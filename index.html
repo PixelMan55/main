@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login to PixelMan</title>
+    <link rel="stylesheet" type="text/css" href="style3.css">
+    <link rel="icon" href="icon_42.png">
+    <script src="script.js"></script>
+</head>
+<body>
+    <div class="form">
+    <p>Login</p>
+        <input type="text" name="username" id="usernameinput" placeholder="username" oninput="login()">
+        <input type="password" name="password" placeholder="password" id="passwordinput">
+        <button onclick="submit()">Login</button>
+        <p class="message">No account? <a href="signup.html">Create one!</a></p>
+        <p id="Messsage_incorrect"></p>
+    </div>
+    <div class="donatediv">
+    <button class="donate" onclick="Donate()">Donate</button>
+</div>
+</body>
+</html>
