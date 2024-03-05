@@ -87,3 +87,9 @@ cursor: pointer;
     display: flex;
     justify-content: center;
 }
+p{
+  font-family: "Teko", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: <weight>;
+  font-style: normal;
+}
