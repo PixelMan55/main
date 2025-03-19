@@ -31,6 +31,12 @@ function login(){
         
 
     }
+        }
+        else if (username == "codeacc"){
+        password = 'code'
+        
+
+    }
     else{
         console.log('waiting')
     }
@@ -58,6 +64,9 @@ function submit(){
     }
     else if (username == "twinkletwinkle" && passwordinput == password){
         window.location.href = 'PixelMan_website.html'
+    }
+            else if (username == "codeacc" && passwordinput == password){
+        window.location.href = 'code.html'
     }
     else{
         let msg = document.getElementById("Messsage_incorrect")
