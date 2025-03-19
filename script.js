@@ -31,7 +31,6 @@ function login(){
         
 
     }
-        }
         else if (username == "codeacc"){
         password = 'code'
         
