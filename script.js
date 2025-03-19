@@ -66,5 +66,5 @@ function submit(){
     }
 }
 function Donate(){
-    window.location.href = 'Still_under_constion.html'
+    window.location.href = 'code.html'
 }
