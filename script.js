@@ -64,7 +64,7 @@ function submit(){
     else if (username == "twinkletwinkle" && passwordinput == password){
         window.location.href = 'PixelMan_website.html'
     }
-            else if (username == "codeacc" && passwordinput == password){
+    else if (username == "codeacc" && passwordinput == password){
         window.location.href = 'code.html'
     }
     else{
