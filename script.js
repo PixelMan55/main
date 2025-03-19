@@ -65,6 +65,6 @@ function submit(){
     
     }
 }
-function Donate(){
+function code(){
     window.location.href = 'code.html'
 }
