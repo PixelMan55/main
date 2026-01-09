@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pixel Stickman Fighting</title>
+<link rel="icon" href="7828e0e0-1679-47af-9b6b-055fb1c6572b.gif">
+
+<style>
+body{margin:0;background:#222;color:white;font-family:Arial;text-align:center}
+button,select{padding:10px;font-size:16px;margin:6px}
+.hidden{display:none}
+
+#game{
+  width:800px;height:400px;margin:20px auto;
+  background:linear-gradient(#444,#222);
+  border:2px solid white;
+  position:relative;
+  overflow:hidden
+}
+
+/* MENUS */
+#menu,#editor,#achievements{margin-top:30px}
+
+/* SWORD GRID */
+#swordGrid{
+  display:grid;
+  grid-template-columns:repeat(4,150px);
+  gap:12px;
+  justify-content:center
+}
+.swordCard{
+  border:2px solid white;
+  background:#333;
+  padding:6px;
+  cursor:pointer
+}
+.swordCard.locked{opacity:.4;cursor:default}
+.swordCard.selected{outline:3px solid gold}
+.swordName{font-weight:bold}
+
+/* RARITY COLORS */
+.r-common{border-color:#bbb}
+.r-decent{border-color:#4caf50}
+.r-great{border-color:#2196f3}
+.r-insane{border-color:#9c27b0}
+.r-alienish{border-color:#00ffcc;box-shadow:0 0 8px #00ffcc}
+.r-demonic{border-color:#ff1744;box-shadow:0 0 10px #ff1744}
+.r-blessed{border-color:gold;box-shadow:0 0 12px gold}
+
+.swordBox{
+  width:100px;height:50px;
+  border:2px solid white;
+  margin:6px auto;
+  background:#111;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative
+}
+.swordMini{
+  height:4px;
+  background:#eee;
+  position:relative
+}
+.swordMini::before{
+  content:"";
+  position:absolute;
+  left:-6px;
+  top:-3px;
+  width:6px;
+  height:10px;
+  background:#6b3f1d
+}
+.lock{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:24px
+}
+.swordStats{font-size:11px}
+
+/* ACHIEVEMENTS */
+.achievement{
+  width:320px;
+  margin:10px auto;
+  border:2px solid white;
+  background:#333;
+  padding:10px
+}
+.achievement.locked{opacity:.4}
+
+/* STICKMAN */
+/* STICKMAN */
+.fighter{
+  position:absolute;
+  width:60px;
+  height:160px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  display:flex;
+  justify-content:center;
+}
+
+/* HEAD */
+.head{
+  width:24px;
+  height:24px;
+  border:3px solid var(--c);
+  border-radius:50%;
+}
+
+/* BODY */
+.body{
+  width:6px;
+  height:40px;
+  background:var(--c);
+  position:relative;
+  left:50%;
+  transform:translateX(-50%);
+}
+/* ARMS */
+.arms{
+  width:36px;
+  height:6px;
+  background:var(--c);
+  position:relative;
+  transform-origin:left center;
+  transition:transform .12s;
+}
+.swing{transform:rotate(65deg)}
+
+/* WEAPON */
+.weapon{
+  position:absolute;
+  left:36px;
+  top:-4px;
+}
+.handle{
+  width:6px;
+  height:10px;
+  background:#6b3f1d;
+  position:absolute;
+  left:-6px;
+}
+.blade{
+  height:4px;
+  background:#eee;
+}
+
+/* LEGS */
+.legs{
+  width:36px;
+  height:30px;
+  position:relative;
+}
+.leg{
+  width:6px;
+  height:28px;
+  background:var(--c);
+  position:absolute;
+  border-radius:4px;
+}
+.leg.left{left:8px}
+.leg.right{right:8px}/* HEALTH */
+.health{position:absolute;top:10px;height:10px;background:red}
+.healthText{position:absolute;top:24px;font-size:12px}
+#p1-health{left:10px}
+#p2-health{right:10px}
+#p1-text{left:10px}
+#p2-text{right:10px}
+</style>
+</head>
+
+<body>
+
+<div id="menu">
+  <h1>Pixel Stickman Fighting</h1>
+  <label><b>Choose Difficulty:</b>
+    <select id="difficulty"></select>
+  </label><br>
+  <button onclick="startGame()">Play</button>
+  <button onclick="openEditor()">Edit Character</button>
+  <button onclick="openAchievements()">Achievements</button>
+  <button onclick="openStats()">Stats</button>
+</div>
+
+<div id="editor" class="hidden">
+  <h2>Edit Character</h2>
+  <input type="color" id="colorPicker"><br><br>
+  <div id="swordGrid"></div>
+  <button onclick="backToMenu()">Back</button>
+</div>
+
+<div id="achievements" class="hidden">
+  <h2>Achievements</h2>
+  <div id="achList"></div>
+  <button onclick="backToMenu()">Back</button>
+</div>
+
+<div id="stats" class="hidden">
+  <h2>Stats</h2>
+  <div id="statsContent"></div>
+  <button onclick="backToMenu()">Back</button>
+</div>
+
+<div id="game" class="hidden">
+  <div id="p1" class="fighter"></div>
+  <div id="p2" class="fighter"></div>
+  <div id="p1-health" class="health"></div>
+  <div id="p2-health" class="health"></div>
+  <div id="p1-text" class="healthText"></div>
+  <div id="p2-text" class="healthText"></div>
+</div>
+
+<script>
+
+
+/* ================= SAVE ================= */
+const saveKey="stickSave";
+let save=JSON.parse(localStorage.getItem(saveKey))||{
+  color:"#ffffff",
+  sword:"dagger",
+  wins:0,
+  losses:0,
+  difficulty:"easy",
+  achievements:{}
+};
+const saveData=()=>localStorage.setItem(saveKey,JSON.stringify(save));
+
+/* ================= STOP GAME ================= */
+let running=false;
+function stopGame(){running=false}
+
+/* ================= DIFFICULTIES ================= */
+const difficulties={
+  easy:{label:"Easy",npcSpeed:0.6,npcHP:70,npcAI:0},
+  normal:{label:"Normal",npcSpeed:1,npcHP:90,npcAI:1},
+  hard:{label:"Hard",npcSpeed:1.4,npcHP:110,npcAI:2},
+  expert:{label:"Expert",npcSpeed:1.8,npcHP:130,npcAI:2},
+  master:{label:"Master",npcSpeed:2.2,npcHP:150,npcAI:3},
+  nightmare:{label:"Nightmare",npcSpeed:2.6,npcHP:180,npcAI:3},
+  impossible:{label:"Impossible",npcSpeed:3,npcHP:220,npcAI:3}
+};
+
+const diffSelect=document.getElementById("difficulty");
+for(const k in difficulties){
+  const o=document.createElement("option");
+  o.value=k;o.textContent=difficulties[k].label;
+  diffSelect.appendChild(o);
+}
+diffSelect.value=save.difficulty;
+diffSelect.onchange=()=>{save.difficulty=diffSelect.value;saveData()};
+
+/* ================= ACHIEVEMENTS ================= */
+const achievements={
+  win_easy:{name:"Beginner Fighter",desc:"Win on Easy"},
+  win_normal:{name:"Skilled Fighter",desc:"Win on Normal"},
+  win_hard:{name:"Veteran Fighter",desc:"Win on Hard"},
+  win_expert:{name:"Elite Fighter",desc:"Win on Expert"},
+  win_master:{name:"Master Fighter",desc:"Win on Master"},
+  win_nightmare:{name:"Nightmare Slayer",desc:"Win on Nightmare"},
+  win_impossible:{name:"Impossible Conqueror",desc:"Win on Impossible"}
+};
+
+/* ================= SWORDS ================= */
+const swords={
+  dagger:{name:"Dagger",dmg:8,knock:4,stun:6,unlock:0,rarity:"common"},
+  shortsword:{name:"Short Sword",dmg:10,knock:6,stun:8,unlock:3,rarity:"decent"},
+  longsword:{name:"Long Sword",dmg:13,knock:9,stun:10,unlock:6,rarity:"great"},
+  claymore:{name:"Claymore",dmg:18,knock:14,stun:14,unlock:12,rarity:"insane"},
+  rapier:{name:"Rapier",dmg:9,knock:3,stun:14,unlock:18,rarity:"great"},
+  axe:{name:"Battle Axe",dmg:22,knock:18,stun:10,unlock:25,rarity:"insane"},
+  hammer:{name:"War Hammer",dmg:26,knock:24,stun:18,unlock:40,rarity:"alienish"},
+  katana:{name:"Katana",dmg:16,knock:10,stun:20,unlock:60,rarity:"alienish"},
+  greatsword:{name:"Great Sword",dmg:30,knock:30,stun:22,unlock:80,rarity:"demonic"},
+  executioner:{name:"Executioner",dmg:38,knock:40,stun:30,unlock:100,rarity:"blessed"},
+
+  ach_easy:{name:"Training Blade",dmg:10,knock:4,stun:8,achievement:"win_easy",rarity:"decent"},
+  ach_normal:{name:"Steel Saber",dmg:14,knock:7,stun:10,achievement:"win_normal",rarity:"great"},
+  ach_hard:{name:"Knight Longsword",dmg:18,knock:12,stun:14,achievement:"win_hard",rarity:"insane"},
+  ach_expert:{name:"Runed Katana",dmg:22,knock:14,stun:18,achievement:"win_expert",rarity:"alienish"},
+  ach_master:{name:"Obsidian Greatblade",dmg:28,knock:20,stun:22,achievement:"win_master",rarity:"demonic"},
+  ach_nightmare:{name:"Cursed Reaver",dmg:34,knock:26,stun:28,achievement:"win_nightmare",rarity:"demonic"},
+  ach_impossible:{name:"Celestial Blade",dmg:40,knock:34,stun:34,achievement:"win_impossible",rarity:"blessed"}
+};
+
+/* ================= UI ================= */
+
+const statsDiv=document.getElementById("stats");
+const statsContent=document.getElementById("statsContent");
+
+function openStats(){
+  stopGame();
+  menu.classList.add("hidden");
+  editor.classList.add("hidden");
+  achievementsDiv.classList.add("hidden");
+  game.classList.add("hidden");
+  statsDiv.classList.remove("hidden");
+  renderStats();
+}
+
+
+const menu=document.getElementById("menu");
+const editor=document.getElementById("editor");
+const achievementsDiv=document.getElementById("achievements");
+const swordGrid=document.getElementById("swordGrid");
+const achList=document.getElementById("achList");
+const game=document.getElementById("game");
+const colorPicker=document.getElementById("colorPicker");
+
+colorPicker.value=save.color;
+colorPicker.oninput=()=>{save.color=colorPicker.value;saveData()};
+
+function backToMenu(){
+  stopGame();
+  editor.classList.add("hidden");
+  achievementsDiv.classList.add("hidden");
+  game.classList.add("hidden");
+  statsDiv.classList.add("hidden");
+  menu.classList.remove("hidden");
+}
+function openEditor(){
+  stopGame();
+  menu.classList.add("hidden");
+  game.classList.add("hidden");
+  editor.classList.remove("hidden");
+  renderSwords();
+}
+function openAchievements(){
+  stopGame();
+  menu.classList.add("hidden");
+  game.classList.add("hidden");
+  achievementsDiv.classList.remove("hidden");
+  renderAchievements();
+}
+
+/* ================= RENDER ================= */
+
+function renderSwords(){
+  swordGrid.innerHTML="";
+  for(const id in swords){
+    const s=swords[id];
+    const unlocked=s.unlock!==undefined?save.wins>=s.unlock:save.achievements[s.achievement];
+    const unlockText=s.unlock!==undefined?`Unlock: ${s.unlock} wins`:`Unlock: ${achievements[s.achievement].name}`;
+    const card=document.createElement("div");
+    card.className=`swordCard r-${s.rarity}${unlocked?"":" locked"}${save.sword===id?" selected":""}`;
+    card.innerHTML=`
+      <div class="swordName">${s.name}</div>
+      <div><b>Rarity:</b> ${s.rarity.toUpperCase()}</div>
+      <div class="swordBox">${unlocked?`<div class="swordMini" style="width:${s.dmg*2}px"></div>`:`<div class="lock">🔒</div>`}</div>
+      <div class="swordStats">
+        DMG:${s.dmg}<br>
+        Knock:${s.knock}<br>
+        Stun:${s.stun}<br>
+        <i>${unlockText}</i>
+      </div>`;
+    if(unlocked)card.onclick=()=>{save.sword=id;saveData();renderSwords()};
+    swordGrid.appendChild(card);
+  }
+}
+
+function renderAchievements(){
+  achList.innerHTML="";
+  for(const id in achievements){
+    const a=achievements[id];
+    const unlocked=!!save.achievements[id];
+    const div=document.createElement("div");
+    div.className="achievement"+(unlocked?"":" locked");
+    div.innerHTML=`<b>${a.name}</b><br>${a.desc}<br>${unlocked?"✔ Unlocked":"❌ Locked"}`;
+    achList.appendChild(div);
+  }
+}
+
+/* ================= GAME ================= */
+const GRAVITY=0.6,JUMP_FORCE=-12,GROUND_Y=40;
+let p1,p2,keys={};
+addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+function makeStick(color,swordId){
+  const s=swords[swordId];
+  return `<div style="--c:${color}">
+    <div class="head"></div>
+    <div class="body"></div>
+    <div class="arms">
+      <div class="weapon">
+        <div class="handle"></div>
+        <div class="blade" style="width:${s.dmg*2}px"></div>
+      </div>
+    </div>
+    <div class="legs">
+      <div class="leg left"></div>
+      <div class="leg right"></div>
+    </div>
+  </div>`;
+}
+
+const p1El=document.getElementById("p1");
+const p2El=document.getElementById("p2");
+const p1Health=document.getElementById("p1-health");
+const p2Health=document.getElementById("p2-health");
+const p1Text=document.getElementById("p1-text");
+const p2Text=document.getElementById("p2-text");
+
+function startGame(){
+  menu.classList.add("hidden");
+  game.classList.remove("hidden");
+  const d=difficulties[save.difficulty];
+  p1={x:100,y:0,vy:0,onGround:true,hp:100,cd:0,stun:0};
+  p2={x:600,hp:d.npcHP,cd:0,stun:0,speed:d.npcSpeed,ai:d.npcAI,think:0};
+  p1El.innerHTML=makeStick(save.color,save.sword);
+  p2El.innerHTML=makeStick("#f55","dagger");
+  running=true;
+  requestAnimationFrame(loop);
+}
+
+function endGame(win){
+  running=false;
+  if(win){
+    save.wins++;
+    const map={
+      easy:"win_easy",normal:"win_normal",hard:"win_hard",
+      expert:"win_expert",master:"win_master",
+      nightmare:"win_nightmare",impossible:"win_impossible"
+    };
+    save.achievements[map[save.difficulty]]=true;
+    saveData();
+  } else {
+    save.losses = (save.losses||0) + 1; 
+  }
+  alert(win?"You Win!":"You Lose!");
+  backToMenu();
+}
+
+function loop(){
+  if(!running)return;
+
+  p1.vy+=GRAVITY;p1.y+=p1.vy;
+  if(p1.y>0){p1.y=0;p1.vy=0;p1.onGround=true}
+  if((keys.w||keys[" "])&&p1.onGround){p1.vy=JUMP_FORCE;p1.onGround=false}
+  if(p1.stun===0){if(keys.a)p1.x-=4;if(keys.d)p1.x+=4}
+
+  const sword=swords[save.sword];
+  if(keys.s&&p1.cd===0&&Math.abs(p1.x-p2.x)<60){
+    p2.hp-=sword.dmg;
+    p2.stun=sword.stun;
+    p2.x+=(p2.x>p1.x?1:-1)*sword.knock;
+    p1.cd=18;
+    p1El.querySelector(".arms").classList.add("swing");
+    setTimeout(()=>p1El.querySelector(".arms").classList.remove("swing"),120);
+    if(p2.hp<=0)return endGame(true);
+  }
+
+  if(p2.think>0)p2.think--;
+  if(p2.stun===0&&p2.think===0){
+    const d=p1.x-p2.x,a=Math.abs(d);
+    if(p2.ai===0)p2.x+=Math.sign(d)*p2.speed;
+   if(p2.ai===1){
+  if(a>70)p2.x+=Math.sign(d)*(p2.speed*6);
+  if(a<50)p2.x-=Math.sign(d)*(p2.speed*0.6);}
+  if(p2.ai>=2){
+  if(a>80)p2.x+=Math.sign(d)*(p2.speed*5);
+  if(a<45)p2.x-=Math.sign(d)*(p2.speed*0.5);
+}
+    if(a<80&&p2.cd===0)p2.cd=28-(p2.ai*4);
+    p2.think=Math.max(2,12-(p2.ai*3));
+
+  }
+
+  if(p2.cd===1&&Math.abs(p1.x-p2.x)<60){
+    p1.hp-=10;
+    p1.stun=12;
+    if(p1.hp<=0)return endGame(false);
+  }
+
+  if(p1.cd>0)p1.cd--;
+  if(p1.stun>0)p1.stun--;
+  if(p2.cd>0)p2.cd--;
+  if(p2.stun>0)p2.stun--;
+
+  p1El.style.left=p1.x+"px";
+  p2El.style.left=p2.x+"px";
+  p1El.style.bottom=(GROUND_Y - p1.y)+"px";
+  p2El.style.bottom=GROUND_Y+"px";
+
+  p1Health.style.width=Math.max(p1.hp,0)*2+"px";
+  p2Health.style.width=Math.max(p2.hp,0)*2+"px";
+  p1Text.textContent=Math.max(p1.hp,0)+"%";
+  p2Text.textContent=Math.max(p2.hp,0)+"%";
+
+  requestAnimationFrame(loop);
+}
+function renderStats(){
+  let unlocked=0;
+  for(const id in swords){
+    const s=swords[id];
+    if(s.unlock!==undefined && save.wins>=s.unlock) unlocked++;
+    if(s.achievement && save.achievements[s.achievement]) unlocked++;
+  }
+
+  statsContent.innerHTML=`
+    <b>Victories:</b> ${save.wins}<br><br>
+    <b>Losses:</b> ${save.losses||0}<br><br>
+    <b>Swords Unlocked:</b> ${unlocked} / ${Object.keys(swords).length}
+  `;
+}
+</script>
+</body>
+</html>
