@@ -9,4 +9,170 @@ UPDATE LOG:
 1.11: The polls are updated
 </a>
   <button onclick="window.location='https://pixelman55.github.io/main/PixelStickManFighting.html'">Back</button>
+  <style>body{margin:0;background:#222;color:white;font-family:Arial;text-align:center}
+button,select{padding:10px;font-size:16px;margin:6px}
+.hidden{display:none}
+
+#game{
+  width:800px;height:400px;margin:20px auto;
+  background:linear-gradient(#444,#222);
+  border:2px solid white;
+  position:relative;
+  overflow:hidden
+}
+
+/* MENUS */
+#menu,#editor,#achievements{margin-top:30px}
+
+/* SWORD GRID */
+#swordGrid{
+  display:grid;
+  grid-template-columns:repeat(4,150px);
+  gap:12px;
+  justify-content:center
+}
+.swordCard{
+  border:2px solid white;
+  background:#333;
+  padding:6px;
+  cursor:pointer
+}
+.swordCard.locked{opacity:.4;cursor:default}
+.swordCard.selected{outline:3px solid gold}
+.swordName{font-weight:bold}
+
+/* RARITY COLORS */
+.r-common{border-color:#bbb}
+.r-decent{border-color:#4caf50}
+.r-great{border-color:#2196f3}
+.r-insane{border-color:#9c27b0}
+.r-alienish{border-color:#00ffcc;box-shadow:0 0 8px #00ffcc}
+.r-demonic{border-color:#ff1744;box-shadow:0 0 10px #ff1744}
+.r-blessed{border-color:gold;box-shadow:0 0 12px gold}
+
+.swordBox{
+  width:100px;height:50px;
+  border:2px solid white;
+  margin:6px auto;
+  background:#111;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative
+}
+.swordMini{
+  height:4px;
+  background:#eee;
+  position:relative
+}
+.swordMini::before{
+  content:"";
+  position:absolute;
+  left:-6px;
+  top:-3px;
+  width:6px;
+  height:10px;
+  background:#6b3f1d
+}
+.lock{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:24px
+}
+.swordStats{font-size:11px}
+
+/* ACHIEVEMENTS */
+.achievement{
+  width:320px;
+  margin:10px auto;
+  border:2px solid white;
+  background:#333;
+  padding:10px
+}
+.achievement.locked{opacity:.4}
+
+/* STICKMAN */
+/* STICKMAN */
+.fighter{
+  position:absolute;
+  width:60px;
+  height:160px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  display:flex;
+  justify-content:center;
+}
+
+/* HEAD */
+.head{
+  width:24px;
+  height:24px;
+  border:3px solid var(--c);
+  border-radius:50%;
+}
+
+/* BODY */
+.body{
+  width:6px;
+  height:40px;
+  background:var(--c);
+  position:relative;
+  left:50%;
+  transform:translateX(-50%);
+}
+/* ARMS */
+.arms{
+  width:36px;
+  height:6px;
+  background:var(--c);
+  position:relative;
+  transform-origin:left center;
+  transition:transform .12s;
+}
+.swing{transform:rotate(65deg)}
+
+/* WEAPON */
+.weapon{
+  position:absolute;
+  left:36px;
+  top:-4px;
+}
+.handle{
+  width:6px;
+  height:10px;
+  background:#6b3f1d;
+  position:absolute;
+  left:-6px;
+}
+.blade{
+  height:4px;
+  background:#eee;
+}
+
+/* LEGS */
+.legs{
+  width:36px;
+  height:30px;
+  position:relative;
+}
+.leg{
+  width:6px;
+  height:28px;
+  background:var(--c);
+  position:absolute;
+  border-radius:4px;
+}
+.leg.left{left:8px}
+.leg.right{right:8px}/* HEALTH */
+.health{position:absolute;top:10px;height:10px;background:red}
+.healthText{position:absolute;top:24px;font-size:12px}
+#p1-health{left:10px}
+#p2-health{right:10px}
+#p1-text{left:10px}
+#p2-text{right:10px}
+</style>
 </html>
