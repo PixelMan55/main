@@ -503,9 +503,11 @@ Coins:
 <input id="chanceDecent" placeholder="Decent %">
 <input id="chanceGreat" placeholder="Great %">
 <input id="chanceInsane" placeholder="Insane %">
+<input id="chanceAlienish" placeholder="Alienish %">
+<input id="chanceDemonic" placeholder="Demonic %">
+<input id="chanceBlessed" placeholder="Blessed %">
 
 <button onclick="updateRollChances()">Apply</button>
-
 <hr>
 
 <!-- TOGGLES -->
@@ -1376,14 +1378,24 @@ alert("Player removed");
 
 }
 
-function updateRollChances(){
+function updateRollChances() {
+  const inputs = [
+    {id:"chanceDecent", rarity:"decent"},
+    {id:"chanceGreat", rarity:"great"},
+    {id:"chanceInsane", rarity:"insane"},
+    {id:"chanceAlienish", rarity:"alienish"},
+    {id:"chanceDemonic", rarity:"demonic"},
+    {id:"chanceBlessed", rarity:"blessed"}
+  ];
 
-rollChances[0].chance=Number(document.getElementById("chanceDecent").value);
-rollChances[1].chance=Number(document.getElementById("chanceGreat").value);
-rollChances[2].chance=Number(document.getElementById("chanceInsane").value);
+  inputs.forEach((i, index) => {
+    const val = Number(document.getElementById(i.id).value);
+    if (!isNaN(val)) {
+      rollChances[index].chance = val;
+    }
+  });
 
-alert("Chances updated");
-
+  alert("Roll chances updated!");
 }
 
 async function savePlayerStats() {
