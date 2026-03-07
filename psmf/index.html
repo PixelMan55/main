@@ -1,6 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBGRZF0m1WbGFCw1H9SPRYszvO_34UPYes",
+  authDomain: "stickman-fighting-5bc1f.firebaseapp.com",
+  projectId: "stickman-fighting-5bc1f",
+  storageBucket: "stickman-fighting-5bc1f.firebasestorage.app",
+  messagingSenderId: "728024005848",
+  appId: "1:728024005848:web:7e2c59b4be2658987c2bad",
+  measurementId: "G-ZY4L50RKSB"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+window.auth = auth;
+window.db = db;
+window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+window.setDoc = setDoc;
+window.doc = doc;
+window.getDocs = getDocs;
+window.collection = collection;
+
+</script>
 <meta charset="UTF-8">
 <title>Pixel Stickman Fighting</title>
 <link rel="icon" href="7828e0e0-1679-47af-9b6b-055fb1c6572b.gif">
@@ -290,6 +321,53 @@ font-size:12px;
 #p2-health{right:10px}
 #p1-text{left:10px}
 #p2-text{right:10px}
+
+/* TOGGLE SWITCH */
+
+.switch{
+position:relative;
+display:inline-block;
+width:50px;
+height:26px;
+}
+
+.switch input{
+opacity:0;
+width:0;
+height:0;
+}
+
+.slider{
+position:absolute;
+cursor:pointer;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background-color:#777;
+transition:.25s;
+border-radius:26px;
+}
+
+.slider:before{
+position:absolute;
+content:"";
+height:20px;
+width:20px;
+left:3px;
+bottom:3px;
+background:white;
+transition:.25s;
+border-radius:50%;
+}
+
+.switch input:checked + .slider{
+background:#4caf50;
+}
+
+.switch input:checked + .slider:before{
+transform:translateX(24px);
+}
 </style>
 </head>
 
@@ -310,8 +388,14 @@ font-size:12px;
   <button onclick="openRoll()">Roll 🎲</button>
   <button onclick="openAchievements()">Achievements ✅</button>
   <button onclick="openStats()">Stats 👌</button>
-  <button onclick="window.location='https://forms.gle/d8683hHXeeWaPd5z8'">Poll 🗳️</button>
+  <button onclick="window.location='https://forms.gle/d8683hHXeeWaPd5z8'">Poll 🗳️
+</button>
     <button onclick="window.location='https://pixelman55.github.io/main/log'">Update Log 📝</button>
+<br><br>
+
+<button onclick="openLogin()">Login</button>
+<button onclick="openSignup()">Sign Up</button>
+<button onclick="openLeaderboard()">Leaderboard 🏆</button>
 </div>
 
 <div id="editor" class="hidden">
@@ -340,8 +424,6 @@ font-size:12px;
 <div id="rollPage" class="hidden">
 
 <h2>🎲 Sword Roll</h2>
-
-<button onclick="rollSword()">Roll (100 Coins)</button>
 
 <h3>Drop Chances</h3>
 
@@ -372,35 +454,157 @@ font-size:12px;
 </table>
 
 <br>
+
+<button onclick="rollSword()">🎲 Roll (100 Coins)</button>
+
+<br><br>
+
+<button onclick="backToMenu()">Back</button>
+
+</div><div id="adminPanel" class="hidden">
+
+<h2>ADMIN PANEL</h2>
+
+<!-- INPUT SECTION -->
+<h3>Inputs</h3>
+
+<div>
+
+Wins:
+<input type="number" id="adminWins">
+<button onclick="setWins()">Apply</button>
+
+<br><br>
+
+Losses:
+<input type="number" id="adminLosses">
+<button onclick="setLosses()">Apply</button>
+
+<br><br>
+
+Coins:
+<input type="number" id="adminCoins">
+<button onclick="setCoins()">Apply</button>
+
+</div>
+
+<hr>
+
+<h3>Leaderboard Control</h3>
+
+<input id="deleteUserID" placeholder="Player UID">
+
+<button onclick="deletePlayer()">Ban Player</button>
+
+<hr>
+
+<h3>Edit Roll Chances</h3>
+
+<input id="chanceDecent" placeholder="Decent %">
+<input id="chanceGreat" placeholder="Great %">
+<input id="chanceInsane" placeholder="Insane %">
+
+<button onclick="updateRollChances()">Apply</button>
+
+<hr>
+
+<!-- TOGGLES -->
+<h3>Toggles</h3>
+
+<div>
+
+Infinite Coins
+
+<label class="switch">
+<input type="checkbox" id="infiniteCoinsToggle" onchange="toggleInfiniteCoins()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Unlock All Swords
+
+<label class="switch">
+<input type="checkbox" id="unlockAllToggle" onchange="toggleUnlockAll()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Invincible
+
+<label class="switch">
+<input type="checkbox" onchange="toggleInvincible()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Instakill
+
+<label class="switch">
+<input type="checkbox" onchange="toggleInstakill()">
+<span class="slider"></span>
+</label>
+
+</div>
+
+<hr>
+
+<!-- UNLOCK AREA -->
+<h3>Unlock Specific Sword</h3>
+
+<select id="swordDropdown"></select>
+
+<button onclick="unlockSelectedSword()">Unlock Sword</button>
+
+<hr>
+
+<button onclick="backToMenu()">Exit</button>
+
+</div>
+
+<div id="loginPage" class="hidden">
+
+<h2>Login</h2>
+
+<input id="loginEmail" placeholder="Email"><br><br>
+<input id="loginPass" type="password" placeholder="Password"><br><br>
+
+<button onclick="login()">Login</button>
+
+<br><br>
+
 <button onclick="backToMenu()">Back</button>
 
 </div>
 
 
-<div id="adminPanel" class="hidden">
+<div id="signupPage" class="hidden">
 
-<h2>ADMIN PANEL</h2>
+<h2>Sign Up</h2>
 
-<h3>Stats</h3>
-<button onclick="save.wins++;saveData()">+1 Win</button>
-<button onclick="save.wins--;saveData()">-1 Win</button>
-<button onclick="save.losses++;saveData()">+1 Loss</button>
+<input id="signupUser" placeholder="Username"><br><br>
+<input id="signupEmail" placeholder="Email"><br><br>
+<input id="signupPass" type="password" placeholder="Password"><br><br>
 
-<h3>Coins</h3>
-<button onclick="save.coins+=100;updateCoins();saveData()">+100</button>
-<button onclick="save.coins+=1000;updateCoins();saveData()">+1000</button>
-
-<h3>Unlock</h3>
-<button onclick="unlockAllSwords()">Unlock All Swords</button>
-<button onclick="unlockRollSwords()">Unlock Roll Swords</button>
-<button onclick="unlockAchievements()">Unlock Achievements</button>
-
-<h3>Cheats</h3>
-<button onclick="toggleInvincible()">Toggle Invincible</button>
-<button onclick="toggleInstakill()">Toggle Instakill</button>
+<button onclick="signup()">Create Account</button>
 
 <br><br>
-<button onclick="backToMenu()">Exit</button>
+
+<button onclick="backToMenu()">Back</button>
+
+</div>
+
+<div id="leaderboard" class="hidden">
+
+<h2>🏆 Global Leaderboard</h2>
+
+<div id="leaderboardList"></div>
+
+<br>
+
+<button onclick="backToMenu()">Back</button>
 
 </div>
 
@@ -416,8 +620,12 @@ font-size:12px;
 <script>
 
 
+
 let invincible=false;
 let instakill=false;
+
+let infiniteCoins = false;
+let storedCoins = 0;
 
 function toggleInvincible(){
 invincible=!invincible;
@@ -520,11 +728,11 @@ const rollSwords=[
 {name:"Mythic Halo Blade",rarity:"blessed"}
 ];
 const rollChances=[
-{rarity:"decent",chance:40.75},
+{rarity:"decent",chance:45},
 {rarity:"great",chance:30},
 {rarity:"insane",chance:15},
-{rarity:"alienish",chance:8},
-{rarity:"demonic",chance:6,},
+{rarity:"alienish",chance:7},
+{rarity:"demonic",chance:2.25,},
 {rarity:"blessed",chance:0.25}
 ];
 /* ===== ADD ROLL SWORDS INTO SWORD SYSTEM ===== */
@@ -587,6 +795,10 @@ function backToMenu(){
   rollPage.classList.add("hidden");
   adminPanel.classList.add("hidden");
 
+document.getElementById("leaderboard").classList.add("hidden");
+document.getElementById("loginPage").classList.add("hidden");
+document.getElementById("signupPage").classList.add("hidden");
+
   menu.classList.remove("hidden");
 }
 function openEditor(){
@@ -604,6 +816,16 @@ function openAchievements(){
   renderAchievements();
 }
 
+function openLogin(){
+menu.classList.add("hidden");
+document.getElementById("loginPage").classList.remove("hidden");
+}
+
+function openSignup(){
+menu.classList.add("hidden");
+document.getElementById("signupPage").classList.remove("hidden");
+}
+
 function openAdmin(){
 
 const code=prompt("Enter admin code");
@@ -612,6 +834,16 @@ if(code==="243564"){
 
 menu.classList.add("hidden");
 adminPanel.classList.remove("hidden");
+
+const drop=document.getElementById("swordDropdown");
+drop.innerHTML="";
+
+for(const id in swords){
+const opt=document.createElement("option");
+opt.value=id;
+opt.textContent=swords[id].name;
+drop.appendChild(opt);
+}
 
 }else{
 
@@ -743,6 +975,7 @@ const rewards={
   master:25,
   nightmare:30,
   impossible:35
+
 };
 
 save.coins = Number(save.coins) + (rewards[save.difficulty] || 5);
@@ -967,7 +1200,207 @@ alert("Achievements unlocked");
 
 }
 
+let previousCoins=0;
+
+function setWins(){
+save.wins = Number(document.getElementById("adminWins").value);
+saveData();
+}
+
+function setLosses(){
+save.losses = Number(document.getElementById("adminLosses").value);
+saveData();
+}
+
+function setCoins(){
+save.coins = Number(document.getElementById("adminCoins").value);
+updateCoins();
+saveData();
+}
+
+function toggleInfiniteCoins(){
+
+const toggle=document.getElementById("infiniteCoinsToggle");
+
+if(toggle.checked){
+
+storedCoins = save.coins;
+save.coins = 999999999;
+infiniteCoins = true;
+
+}else{
+
+save.coins = storedCoins;
+infiniteCoins = false;
+
+}
+
+updateCoins();
+saveData();
+
+}
+function toggleUnlockAll(){
+
+const toggle=document.getElementById("unlockAllToggle");
+
+if(toggle.checked){
+
+save.wins=999;
+save.unlockedRollSwords=rollSwords.map(s=>s.name);
+
+for(const a in achievements){
+save.achievements[a]=true;
+}
+
+}else{
+
+alert("Turning this off won't relock swords.");
+
+}
+
+saveData();
+
+}
+
+function unlockSelectedSword(){
+
+const id=document.getElementById("swordDropdown").value;
+
+const s=swords[id];
+
+if(s.roll){
+
+if(!save.unlockedRollSwords.includes(s.name)){
+save.unlockedRollSwords.push(s.name);
+}
+
+}else{
+
+save.wins=Math.max(save.wins,s.unlock||0);
+
+}
+
+saveData();
+
+alert("Unlocked: "+s.name);
+
+}
+
+
+function signup(){
+
+const user=document.getElementById("signupUser").value;
+const email=document.getElementById("signupEmail").value;
+const pass=document.getElementById("signupPass").value;
+
+createUserWithEmailAndPassword(auth,email,pass)
+
+.then(cred=>{
+
+alert("Account created!");
+localStorage.setItem("username", user);
+
+setDoc(doc(db,"players",cred.user.uid),{
+username:user,
+wins:0,
+losses:0
+});
+
+backToMenu();
+
+})
+
+.catch(e=>alert(e.message));
+
+}
+
+function login(){
+
+const email=document.getElementById("loginEmail").value;
+const pass=document.getElementById("loginPass").value;
+
+signInWithEmailAndPassword(auth,email,pass)
+
+.then(()=>{
+
+alert("Logged in!");
+
+backToMenu();
+
+})
+
+.catch(e=>alert(e.message));
+
+}
+if(auth.currentUser){
+
+setDoc(doc(db,"players",auth.currentUser.uid),{
+wins:save.wins,
+losses:save.losses
+});
+
+}
+
+async function openLeaderboard(){
+
+menu.classList.add("hidden");
+document.getElementById("leaderboard").classList.remove("hidden");
+
+const snap=await getDocs(collection(db,"players"));
+
+let players=[];
+
+snap.forEach(doc=>{
+players.push(doc.data());
+});
+
+players.sort((a,b)=>b.wins-a.wins);
+
+let html="";
+
+players.forEach(p=>{
+html+=`<b>${p.username}</b> — ${p.wins} Wins | ${p.losses} Losses<br>`;
+});
+
+document.getElementById("leaderboardList").innerHTML=html;
+
+}
+
+async function deletePlayer(){
+
+const id=document.getElementById("deleteUserID").value;
+
+await setDoc(doc(db,"players",id),{});
+
+alert("Player removed");
+
+}
+
+function updateRollChances(){
+
+rollChances[0].chance=Number(document.getElementById("chanceDecent").value);
+rollChances[1].chance=Number(document.getElementById("chanceGreat").value);
+rollChances[2].chance=Number(document.getElementById("chanceInsane").value);
+
+alert("Chances updated");
+
+}
+
+async function savePlayerStats() {
+  const user = auth.currentUser;
+  if(!user) return;
+  
+  const playerRef = doc(db, "players", user.uid);
+  const playerData = {
+    username: localStorage.getItem("username") || user.email.split("@")[0],
+    wins: save.wins,
+    losses: save.losses
+  };
+  
+  await setDoc(playerRef, playerData, { merge: true }); // merge to avoid overwriting other fields
+}
 </script>
+
 </body>
 </html>
 
