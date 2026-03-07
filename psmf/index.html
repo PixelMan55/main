@@ -21,6 +21,26 @@ button,select{padding:10px;font-size:16px;margin:6px}
 /* MENUS */
 #menu,#editor,#achievements{margin-top:30px}
 
+/*gamblling css*/
+
+#coinDisplay{
+position:absolute;
+top:10px;
+right:20px;
+display:flex;
+align-items:center;
+gap:8px;
+font-size:22px;
+font-weight:bold;
+}
+
+#coinDisplay img{
+width:32px;
+height:32px;
+image-rendering:pixelated;
+}
+
+
 /* SWORD GRID */
 #swordGrid{
   display:grid;
@@ -46,7 +66,13 @@ button,select{padding:10px;font-size:16px;margin:6px}
 .r-alienish{border-color:#00ffcc;box-shadow:0 0 8px #00ffcc}
 .r-demonic{border-color:#ff1744;box-shadow:0 0 10px #ff1744}
 .r-blessed{border-color:gold;box-shadow:0 0 12px gold}
-
+.r-eblessed{
+  border:2px solid transparent;
+  background:
+    linear-gradient(#333,#333) padding-box,
+    linear-gradient(45deg,gold,#d06bff) border-box;
+  box-shadow:0 0 14px gold,0 0 16px #d06bff;
+}
 .swordBox{
   width:100px;height:50px;
   border:2px solid white;
@@ -221,6 +247,14 @@ button,select{padding:10px;font-size:16px;margin:6px}
   transform-origin:top center;
 }
 
+#adminBtn{
+position:absolute;
+top:10px;
+left:10px;
+padding:6px 10px;
+font-size:12px;
+}
+
 /* WALKING ANIMATION */
 .walking .legs::before{
   animation:walkLeft .18s infinite alternate ease-in-out;
@@ -262,12 +296,18 @@ button,select{padding:10px;font-size:16px;margin:6px}
 <body>
 
 <div id="menu">
+<div id="coinDisplay">
+<img src="https://e7.pngegg.com/pngimages/1003/599/png-clipart-pixel-art-mario-coin-text-rectangle-thumbnail.png">
+<span id="coinText">0</span>
+</div>
   <h1>Pixel Stickman Fighting</h1>
   <label><b>Choose Difficulty:</b>
     <select id="difficulty"></select>
   </label><br>
+	<button id="adminBtn" onclick="openAdmin()">AP</button>
   <button onclick="startGame()">Play ⚔️</button>
   <button onclick="openEditor()">Edit Character 🎨</button>
+  <button onclick="openRoll()">Roll 🎲</button>
   <button onclick="openAchievements()">Achievements ✅</button>
   <button onclick="openStats()">Stats 👌</button>
   <button onclick="window.location='https://forms.gle/d8683hHXeeWaPd5z8'">Poll 🗳️</button>
@@ -293,6 +333,77 @@ button,select{padding:10px;font-size:16px;margin:6px}
   <button onclick="backToMenu()">Back</button>
 </div>
 
+
+
+
+
+<div id="rollPage" class="hidden">
+
+<h2>🎲 Sword Roll</h2>
+
+<button onclick="rollSword()">Roll (100 Coins)</button>
+
+<h3>Drop Chances</h3>
+
+<table style="margin:auto;border-collapse:collapse">
+<tr>
+<th style="padding:6px;border:1px solid white">Sword</th>
+<th style="padding:6px;border:1px solid white">Rarity</th>
+<th style="padding:6px;border:1px solid white">Chance</th>
+</tr>
+
+<tr><td>Iron Saber</td><td>Decent</td><td>40.75%</td></tr>
+<tr><td>Knight Blade</td><td>Decent</td><td>40.75%</td></tr>
+
+<tr><td>Emerald Cutter</td><td>Great</td><td>30%</td></tr>
+<tr><td>Crystal Edge</td><td>Great</td><td>30%</td></tr>
+
+<tr><td>Storm Katana</td><td>Insane</td><td>15%</td></tr>
+<tr><td>Shadow Reaver</td><td>Insane</td><td>15%</td></tr>
+
+<tr><td>Void Greatsword</td><td>Alienish</td><td>8%</td></tr>
+
+<tr><td>Infernal Cleaver</td><td>Demonic</td><td>6%</td></tr>
+
+<tr><td>Divine Longblade</td><td>Blessed</td><td>0.25%</td></tr>
+<tr><td>Celestial Edge</td><td>Blessed</td><td>0.25%</td></tr>
+<tr><td>Mythic Halo Blade</td><td>Blessed</td><td>0.25%</td></tr>
+
+</table>
+
+<br>
+<button onclick="backToMenu()">Back</button>
+
+</div>
+
+
+<div id="adminPanel" class="hidden">
+
+<h2>ADMIN PANEL</h2>
+
+<h3>Stats</h3>
+<button onclick="save.wins++;saveData()">+1 Win</button>
+<button onclick="save.wins--;saveData()">-1 Win</button>
+<button onclick="save.losses++;saveData()">+1 Loss</button>
+
+<h3>Coins</h3>
+<button onclick="save.coins+=100;updateCoins();saveData()">+100</button>
+<button onclick="save.coins+=1000;updateCoins();saveData()">+1000</button>
+
+<h3>Unlock</h3>
+<button onclick="unlockAllSwords()">Unlock All Swords</button>
+<button onclick="unlockRollSwords()">Unlock Roll Swords</button>
+<button onclick="unlockAchievements()">Unlock Achievements</button>
+
+<h3>Cheats</h3>
+<button onclick="toggleInvincible()">Toggle Invincible</button>
+<button onclick="toggleInstakill()">Toggle Instakill</button>
+
+<br><br>
+<button onclick="backToMenu()">Exit</button>
+
+</div>
+
 <div id="game" class="hidden">
   <div id="p1" class="fighter"></div>
   <div id="p2" class="fighter"></div>
@@ -303,6 +414,20 @@ button,select{padding:10px;font-size:16px;margin:6px}
 </div>
 
 <script>
+
+
+let invincible=false;
+let instakill=false;
+
+function toggleInvincible(){
+invincible=!invincible;
+alert("Invincible: "+invincible);
+}
+
+function toggleInstakill(){
+instakill=!instakill;
+alert("Instakill: "+instakill);
+}
 
 const bgMusic = new Audio("https://cdn.pixabay.com/download/audio/2025/12/19/audio_d47cb60a82.mp3?filename=paulyudin-action-453990.mp3");
 bgMusic.loop = true;
@@ -315,9 +440,14 @@ let save=JSON.parse(localStorage.getItem(saveKey))||{
   sword:"dagger",
   wins:0,
   losses:0,
+  coins:0,
   difficulty:"easy",
-  achievements:{}
+  achievements:{},
+  unlockedRollSwords:[]
 };
+save.coins = Number(save.coins || 0);
+
+if(save.coins === undefined) save.coins = 0;
 const saveData=()=>localStorage.setItem(saveKey,JSON.stringify(save));
 
 /* ================= STOP GAME ================= */
@@ -376,7 +506,41 @@ const swords={
   ach_nightmare:{name:"Cursed Reaver",dmg:34,knock:26,stun:28,achievement:"win_nightmare",rarity:"demonic"},
   ach_impossible:{name:"Celestial Blade",dmg:40,knock:34,stun:34,achievement:"win_impossible",rarity:"blessed"}
 };
+const rollSwords=[
+{name:"Iron Saber",rarity:"decent"},
+{name:"Knight Blade",rarity:"decent"},
+{name:"Emerald Cutter",rarity:"great"},
+{name:"Crystal Edge",rarity:"great"},
+{name:"Storm Katana",rarity:"insane"},
+{name:"Shadow Reaver",rarity:"insane"},
+{name:"Void Greatsword",rarity:"alienish"},
+{name:"Infernal Cleaver",rarity:"demonic"},
+{name:"Divine Longblade",rarity:"blessed"},
+{name:"Celestial Edge",rarity:"blessed"},
+{name:"Mythic Halo Blade",rarity:"blessed"}
+];
+const rollChances=[
+{rarity:"decent",chance:40.75},
+{rarity:"great",chance:30},
+{rarity:"insane",chance:15},
+{rarity:"alienish",chance:8},
+{rarity:"demonic",chance:6,},
+{rarity:"blessed",chance:0.25}
+];
+/* ===== ADD ROLL SWORDS INTO SWORD SYSTEM ===== */
 
+rollSwords.forEach(s=>{
+  const id = s.name.toLowerCase().replace(/ /g,"_");
+
+  swords[id]={
+    name:s.name,
+    dmg:32,
+    knock:28,
+    stun:22,
+    roll:true,
+    rarity:s.rarity
+  };
+});
 /* ================= UI ================= */
 
 const statsDiv=document.getElementById("stats");
@@ -391,8 +555,15 @@ function openStats(){
   statsDiv.classList.remove("hidden");
   renderStats();
 }
+const rollPage=document.getElementById("rollPage");
 
+function openRoll(){
+stopGame();
 
+menu.classList.add("hidden");
+rollPage.classList.remove("hidden");
+}
+const adminPanel=document.getElementById("adminPanel");
 const menu=document.getElementById("menu");
 const editor=document.getElementById("editor");
 const achievementsDiv=document.getElementById("achievements");
@@ -406,12 +577,16 @@ colorPicker.oninput=()=>{save.color=colorPicker.value;saveData()};
 
 function backToMenu(){
   stopGame();
-bgMusic.pause();
-bgMusic.currentTime = 0;
+  bgMusic.pause();
+  bgMusic.currentTime = 0;
+
   editor.classList.add("hidden");
   achievementsDiv.classList.add("hidden");
   game.classList.add("hidden");
   statsDiv.classList.add("hidden");
+  rollPage.classList.add("hidden");
+  adminPanel.classList.add("hidden");
+
   menu.classList.remove("hidden");
 }
 function openEditor(){
@@ -429,14 +604,54 @@ function openAchievements(){
   renderAchievements();
 }
 
+function openAdmin(){
+
+const code=prompt("Enter admin code");
+
+if(code==="243564"){
+
+menu.classList.add("hidden");
+adminPanel.classList.remove("hidden");
+
+}else{
+
+alert("Wrong code");
+
+}
+
+}
+/*=================== Gambling js ==========================*/
+
+
+function updateCoins(){
+document.getElementById("coinText").textContent = save.coins || 0;
+}
+
+
 /* ================= RENDER ================= */
 
 function renderSwords(){
   swordGrid.innerHTML="";
   for(const id in swords){
     const s=swords[id];
-    const unlocked=s.unlock!==undefined?save.wins>=s.unlock:save.achievements[s.achievement];
-    const unlockText=s.unlock!==undefined?`Unlock: ${s.unlock} wins`:`Unlock: ${achievements[s.achievement].name}`;
+let unlocked=false;
+
+if(s.roll){
+  unlocked=save.unlockedRollSwords.includes(s.name);
+}else if(s.unlock!==undefined){
+  unlocked=save.wins>=s.unlock;
+}else if(s.achievement){
+  unlocked=save.achievements[s.achievement];
+}
+    let unlockText="";
+
+if(s.roll){
+  unlockText="Roll Only";
+}else if(s.unlock!==undefined){
+  unlockText=`Unlock: ${s.unlock} wins`;
+}else if(s.achievement){
+  unlockText=`Unlock: ${achievements[s.achievement].name}`;
+}
     const card=document.createElement("div");
     card.className=`swordCard r-${s.rarity}${unlocked?"":" locked"}${save.sword===id?" selected":""}`;
     card.innerHTML=`
@@ -483,8 +698,8 @@ function makeStick(color,swordId){
 <div class="arms">
   <div class="armBar">
     <div class="weapon">
-      <div class="blade" style="height:${s.dmg*2}px"></div>
-      <div class="handle"></div>
+<div class="handle"></div>
+<div class="blade" style="height:${s.dmg*2}px"></div>
     </div>
   </div>
 </div>
@@ -520,6 +735,18 @@ bgMusic.play().catch(()=>{});
 function endGame(win){
   running=false;
   if(win){
+const rewards={
+  easy:5,
+  normal:10,
+  hard:15,
+  expert:20,
+  master:25,
+  nightmare:30,
+  impossible:35
+};
+
+save.coins = Number(save.coins) + (rewards[save.difficulty] || 5);
+updateCoins();
     save.wins++;
     const map={
       easy:"win_easy",normal:"win_normal",hard:"win_hard",
@@ -545,7 +772,11 @@ function loop(){
 
   const sword=swords[save.sword];
   if(keys.s&&p1.cd===0&&Math.abs(p1.x-p2.x)<60){
-    p2.hp-=sword.dmg;
+if(instakill){
+p2.hp=0;
+}else{
+p2.hp-=sword.dmg;
+}
     p2.stun=sword.stun;
     p2.x+=(p2.x>p1.x?1:-1)*sword.knock;
     p1.cd=18;
@@ -579,7 +810,9 @@ setTimeout(()=>{
   }
 
   if(p2.cd===1&&Math.abs(p1.x-p2.x)<60){
-    p1.hp-=10;
+if(!invincible){
+p1.hp-=10;
+}
     p1.stun=12;
     if(p1.hp<=0)return endGame(false);
   }
@@ -654,6 +887,86 @@ function renderStats(){
     <b>Swords Unlocked:</b> ${unlocked} / ${Object.keys(swords).length}
   `;
 }
+function rollSword(){
+
+save.coins = Number(save.coins || 0); // force coins to be a number
+
+if(save.coins < 100){
+  alert("Not enough coins!");
+  return;
+}
+save.coins -= 100;
+
+let r=Math.random()*100;
+let total=0;
+let rarity="decent";
+
+for(const c of rollChances){
+  total += c.chance;
+  if(r <= total){
+    rarity=c.rarity;
+    break;
+  }
+}
+
+const possible=rollSwords.filter(s=>s.rarity===rarity);
+const sword=possible[Math.floor(Math.random()*possible.length)];
+
+if(!save.unlockedRollSwords.includes(sword.name)){
+  save.unlockedRollSwords.push(sword.name);
+}
+
+saveData();
+updateCoins();
+
+alert("You rolled: "+sword.name+" ("+rarity.toUpperCase()+")");
+}
+window.onload = () => {
+  updateCoins();
+};
+
+function unlockAllSwords(){
+
+save.wins = 999;
+
+save.unlockedRollSwords = rollSwords.map(s=>s.name);
+
+for(const a in achievements){
+save.achievements[a]=true;
+}
+
+saveData();
+
+alert("Everything unlocked!");
+
+}
+
+function unlockRollSwords(){
+
+save.unlockedRollSwords=[
+"Iron Saber","Knight Blade","Emerald Cutter","Crystal Edge",
+"Storm Katana","Shadow Reaver","Void Greatsword",
+"Infernal Cleaver","Divine Longblade","Celestial Edge","Mythic Halo Blade"
+];
+
+saveData();
+
+alert("Roll swords unlocked");
+
+}
+
+function unlockAchievements(){
+
+for(const a in achievements){
+save.achievements[a]=true;
+}
+
+saveData();
+
+alert("Achievements unlocked");
+
+}
+
 </script>
 </body>
 </html>
