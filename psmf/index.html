@@ -686,6 +686,117 @@ Coin Multiplier
 
 </div>
 
+<!-- Add this inside your body -->
+<div id="liteAdminPanel" class="hidden">
+  <h2>LITE ADMIN PANEL</h2>
+
+<label>Invincible
+<label class="switch">
+<input type="checkbox" id="liteInvincible" onchange="toggleInvincible()">
+<span class="slider"></span>
+</label>
+</label>
+
+<br><br>
+
+<label>Instakill
+<label class="switch">
+<input type="checkbox" id="liteInstakill" onchange="toggleInstakill()">
+<span class="slider"></span>
+</label>
+</label>
+
+  <hr>
+  <h3>Player Commands</h3>
+  <input id="liteTargetUID" placeholder="Player UID"><br><br>
+
+  <button onclick="banPlayer()">Ban Player</button>
+  <button onclick="unbanPlayer()">Unban Player</button><br><br>
+
+  <button onclick="shadowBan()">Shadow Ban</button>
+  <button onclick="unshadowBan()">Remove Shadow Ban</button>
+
+  <hr>
+  <h3>Inputs</h3>
+  Wins: <input type="number" id="liteWins"><button onclick="setWinsLite()">Apply</button><br><br>
+  Losses: <input type="number" id="liteLosses"><button onclick="setLossesLite()">Apply</button><br><br>
+  Coins: <input type="number" id="liteCoins"><button onclick="setCoinsLite()">Apply</button><br><br>
+<hr>
+
+<h3>Live Player List</h3>
+
+<div id="playerList" style="max-height:200px;overflow:auto"></div>
+
+<hr>
+
+<h3>Server Log</h3>
+
+<div id="serverLogLite"
+style="
+height:120px;
+overflow:auto;
+background:#111;
+border:1px solid white;
+padding:6px;
+font-size:12px">
+</div>
+
+  <button onclick="backToMenu()">Exit</button>
+</div>
+
+<script>
+// Check if current user is THEFIREMOUSE to show lite panel
+// Lite Admin Functions (reuse your main admin logic)
+function banPlayerLite() {
+  const uid = document.getElementById("liteTargetUID").value;
+  if(!uid) return alert("Enter a UID");
+  setDoc(doc(db,"players",uid), { banned:true }, { merge:true });
+  alert("Player banned");
+}
+
+function unbanPlayerLite() {
+  const uid = document.getElementById("liteTargetUID").value;
+  if(!uid) return alert("Enter a UID");
+  setDoc(doc(db,"players",uid), { banned:false }, { merge:true });
+  alert("Player unbanned");
+}
+
+function shadowBanLite() {
+  const uid = document.getElementById("liteTargetUID").value;
+  if(!uid) return alert("Enter a UID");
+  setDoc(doc(db,"players",uid), { shadowBan:true }, { merge:true });
+  alert("Player shadow banned");
+}
+
+function unshadowBanLite() {
+  const uid = document.getElementById("liteTargetUID").value;
+  if(!uid) return alert("Enter a UID");
+  setDoc(doc(db,"players",uid), { shadowBan:false }, { merge:true });
+  alert("Shadow ban removed");
+}
+
+function setWinsLite() {
+  save.wins = Number(document.getElementById("liteWins").value);
+  saveData();
+  alert("Wins updated");
+}
+
+function setLossesLite() {
+  save.losses = Number(document.getElementById("liteLosses").value);
+  saveData();
+  alert("Losses updated");
+}
+
+function setCoinsLite() {
+  save.coins = Number(document.getElementById("liteCoins").value);
+  updateCoins();
+  saveData();
+  alert("Coins updated");
+}
+
+// Call this on page load or login
+</script>
+
 <div id="loginPage" class="hidden">
 
 <h2>Login</h2>
@@ -949,7 +1060,7 @@ function backToMenu(){
   statsDiv.classList.add("hidden");
   rollPage.classList.add("hidden");
   adminPanel.classList.add("hidden");
-
+document.getElementById("liteAdminPanel").classList.add("hidden");
 document.getElementById("leaderboard").classList.add("hidden");
 document.getElementById("loginPage").classList.add("hidden");
 document.getElementById("signupPage").classList.add("hidden");
@@ -982,34 +1093,37 @@ document.getElementById("signupPage").classList.remove("hidden");
 }
 
 function openAdmin(){
-    stopGame();                  // stop any running game
-    menu.classList.add("hidden"); // HIDE MAIN MENU
-    editor.classList.add("hidden");
-    achievementsDiv.classList.add("hidden");
-    rollPage.classList.add("hidden");
-    statsDiv.classList.add("hidden");
-    game.classList.add("hidden");
 
-    adminPanel.classList.remove("hidden"); // SHOW ADMIN PANEL
+stopGame();
 
-    populateSwordDropdown();
+menu.classList.add("hidden");
+editor.classList.add("hidden");
+achievementsDiv.classList.add("hidden");
+rollPage.classList.add("hidden");
+statsDiv.classList.add("hidden");
+game.classList.add("hidden");
 
-    const giveSwordDrop = document.getElementById("giveSword");
-    const eventDrop = document.getElementById("eventSword");
+const username = document.querySelector("#userBar b")?.textContent;
 
-    giveSwordDrop.innerHTML="";
-    eventDrop.innerHTML="";
+if(username === "PixelMan"){
 
-    for(const id in swords){
-        const opt=document.createElement("option");
-        opt.value=id;
-        opt.textContent=swords[id].name;
+adminPanel.classList.remove("hidden");
 
-        giveSwordDrop.appendChild(opt.cloneNode(true));
-        eventDrop.appendChild(opt);
-    }
+}else if(username === "THEFIREMOUSE"){
 
-    loadPlayers();
+document.getElementById("liteAdminPanel").classList.remove("hidden");
+
+}else{
+
+alert("You are not an admin.");
+backToMenu();
+return;
+
+}
+
+populateSwordDropdown();
+loadPlayers();
+
 }
 /*=================== Gambling js ==========================*/
 
@@ -1564,10 +1678,7 @@ if(name==="THEFIREMOUSE"){
 name=`<span style="color:green">THEFIREMOUSE [Admin]</span>`;
 }
 
-if(name==="lil_Jim"){
-name=`<span style="color:green">lil_Jim [Admin]</span>`;
-}
-  
+
 html+=`<div onclick="openProfile('${p.id}')"
 style="cursor:pointer;margin:6px">
 <b>${name}</b> — ${p.wins} Wins | ${p.losses} Losses
@@ -1585,7 +1696,7 @@ document.getElementById("leaderboard").classList.remove("hidden");
 
 loadLeaderboard();
 
-leaderboardInterval=setInterval(loadLeaderboard,3000);
+leaderboardInterval=setInterval(loadLeaderboard,1000);
 
 }
 
@@ -1671,7 +1782,7 @@ username=d.data().username;
 }
 });
 
-if(username.toLowerCase()==="pixelman"){
+if(username === "PixelMan" || username === "THEFIREMOUSE"){
 document.getElementById("adminBtn").style.display="block";
 }else{
 document.getElementById("adminBtn").style.display="none";
@@ -1740,8 +1851,12 @@ if(name==="PixelMan"){
 name=`<span style="color:yellow">PixelMan [Creator]</span>`;
 }
 
-if(name==="PixelMan"){
+if(name==="THEFIREMOUSE"){
 name=`<span style="color:green">THEFIREMOUSE [Admin]</span>`;
+}
+
+if(name==="lil_Jim"){
+name=`<span style="color:green">lil_Jim [Admin]</span>`;
 }
 
 document.getElementById("profileContent").innerHTML=`
@@ -1863,7 +1978,11 @@ UID: ${d.id}
 
 });
 
-document.getElementById("playerList").innerHTML=html;
+const full=document.getElementById("playerList");
+const lite=document.getElementById("playerListLite");
+
+if(full) full.innerHTML=html;
+if(lite) lite.innerHTML=html;
 
 }
 
@@ -1908,11 +2027,18 @@ alert("Sword injected");
 
 function logServer(msg){
 
-const log=document.getElementById("serverLog");
-
 const time=new Date().toLocaleTimeString();
 
-log.innerHTML=`[${time}] ${msg}<br>`+log.innerHTML;
+const fullLog=document.getElementById("serverLog");
+const liteLog=document.getElementById("serverLogLite");
+
+if(fullLog){
+fullLog.innerHTML=`[${time}] ${msg}<br>`+fullLog.innerHTML;
+}
+
+if(liteLog){
+liteLog.innerHTML=`[${time}] ${msg}<br>`+liteLog.innerHTML;
+}
 
 }
 
@@ -2151,37 +2277,45 @@ type:"forcepvp"
 
 }
 
-function updateOnlineStatus(){
+async function updateOnlineStatus(){
 
-localStorage.setItem("lastSeen",Date.now());
+if(!auth.currentUser) return;
+
+await setDoc(doc(db,"players",auth.currentUser.uid),{
+lastSeen:Date.now()
+},{merge:true});
 
 }
 
-function checkOnlineStatus(){
+async function checkOnlineStatus(uid){
 
-const lastSeen=Number(localStorage.getItem("lastSeen")||0);
+const snap=await getDocs(collection(db,"players"));
 
+snap.forEach(d=>{
+
+if(d.id===uid){
+
+const lastSeen=d.data().lastSeen||0;
 const diff=Date.now()-lastSeen;
 
 const dot=document.getElementById("statusDot");
 const text=document.getElementById("statusText");
 
 if(diff<10000){
-
 dot.textContent="🟢";
 text.textContent="Online";
-
 }else{
-
 dot.textContent="🔴";
 text.textContent="Offline";
+}
 
 }
+
+});
 
 }
 
 setInterval(updateOnlineStatus,3000);
-setInterval(checkOnlineStatus,3000);
 
 function openAdminTab(tab){
 
@@ -2196,11 +2330,11 @@ const el=document.getElementById("admin_"+tab);
 if(el) el.style.display="block";
 
 }
+setInterval(loadAnnouncement,1000);
 </script>
 
 </body>
 </html>
-
 
 
 
