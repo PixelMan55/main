@@ -725,7 +725,7 @@ Coin Multiplier
 
 <h3>Live Player List</h3>
 
-<div id="playerList" style="max-height:200px;overflow:auto"></div>
+<div id="playerListLite" style="max-height:200px;overflow:auto"></div>
 
 <hr>
 
@@ -1988,10 +1988,13 @@ if(lite) lite.innerHTML=html;
 
 function selectPlayer(uid){
 
-document.getElementById("targetUID").value=uid;
+const full = document.getElementById("targetUID");
+const lite = document.getElementById("liteTargetUID");
+
+if(full) full.value = uid;
+if(lite) lite.value = uid;
 
 }
-
 async function giveCoins(){
 
 const uid=document.getElementById("targetUID").value;
