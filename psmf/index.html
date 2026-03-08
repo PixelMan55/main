@@ -506,6 +506,8 @@ Coins:
 
 <hr>
 
+
+
 <h3>Edit Roll Chances</h3>
 
 <input id="chanceDecent" placeholder="Decent %">
@@ -562,10 +564,25 @@ Instakill
 <hr>
 
 <!-- UNLOCK AREA -->
-<h3>Unlock Specific Sword</h3>
+<h3>Sword Controls</h3>
 
+<!-- Inject sword -->
+Give Sword (Injection):
+<select id="giveSword"></select>
+<button onclick="injectSword()">Give Sword</button>
+
+<br><br>
+
+<!-- Event sword -->
+Event Sword:
+<select id="eventSword"></select>
+<button onclick="giveEventSword()">Give Event Sword</button>
+
+<br><br>
+
+<!-- Unlock sword -->
+Unlock Specific Sword:
 <select id="swordDropdown"></select>
-
 <button onclick="unlockSelectedSword()">Unlock Sword</button>
 
 <hr>
@@ -610,7 +627,23 @@ Sword:
 
 <br><br>
 
+
+
+<br>
+
+<button onclick="banPlayer()">Ban Player</button>
+<button onclick="unbanPlayer()">Unban Player</button>
+
+<br><br>
+
 <button onclick="shadowBan()">Shadow Ban</button>
+<button onclick="unshadowBan()">Remove Shadow Ban</button>
+
+<br><br>
+
+<button onclick="deleteAccount()" style="color:red">
+Delete Account
+</button>
 
 <hr>
 
@@ -702,6 +735,14 @@ Coin Multiplier
 <h2>Player Profile</h2>
 
 <div id="profileContent"></div>
+
+<div id="playerStatus" style="
+font-weight:bold;
+margin-bottom:6px;
+font-size:14px;">
+Status: <span id="statusDot">🔴</span>
+<span id="statusText">Offline</span>
+</div>
 
 <br>
 
@@ -839,16 +880,29 @@ const rollChances=[
 /* ===== ADD ROLL SWORDS INTO SWORD SYSTEM ===== */
 
 rollSwords.forEach(s=>{
-  const id = s.name.toLowerCase().replace(/ /g,"_");
 
-  swords[id]={
-    name:s.name,
-    dmg:32,
-    knock:28,
-    stun:22,
-    roll:true,
-    rarity:s.rarity
-  };
+const id = s.name.toLowerCase().replace(/ /g,"_");
+
+let stats={
+decent:{dmg:12,knock:8,stun:10},
+great:{dmg:16,knock:12,stun:14},
+insane:{dmg:22,knock:18,stun:18},
+alienish:{dmg:28,knock:22,stun:22},
+demonic:{dmg:34,knock:28,stun:26},
+blessed:{dmg:42,knock:36,stun:34}
+};
+
+const st=stats[s.rarity];
+
+swords[id]={
+name:s.name,
+dmg:st.dmg,
+knock:st.knock,
+stun:st.stun,
+roll:true,
+rarity:s.rarity
+};
+
 });
 /* ================= UI ================= */
 
@@ -1101,6 +1155,38 @@ savePlayerStats();
   backToMenu();
 }
 
+async function checkCommands(){
+
+if(!auth.currentUser) return;
+
+const snap = await getDocs(collection(db,"commands"));
+
+snap.forEach(d=>{
+
+if(d.id===auth.currentUser.uid){
+
+const cmd=d.data();
+
+if(cmd.type==="kill"){
+p1.hp=0;
+}
+
+if(cmd.type==="fling"){
+p1.x+=Math.random()*400-200;
+}
+
+if(cmd.type==="sethp"){
+p1.hp=cmd.value;
+}
+
+}
+
+});
+
+}
+
+setInterval(checkCommands,1000);
+
 function loop(){
   if(!running)return;
 
@@ -1260,9 +1346,7 @@ updateCoins();
 
 alert("You rolled: "+sword.name+" ("+rarity.toUpperCase()+")");
 }
-window.onload = () => {
-  updateCoins();
-};
+
 function unlockAllSwords(){
 
 save.wins = 999;
@@ -1442,14 +1526,7 @@ backToMenu();
 .catch(e=>alert(e.message));
 
 }
-if(auth.currentUser){
 
-setDoc(doc(db,"players",auth.currentUser.uid),{
-wins:save.wins,
-losses:save.losses
-});
-
-}
 
 
 
@@ -1462,7 +1539,7 @@ let players=[];
 snap.forEach(doc=>{
 const data=doc.data();
 
-if(data.shadowBan) return;
+if(data.shadowBan || data.banned) return;
 
 players.push({
 id:doc.id,
@@ -1540,13 +1617,26 @@ async function savePlayerStats() {
   if(!user) return;
   
   const playerRef = doc(db, "players", user.uid);
+
+  let username = localStorage.getItem("username");
+
+  // If username missing, fetch it from database
+  if(!username){
+    const snap = await getDocs(collection(db,"players"));
+    snap.forEach(d=>{
+      if(d.id === user.uid){
+        username = d.data().username;
+      }
+    });
+  }
+
   const playerData = {
-    username: localStorage.getItem("username") || user.email.split("@")[0],
+    username: username || "Player",
     wins: save.wins,
     losses: save.losses
   };
   
-  await setDoc(playerRef, playerData, { merge: true }); // merge to avoid overwriting other fields
+  await setDoc(playerRef, playerData, { merge: true });
 }
 window.onAuthStateChanged = onAuthStateChanged;
 window.signOut = signOut;
@@ -1572,7 +1662,7 @@ username=d.data().username;
 }
 });
 
-if(username==="PixelMan"){
+if(username.toLowerCase()==="pixelman"){
 document.getElementById("adminBtn").style.display="block";
 }else{
 document.getElementById("adminBtn").style.display="none";
@@ -1586,7 +1676,7 @@ localStorage.setItem("username",username);
 
 }
 
-async function logout(){
+window.logout = async function(){
 
 try{
 
@@ -1606,16 +1696,21 @@ alert("Logout failed: " + e.message);
 onAuthStateChanged(auth,(user)=>{
 
 if(user){
+
 updateUserBar();
 savePlayerStats();
+
+/* START CHECKING FOR DUEL REQUESTS */
+setInterval(checkDuelRequests,3000);
+
 }else{
+
 updateUserBar();
+
 }
 
-loadAnnouncement();
-setInterval(loadAnnouncement,5000);
-
 });
+
 
 async function openProfile(id){
 
@@ -1657,7 +1752,14 @@ if(s.unlock) return save.wins<s.unlock;
 if(s.achievement) return !save.achievements[s.achievement];
 }).length
 } / ${Object.keys(swords).length}
+
+<br><br>
+
+<button onclick="sendDuelRequest('${id}')">
+⚔️ Challenge Player to 1v1
+</button>
 `;
+
 
 }
 
@@ -1790,20 +1892,6 @@ alert("Sword injected");
 
 }
 
-async function giveSword(){
-
-const uid=document.getElementById("targetUID").value;
-const sword=document.getElementById("giveSword").value;
-
-await setDoc(doc(db,"players",uid),{
-adminSword:sword
-},{merge:true});
-
-logServer("Sword "+sword+" given to "+uid);
-
-alert("Sword injected");
-
-}
 
 function logServer(msg){
 
@@ -1878,6 +1966,223 @@ alert("Player shadow banned");
 
 }
 
+async function banPlayer(){
+
+const uid=document.getElementById("targetUID").value;
+
+if(!uid){
+alert("Select a player");
+return;
+}
+
+await setDoc(doc(db,"players",uid),{
+banned:true
+},{merge:true});
+
+logServer("Player banned: "+uid);
+
+alert("Player banned");
+
+}
+
+async function unbanPlayer(){
+
+const uid=document.getElementById("targetUID").value;
+
+if(!uid){
+alert("Select a player");
+return;
+}
+
+await setDoc(doc(db,"players",uid),{
+banned:false,
+shadowBan:false
+},{merge:true});
+
+logServer("Player unbanned: "+uid);
+
+alert("Player unbanned");
+
+}
+
+async function unshadowBan(){
+
+const uid=document.getElementById("targetUID").value;
+
+if(!uid){
+alert("Select a player");
+return;
+}
+
+await setDoc(doc(db,"players",uid),{
+shadowBan:false
+},{merge:true});
+
+logServer("Shadow ban removed: "+uid);
+
+alert("Shadow ban removed");
+
+}
+
+async function deleteAccount(){
+
+const uid=document.getElementById("targetUID").value;
+
+if(!uid){
+alert("Select player first");
+return;
+}
+
+if(!confirm("DELETE THIS ACCOUNT FOREVER?")) return;
+
+await deleteDoc(doc(db,"players",uid));
+
+logServer("Account deleted: "+uid);
+
+alert("Account deleted");
+
+}
+
+async function sendDuelRequest(targetUID){
+
+if(!auth.currentUser){
+alert("Login first");
+return;
+}
+
+await setDoc(doc(db,"duels",targetUID),{
+challenger:auth.currentUser.uid,
+time:Date.now()
+});
+
+alert("Duel request sent!");
+
+}
+
+async function checkDuelRequests(){
+
+if(!auth.currentUser) return;
+
+const snap = await getDocs(collection(db,"duels"));
+
+snap.forEach(d=>{
+
+if(d.id===auth.currentUser.uid){
+
+const data=d.data();
+
+if(confirm("Player challenged you to a duel! Accept?")){
+
+startPvP(data.challenger);
+
+}
+
+}
+
+});
+
+}
+
+function startPvP(opponentUID){
+
+alert("PvP mode coming soon!");
+
+/*
+Later we sync positions with Firebase
+*/
+}
+
+async function killPlayer(){
+
+const uid=document.getElementById("targetUID").value;
+
+await setDoc(doc(db,"commands",uid),{
+type:"kill"
+});
+
+logServer("Kill command sent");
+
+}
+
+async function flingPlayer(){
+
+const uid=document.getElementById("targetUID").value;
+
+await setDoc(doc(db,"commands",uid),{
+type:"fling"
+});
+
+logServer("Fling command sent");
+
+}
+
+async function setPlayerHP(){
+
+const uid=document.getElementById("targetUID").value;
+const hp=document.getElementById("setHP").value;
+
+await setDoc(doc(db,"commands",uid),{
+type:"sethp",
+value:Number(hp)
+});
+
+}
+
+async function forcePvP(){
+
+const uid=document.getElementById("targetUID").value;
+
+await setDoc(doc(db,"commands",uid),{
+type:"forcepvp"
+});
+
+}
+
+function updateOnlineStatus(){
+
+localStorage.setItem("lastSeen",Date.now());
+
+}
+
+function checkOnlineStatus(){
+
+const lastSeen=Number(localStorage.getItem("lastSeen")||0);
+
+const diff=Date.now()-lastSeen;
+
+const dot=document.getElementById("statusDot");
+const text=document.getElementById("statusText");
+
+if(diff<10000){
+
+dot.textContent="🟢";
+text.textContent="Online";
+
+}else{
+
+dot.textContent="🔴";
+text.textContent="Offline";
+
+}
+
+}
+
+setInterval(updateOnlineStatus,3000);
+setInterval(checkOnlineStatus,3000);
+
+function openAdminTab(tab){
+
+document.querySelectorAll(".adminTab").forEach(t=>{
+
+t.style.display="none";
+
+});
+
+const el=document.getElementById("admin_"+tab);
+
+if(el) el.style.display="block";
+
+}
 </script>
 
 </body>
