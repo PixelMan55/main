@@ -3,8 +3,11 @@
 <head>
 <script type="module">
 
+import { deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { setPersistence, browserLocalPersistence }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } 
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -20,6 +23,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+
+setPersistence(auth, browserLocalPersistence)
+.catch(e=>console.error(e));
 const db = getFirestore(app);
 
 window.auth = auth;
@@ -379,10 +385,12 @@ transform:translateX(24px);
 <span id="coinText">0</span>
 </div>
   <h1>Pixel Stickman Fighting</h1>
+<div id="announcementBar" style="color:gold;margin:10px;font-weight:bold"></div>
+<div id="userBar"></div>
   <label><b>Choose Difficulty:</b>
     <select id="difficulty"></select>
   </label><br>
-	<button id="adminBtn" onclick="openAdmin()">AP</button>
+<button id="adminBtn" onclick="openAdmin()" style="display:none">AP</button>
   <button onclick="startGame()">Play ⚔️</button>
   <button onclick="openEditor()">Edit Character 🎨</button>
   <button onclick="openRoll()">Roll 🎲</button>
@@ -562,6 +570,85 @@ Instakill
 
 <hr>
 
+<hr>
+
+<h3>Global Announcement</h3>
+
+<input id="announcementInput" placeholder="Write announcement">
+
+<button onclick="sendAnnouncement()">Send</button>
+<button onclick="clearAnnouncement()">Clear</button>
+
+<hr>
+
+<h3>Live Player List</h3>
+
+<input id="playerSearch" placeholder="Search player">
+<button onclick="loadPlayers()">Refresh</button>
+
+<div id="playerList" style="max-height:200px;overflow:auto"></div>
+
+<hr>
+
+<h3>Player Controls</h3>
+
+<input id="targetUID" placeholder="Player UID">
+
+<br><br>
+
+Coins:
+<input type="number" id="giveCoins">
+
+<button onclick="giveCoins()">Give Coins</button>
+
+<br><br>
+
+Sword:
+<select id="giveSword"></select>
+
+<button onclick="giveSword()">Give Sword</button>
+
+<br><br>
+
+<button onclick="shadowBan()">Shadow Ban</button>
+
+<hr>
+
+<h3>Server Log</h3>
+
+<div id="serverLog"
+style="
+height:160px;
+overflow:auto;
+background:#111;
+border:1px solid white;
+padding:6px;
+font-size:12px">
+</div>
+
+<hr>
+
+<h3>Economy Controls</h3>
+
+Coin Multiplier
+<input type="number" id="coinMultiplier" value="1">
+
+<button onclick="setMultiplier()">Apply</button>
+
+<br><br>
+
+<button onclick="disableRolling()">Disable Rolling</button>
+<button onclick="enableRolling()">Enable Rolling</button>
+
+<hr>
+
+<h3>Event Swords</h3>
+
+<select id="eventSword"></select>
+
+<button onclick="enableEventSword()">Enable Event</button>
+<button onclick="disableEventSword()">Disable Event</button>
+
 <button onclick="backToMenu()">Exit</button>
 
 </div>
@@ -610,6 +697,18 @@ Instakill
 
 </div>
 
+<div id="profilePage" class="hidden">
+
+<h2>Player Profile</h2>
+
+<div id="profileContent"></div>
+
+<br>
+
+<button onclick="backToLeaderboard()">Back</button>
+
+</div>
+
 <div id="game" class="hidden">
   <div id="p1" class="fighter"></div>
   <div id="p2" class="fighter"></div>
@@ -621,7 +720,7 @@ Instakill
 
 <script>
 
-
+let leaderboardInterval=null;
 
 let invincible=false;
 let instakill=false;
@@ -789,7 +888,7 @@ function backToMenu(){
   stopGame();
   bgMusic.pause();
   bgMusic.currentTime = 0;
-
+  clearInterval(leaderboardInterval);
   editor.classList.add("hidden");
   achievementsDiv.classList.add("hidden");
   game.classList.add("hidden");
@@ -829,30 +928,34 @@ document.getElementById("signupPage").classList.remove("hidden");
 }
 
 function openAdmin(){
+    stopGame();                  // stop any running game
+    menu.classList.add("hidden"); // HIDE MAIN MENU
+    editor.classList.add("hidden");
+    achievementsDiv.classList.add("hidden");
+    rollPage.classList.add("hidden");
+    statsDiv.classList.add("hidden");
+    game.classList.add("hidden");
 
-const code=prompt("Enter admin code");
+    adminPanel.classList.remove("hidden"); // SHOW ADMIN PANEL
 
-if(code==="243564"){
+    populateSwordDropdown();
 
-menu.classList.add("hidden");
-adminPanel.classList.remove("hidden");
+    const giveSwordDrop = document.getElementById("giveSword");
+    const eventDrop = document.getElementById("eventSword");
 
-const drop=document.getElementById("swordDropdown");
-drop.innerHTML="";
+    giveSwordDrop.innerHTML="";
+    eventDrop.innerHTML="";
 
-for(const id in swords){
-const opt=document.createElement("option");
-opt.value=id;
-opt.textContent=swords[id].name;
-drop.appendChild(opt);
-}
+    for(const id in swords){
+        const opt=document.createElement("option");
+        opt.value=id;
+        opt.textContent=swords[id].name;
 
-}else{
+        giveSwordDrop.appendChild(opt.cloneNode(true));
+        eventDrop.appendChild(opt);
+    }
 
-alert("Wrong code");
-
-}
-
+    loadPlayers();
 }
 /*=================== Gambling js ==========================*/
 
@@ -994,6 +1097,7 @@ updateCoins();
     save.losses = (save.losses||0) + 1; 
   }
   alert(win?"You Win!":"You Lose!");
+savePlayerStats();
   backToMenu();
 }
 
@@ -1159,7 +1263,6 @@ alert("You rolled: "+sword.name+" ("+rarity.toUpperCase()+")");
 window.onload = () => {
   updateCoins();
 };
-
 function unlockAllSwords(){
 
 save.wins = 999;
@@ -1327,6 +1430,11 @@ signInWithEmailAndPassword(auth,email,pass)
 
 alert("Logged in!");
 
+
+
+savePlayerStats();
+updateUserBar();
+
 backToMenu();
 
 })
@@ -1343,17 +1451,23 @@ losses:save.losses
 
 }
 
-async function openLeaderboard(){
 
-menu.classList.add("hidden");
-document.getElementById("leaderboard").classList.remove("hidden");
+
+async function loadLeaderboard(){
 
 const snap=await getDocs(collection(db,"players"));
 
 let players=[];
 
 snap.forEach(doc=>{
-players.push(doc.data());
+const data=doc.data();
+
+if(data.shadowBan) return;
+
+players.push({
+id:doc.id,
+...data
+});
 });
 
 players.sort((a,b)=>b.wins-a.wins);
@@ -1361,10 +1475,31 @@ players.sort((a,b)=>b.wins-a.wins);
 let html="";
 
 players.forEach(p=>{
-html+=`<b>${p.username}</b> — ${p.wins} Wins | ${p.losses} Losses<br>`;
+
+let name=p.username;
+
+if(name==="PixelMan"){
+name=`<span style="color:yellow">PixelMan [Creator]</span>`;
+}
+
+html+=`<div onclick="openProfile('${p.id}')"
+style="cursor:pointer;margin:6px">
+<b>${name}</b> — ${p.wins} Wins | ${p.losses} Losses
+</div>`;
 });
 
 document.getElementById("leaderboardList").innerHTML=html;
+
+}
+
+function openLeaderboard(){
+
+menu.classList.add("hidden");
+document.getElementById("leaderboard").classList.remove("hidden");
+
+loadLeaderboard();
+
+leaderboardInterval=setInterval(loadLeaderboard,3000);
 
 }
 
@@ -1372,9 +1507,11 @@ async function deletePlayer(){
 
 const id=document.getElementById("deleteUserID").value;
 
-await setDoc(doc(db,"players",id),{});
+await setDoc(doc(db,"players",id),{
+shadowBan:true
+},{merge:true});
 
-alert("Player removed");
+alert("Player banned");
 
 }
 
@@ -1411,6 +1548,336 @@ async function savePlayerStats() {
   
   await setDoc(playerRef, playerData, { merge: true }); // merge to avoid overwriting other fields
 }
+window.onAuthStateChanged = onAuthStateChanged;
+window.signOut = signOut;
+async function updateUserBar(){
+
+const bar=document.getElementById("userBar");
+
+if(!auth.currentUser){
+bar.innerHTML="";
+document.getElementById("adminBtn").style.display="none";
+return;
+}
+
+const uid=auth.currentUser.uid;
+
+const snap=await getDocs(collection(db,"players"));
+
+let username="Player";
+
+snap.forEach(d=>{
+if(d.id===uid){
+username=d.data().username;
+}
+});
+
+if(username==="PixelMan"){
+document.getElementById("adminBtn").style.display="block";
+}else{
+document.getElementById("adminBtn").style.display="none";
+}
+
+bar.innerHTML=
+`<b>${username}</b>
+<button onclick="logout()">Sign Out</button>`;
+
+localStorage.setItem("username",username);
+
+}
+
+async function logout(){
+
+try{
+
+await signOut(auth);
+
+alert("Signed out");
+
+updateUserBar();
+
+}catch(e){
+
+alert("Logout failed: " + e.message);
+
+}
+
+}
+onAuthStateChanged(auth,(user)=>{
+
+if(user){
+updateUserBar();
+savePlayerStats();
+}else{
+updateUserBar();
+}
+
+loadAnnouncement();
+setInterval(loadAnnouncement,5000);
+
+});
+
+async function openProfile(id){
+
+document.getElementById("leaderboard").classList.add("hidden");
+document.getElementById("profilePage").classList.remove("hidden");
+
+const snap=await getDocs(collection(db,"players"));
+
+snap.forEach(doc=>{
+
+if(doc.id===id){
+
+const p=doc.data();
+
+let name=p.username || "Unknown Player";
+
+if(name==="PixelMan"){
+name=`<span style="color:yellow">PixelMan [Creator]</span>`;
+}
+
+document.getElementById("profileContent").innerHTML=`
+<b>${name}</b><br><br>
+
+Wins: ${p.wins}<br>
+Losses: ${p.losses}<br><br>
+
+Coins: ${save.coins}<br>
+
+Achievements: ${
+Object.keys(save.achievements).filter(a=>save.achievements[a]).length
+} / ${Object.keys(achievements).length}<br>
+
+Swords: ${
+Object.keys(swords).length
+- Object.keys(swords).filter(id=>{
+const s=swords[id];
+if(s.roll) return !save.unlockedRollSwords.includes(s.name);
+if(s.unlock) return save.wins<s.unlock;
+if(s.achievement) return !save.achievements[s.achievement];
+}).length
+} / ${Object.keys(swords).length}
+`;
+
+}
+
+});
+
+}
+
+function backToLeaderboard(){
+
+document.getElementById("profilePage").classList.add("hidden");
+document.getElementById("leaderboard").classList.remove("hidden");
+
+}
+
+async function sendAnnouncement(){
+
+const msg=document.getElementById("announcementInput").value;
+
+if(!msg){
+alert("Write something first");
+return;
+}
+
+await setDoc(doc(db,"global","announcement"),{
+message:msg,
+author:"PixelMan"
+});
+
+alert("Announcement sent!");
+
+}
+
+async function clearAnnouncement(){
+
+await setDoc(doc(db,"global","announcement"),{
+message:"",
+author:""
+});
+
+document.getElementById("announcementBar").textContent="";
+
+}
+async function loadAnnouncement(){
+
+const snap=await getDocs(collection(db,"global"));
+
+snap.forEach(doc=>{
+
+if(doc.id==="announcement"){
+
+const data=doc.data();
+
+if(data.message){
+
+document.getElementById("announcementBar").innerHTML =
+`<span style="color:yellow">${data.author} [Creator]</span>: ${data.message}`;
+
+}
+
+}
+
+});
+
+}
+
+async function loadPlayers(){
+
+const snap=await getDocs(collection(db,"players"));
+
+let html="";
+const search=document.getElementById("playerSearch").value.toLowerCase();
+
+snap.forEach(d=>{
+
+const p=d.data();
+const name=(p.username||"player").toLowerCase();
+
+if(search && !name.includes(search)) return;
+
+html+=`
+<div style="border-bottom:1px solid #444;padding:4px">
+<b>${p.username}</b><br>
+Wins:${p.wins} | Losses:${p.losses}<br>
+UID: ${d.id}
+<button onclick="selectPlayer('${d.id}')">Select</button>
+</div>
+`;
+
+});
+
+document.getElementById("playerList").innerHTML=html;
+
+}
+
+function selectPlayer(uid){
+
+document.getElementById("targetUID").value=uid;
+
+}
+
+async function giveCoins(){
+
+const uid=document.getElementById("targetUID").value;
+const amount=Number(document.getElementById("giveCoins").value);
+
+if(!uid)return alert("Select a player");
+
+await setDoc(doc(db,"players",uid),{
+coins:amount
+},{merge:true});
+
+logServer("Coins given to "+uid);
+
+alert("Coins injected");
+
+}
+
+async function giveSword(){
+
+const uid=document.getElementById("targetUID").value;
+const sword=document.getElementById("giveSword").value;
+
+await setDoc(doc(db,"players",uid),{
+adminSword:sword
+},{merge:true});
+
+logServer("Sword "+sword+" given to "+uid);
+
+alert("Sword injected");
+
+}
+
+async function giveSword(){
+
+const uid=document.getElementById("targetUID").value;
+const sword=document.getElementById("giveSword").value;
+
+await setDoc(doc(db,"players",uid),{
+adminSword:sword
+},{merge:true});
+
+logServer("Sword "+sword+" given to "+uid);
+
+alert("Sword injected");
+
+}
+
+function logServer(msg){
+
+const log=document.getElementById("serverLog");
+
+const time=new Date().toLocaleTimeString();
+
+log.innerHTML=`[${time}] ${msg}<br>`+log.innerHTML;
+
+}
+
+let coinMultiplier = 1;
+let rollingDisabled = false;
+let eventSword = null;   // FIX: declare event sword
+
+function setMultiplier(){
+
+coinMultiplier=Number(document.getElementById("coinMultiplier").value)||1;
+
+logServer("Multiplier set to "+coinMultiplier);
+
+}
+
+function disableRolling(){
+
+rollingDisabled=true;
+logServer("Rolling disabled");
+
+}
+
+function enableRolling(){
+
+rollingDisabled=false;
+logServer("Rolling enabled");
+
+}
+
+function populateSwordDropdown(){
+  const dd = document.getElementById("giveSword"); // FIXED ID
+  if(!dd) return;
+
+  dd.innerHTML = "";
+
+  Object.keys(swords).forEach(id=>{
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = swords[id].name;
+    dd.appendChild(opt);
+  });
+}
+window.onload = () => {
+  updateCoins();
+  populateSwordDropdown();
+};
+
+async function shadowBan(){
+
+const uid=document.getElementById("targetUID").value;
+
+if(!uid){
+alert("Select a player first");
+return;
+}
+
+await setDoc(doc(db,"players",uid),{
+shadowBan:true
+},{merge:true});
+
+logServer("Shadow banned "+uid);
+
+alert("Player shadow banned");
+
+}
+
 </script>
 
 </body>
