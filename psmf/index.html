@@ -765,6 +765,13 @@ Unlock Specific Sword:
 <select id="liteSwordDropdown"></select>
 
 <button onclick="unlockLiteSword()">Unlock Sword</button>
+<br><br>
+
+Lock Specific Sword:
+<select id="liteLockSwordDropdown"></select>
+<button onclick="lockSelectedSwordLite()">Lock Sword</button>
+
+
   <button onclick="backToMenu()">Exit</button>
 </div>
 
@@ -831,6 +838,7 @@ function setCoinsLite() {
 <button onclick="login()">Login</button>
 
 <br><br>
+
 
 <button onclick="backToMenu()">Back</button>
 
@@ -2100,26 +2108,24 @@ function populateSwordDropdown(){
 const give=document.getElementById("giveSword");
 const unlock=document.getElementById("swordDropdown");
 const lock=document.getElementById("lockSwordDropdown");
-const lite=document.getElementById("liteSwordDropdown");
+const liteUnlock=document.getElementById("liteSwordDropdown");
+const liteLock=document.getElementById("liteLockSwordDropdown");
 
 if(give) give.innerHTML="";
 if(unlock) unlock.innerHTML="";
 if(lock) lock.innerHTML="";
-if(lite) lite.innerHTML="";
+if(liteUnlock) liteUnlock.innerHTML="";
+if(liteLock) liteLock.innerHTML="";
 
 Object.keys(swords).forEach(id=>{
 
 const name=swords[id].name;
 
-const opt1=new Option(name,id);
-const opt2=new Option(name,id);
-const opt3=new Option(name,id);
-const opt4=new Option(name,id);
-
-if(give) give.appendChild(opt1);
-if(unlock) unlock.appendChild(opt2);
-if(lock) lock.appendChild(opt3);
-if(lite) lite.appendChild(opt4);
+if(give) give.appendChild(new Option(name,id));
+if(unlock) unlock.appendChild(new Option(name,id));
+if(lock) lock.appendChild(new Option(name,id));
+if(liteUnlock) liteUnlock.appendChild(new Option(name,id));
+if(liteLock) liteLock.appendChild(new Option(name,id));
 
 });
 
@@ -2447,6 +2453,33 @@ saveData();
 renderSwords();
 
 alert("Unlocked: "+s.name);
+
+}
+
+function lockSelectedSwordLite(){
+
+const id=document.getElementById("liteLockSwordDropdown").value;
+const s=swords[id];
+
+if(s.roll){
+
+save.unlockedRollSwords =
+save.unlockedRollSwords.filter(n=>n!==s.name);
+
+}else if(s.unlock!==undefined){
+
+save.wins = Math.min(save.wins, s.unlock-1);
+
+}else if(s.achievement){
+
+delete save.achievements[s.achievement];
+
+}
+
+saveData();
+renderSwords();
+
+alert("Locked: "+s.name);
 
 }
 </script>
