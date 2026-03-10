@@ -63,7 +63,7 @@ filter:blur(10px);
 100%{
 transform:scale(1);
 opacity:1;
-filter:blur(0px);
+
 }
 
 }
@@ -440,6 +440,13 @@ background:#4caf50;
 .switch input:checked + .slider:before{
 transform:translateX(24px);
 }
+#rollDisplay{
+position:relative;
+height:120px;
+margin-top:20px;
+overflow:hidden;
+}
+
 </style>
 </head>
 
@@ -531,6 +538,8 @@ transform:translateX(24px);
 
 <button onclick="rollSword()">🎲 Roll (100 Coins)</button>
 
+
+
 <div id="rollReveal" style="
 margin-top:20px;
 font-size:32px;
@@ -578,7 +587,24 @@ Coins:
 
 <hr>
 
+<h3>Spawn Event</h3>
 
+<select id="eventType">
+
+<option value="coins2">2x Coins</option>
+<option value="coins3">3x Coins</option>
+<option value="coins4">4x Coins</option>
+
+<option value="luck2">2x Luck</option>
+<option value="luck3">3x Luck</option>
+<option value="luck4">4x Luck</option>
+
+</select>
+
+<input id="eventTime" placeholder="5:00 or 1:00:00">
+
+<button onclick="spawnEvent()">Spawn Event</button>
+<hr>
 
 <h3>Edit Roll Chances</h3>
 
@@ -757,7 +783,7 @@ font-size:12px">
 <input id="consoleInput" type="text" placeholder="type command..." autocomplete="off">
 </div>
 </div>
-<button onclick="runAdminCommand()">Execute</button>
+<button onclick="runAdminCommand(consoleInput.value)">Execute</button>
 <button onclick="toggleConsole()">Console</button>
 
 <hr>
@@ -870,7 +896,21 @@ Lock Specific Sword:
   <button onclick="backToMenu()">Exit</button>
 </div>
 
+<div id="eventDisplay" style="
+position:absolute;
+right:10px;
+bottom:10px;
+font-family:monospace;
+color:white;
+text-align:right;
+"></div>
+
 <script>
+let adminLevel = "none";
+
+function isFastRoll(){
+return document.getElementById("fastRollToggle").checked;
+}
 // Check if current user is THEFIREMOUSE to show lite panel
 // Lite Admin Functions (reuse your main admin logic)
 function banPlayerLite() {
@@ -1978,20 +2018,35 @@ alert("Logout failed: " + e.message);
 }
 
 }
-onAuthStateChanged(auth,(user)=>{
+onAuthStateChanged(auth, async (user)=>{
 
-if(user){
+if(!user) return;
 
-updateUserBar();
-savePlayerStats();
+const uid = user.uid;
 
-/* START CHECKING FOR DUEL REQUESTS */
-setInterval(checkDuelRequests,3000);
+const userRef = doc(db,"users",uid);
+const snap = await getDoc(userRef);
 
-}else{
+if(!snap.exists()) return;
 
-updateUserBar();
+const data = snap.data();
 
+/* username display */
+
+if(data.username){
+document.getElementById("usernameDisplay").innerText = data.username;
+}
+
+/* admin detection */
+
+if(data.owner === "yes"){
+adminLevel = "owner";
+document.getElementById("adminBtn").style.display = "block";
+}
+
+else if(data.admin === "yes"){
+adminLevel = "admin";
+document.getElementById("adminBtn").style.display = "block";
 }
 
 });
@@ -2213,6 +2268,7 @@ liteLog.innerHTML=`[${time}] ${msg}<br>`+liteLog.innerHTML;
 let coinMultiplier = 1;
 let rollingDisabled = false;
 let eventSword = null;   // FIX: declare event sword
+let activeEvents = [];
 
 function setMultiplier(){
 
@@ -2619,12 +2675,6 @@ alert("Locked: "+s.name);
 const consoleInput = document.getElementById("consoleInput");
 const consoleOutput = document.getElementById("consoleOutput");
 
-function consoleLog(text){
-const line = document.createElement("div");
-line.textContent = text;
-consoleOutput.appendChild(line);
-consoleOutput.scrollTop = consoleOutput.scrollHeight;
-}
 
 consoleInput.addEventListener("keydown",(e)=>{
 
@@ -2637,8 +2687,21 @@ runAdminCommand(cmd);
 
 });
 
+function consoleLog(msg){
+
+const line=document.createElement("div");
+
+line.textContent="> "+msg;
+
+consoleOutput.appendChild(line);
+
+consoleOutput.scrollTop=consoleOutput.scrollHeight;
+
+}
+
 function runAdminCommand(cmd){
 
+consoleLog(cmd);
 const args = cmd.split(" ");
 const command = args[0];
 
@@ -2744,6 +2807,194 @@ output.innerHTML += "<div>> " + text + "</div>";
 output.scrollTop = output.scrollHeight;
 
 }
+
+const eventsRef = collection(db,"serverEvents");
+
+onSnapshot(eventsRef,(snap)=>{
+
+activeEvents = [];
+
+snap.forEach(doc=>{
+activeEvents.push(doc.data());
+});
+
+updateEventUI();
+
+});
+
+function updateEventUI(){
+
+const box = document.getElementById("eventDisplay");
+
+box.innerHTML="";
+
+activeEvents.forEach(e=>{
+
+const timeLeft = Math.max(0,Math.floor((e.endTime - Date.now())/1000));
+
+const min = Math.floor(timeLeft/60);
+const sec = timeLeft%60;
+
+const div = document.createElement("div");
+
+div.innerText = e.name+" | "+min+":"+sec.toString().padStart(2,"0");
+
+box.appendChild(div);
+
+});
+
+}
+
+async function spawnEvent(){
+
+if(adminLevel === "none") return;
+
+const type = document.getElementById("eventType").value;
+const timeText = document.getElementById("eventTime").value;
+
+const parts = timeText.split(":").map(Number);
+
+let seconds=0;
+
+if(parts.length===2){
+seconds = parts[0]*60 + parts[1];
+}
+
+if(parts.length===3){
+seconds = parts[0]*3600 + parts[1]*60 + parts[2];
+}
+
+const endTime = Date.now() + seconds*1000;
+
+let name="";
+let multiplier=1;
+
+if(type==="coins2"){name="2x Coins"; multiplier=2;}
+if(type==="coins3"){name="3x Coins"; multiplier=3;}
+if(type==="coins4"){name="4x Coins"; multiplier=4;}
+
+if(type==="luck2"){name="2x Luck"; multiplier=2;}
+if(type==="luck3"){name="3x Luck"; multiplier=3;}
+if(type==="luck4"){name="4x Luck"; multiplier=4;}
+
+await setDoc(doc(db,"serverEvents",type),{
+
+name:name,
+multiplier:multiplier,
+type:type,
+endTime:endTime
+
+});
+
+}
+
+setInterval(()=>{
+
+activeEvents.forEach(async e=>{
+
+if(Date.now() > e.endTime){
+
+await deleteDoc(doc(db,"serverEvents",e.type));
+
+}
+
+});
+
+},5000);
+
+
+const historyBox = document.getElementById("consoleHistory");
+
+function consoleLog(text){
+
+const line = document.createElement("div");
+line.innerText = "> " + text;
+
+historyBox.appendChild(line);
+
+historyBox.scrollTop = historyBox.scrollHeight;
+
+}
+
+if(cmd === "unfreeze"){
+
+const target = args[0];
+
+const playerRef = doc(db,"players",target);
+
+updateDoc(playerRef,{
+frozen:false
+});
+
+consoleLog("Player unfrozen");
+
+}
+
+if(cmd === "freeze"){
+
+const target = args[0];
+
+const playerRef = doc(db,"players",target);
+
+updateDoc(playerRef,{
+frozen:true
+});
+
+consoleLog("Player frozen");
+
+}
+
+function spawnEvent(){
+
+const type=document.getElementById("eventType").value;
+const time=document.getElementById("eventTime").value;
+
+if(!time){
+alert("Enter event time");
+return;
+}
+
+let seconds=0;
+
+const parts=time.split(":").map(Number);
+
+if(parts.length===2){
+seconds=parts[0]*60+parts[1];
+}
+
+if(parts.length===3){
+seconds=parts[0]*3600+parts[1]*60+parts[2];
+}
+
+activeEvents.push({
+type:type,
+time:seconds
+});
+
+logServer("Event spawned: "+type);
+
+}
+setInterval(()=>{
+
+const box=document.getElementById("eventDisplay");
+
+box.innerHTML="";
+
+activeEvents.forEach(e=>{
+
+e.time--;
+
+if(e.time<=0) return;
+
+box.innerHTML+=
+"<div>"+e.type+" | "+e.time+"s</div>";
+
+});
+
+activeEvents=activeEvents.filter(e=>e.time>0);
+
+},1000);
+
 </script>
 
 <div id="globalAnnouncement" style="
@@ -2761,7 +3012,6 @@ display:none;
 z-index:9999;
 box-shadow:0 0 10px gold;
 ">
-
 
 </div>
 </body>
