@@ -793,6 +793,24 @@ Instakill
 <span class="slider"></span>
 </label>
 
+<br><br>
+
+Super Speed
+
+<label class="switch">
+<input type="checkbox" id="superSpeedToggle" onchange="toggleSuperSpeed()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Super Jump
+
+<label class="switch">
+<input type="checkbox" id="superJumpToggle" onchange="toggleSuperJump()">
+<span class="slider"></span>
+</label>
+
 </div>
 
 <hr>
@@ -970,6 +988,41 @@ Unlock All Swords
 <span class="slider"></span>
 </label>
 
+<br><br>
+
+Infinite Coins
+
+<label class="switch">
+<input type="checkbox" id="liteInfiniteCoins" onchange="toggleInfiniteCoins()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Show Hitboxes
+
+<label class="switch">
+<input type="checkbox" id="liteHitboxes" onchange="toggleHitboxes()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Super Speed
+
+<label class="switch">
+<input type="checkbox" id="liteSuperSpeed" onchange="toggleSuperSpeed()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Super Jump
+
+<label class="switch">
+<input type="checkbox" id="liteSuperJump" onchange="toggleSuperJump()">
+<span class="slider"></span>
+</label>
 
   <hr>
   <h3>Player Commands</h3>
@@ -1604,6 +1657,8 @@ p1.hp=cmd.value;
 setInterval(checkCommands,1000);
 
 function loop(){
+
+
   if(!running)return;
 
   p1.vy+=GRAVITY;p1.y+=p1.vy;
@@ -2018,6 +2073,9 @@ if(name==="lil_Jim"){
 name=`<span style="color:green">lil_Jim [Admin]</span>`;
 }
 
+if(name==="DaddyChill"){
+name=`<span style="color:red">DaddyChill [Flagged Name🚩]</span>`;
+}
 
 html+=`<div onclick="openProfile('${p.id}')"
 style="cursor:pointer;margin:6px">
@@ -2212,6 +2270,10 @@ name=`<span style="color:green">THEFIREMOUSE [Admin]</span>`;
 
 if(name==="lil_Jim"){
 name=`<span style="color:green">lil_Jim [Admin]</span>`;
+}
+
+if(name==="DaddyChill"){
+name=`<span style="color:red">DaddyChill [Flagged Name🚩]</span>`;
 }
 
 document.getElementById("profileContent").innerHTML=`
@@ -3199,6 +3261,31 @@ rewardBtn.classList.remove("hidden");
 }else{
 rewardBtn.classList.add("hidden");
 }
+}
+
+
+let superJump = false;
+let normalJump = jumpStrength;
+
+function toggleSuperJump() {
+    superJump = !superJump;
+
+    if (superJump) {
+        jumpStrength = normalJump * 2.5;
+    } else {
+        jumpStrength = normalJump;
+    }
+}
+
+let superSpeed = false;
+let normalSpeed = speed;
+
+function toggleSuperSpeed() {
+    superSpeedEnabled = !superSpeedEnabled;
+}
+
+function toggleSuperJump() {
+    superJumpEnabled = !superJumpEnabled;
 }
 </script>
 
