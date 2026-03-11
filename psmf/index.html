@@ -536,7 +536,7 @@ overflow:hidden;
 
 <br>
 
-<button onclick="rollSword()">🎲 Roll (100 Coins)</button>
+<button onclick="rollSword()">🎲 Roll (50 Coins)</button>
 
 
 
@@ -1602,13 +1602,13 @@ function rollSword(){
 
 save.coins = Number(save.coins || 0); // force coins to be a number
 
-if(save.coins < 100){
+if(save.coins < 50){
   alert("Not enough coins!");
   return;
 }
-save.coins -= 100;
+save.coins -= 50;
 
-let r=Math.random()*100;
+let r=Math.random()*50;
 let total=0;
 let rarity="decent";
 
@@ -3016,6 +3016,7 @@ box-shadow:0 0 10px gold;
 </div>
 </body>
 </html>
+
 
 
 
