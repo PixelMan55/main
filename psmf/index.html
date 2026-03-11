@@ -751,6 +751,15 @@ Coins:
 
 <div>
 
+Launch Mode
+
+<label class="switch">
+<input type="checkbox" onchange="toggleLaunchMode()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
 Infinite Coins
 
 <label class="switch">
@@ -794,22 +803,6 @@ Instakill
 </label>
 
 <br><br>
-
-Super Speed
-
-<label class="switch">
-<input type="checkbox" id="superSpeedToggle" onchange="toggleSuperSpeed()">
-<span class="slider"></span>
-</label>
-
-<br><br>
-
-Super Jump
-
-<label class="switch">
-<input type="checkbox" id="superJumpToggle" onchange="toggleSuperJump()">
-<span class="slider"></span>
-</label>
 
 </div>
 
@@ -1008,21 +1001,6 @@ Show Hitboxes
 
 <br><br>
 
-Super Speed
-
-<label class="switch">
-<input type="checkbox" id="liteSuperSpeed" onchange="toggleSuperSpeed()">
-<span class="slider"></span>
-</label>
-
-<br><br>
-
-Super Jump
-
-<label class="switch">
-<input type="checkbox" id="liteSuperJump" onchange="toggleSuperJump()">
-<span class="slider"></span>
-</label>
 
   <hr>
   <h3>Player Commands</h3>
@@ -3267,14 +3245,17 @@ rewardBtn.classList.add("hidden");
 let superJump = false;
 let normalJump = jumpStrength;
 
-function toggleSuperJump() {
-    superJump = !superJump;
+let superJumpEnabled = false;
+const BASE_JUMP = JUMP_FORCE;
 
-    if (superJump) {
-        jumpStrength = normalJump * 2.5;
-    } else {
-        jumpStrength = normalJump;
-    }
+function toggleSuperJump() {
+  superJumpEnabled = !superJumpEnabled;
+
+  if (superJumpEnabled) {
+    JUMP_FORCE = BASE_JUMP * 2;
+  } else {
+    JUMP_FORCE = BASE_JUMP;
+  }
 }
 
 let superSpeed = false;
@@ -3286,6 +3267,12 @@ function toggleSuperSpeed() {
 
 function toggleSuperJump() {
     superJumpEnabled = !superJumpEnabled;
+}
+
+let launchMode = false;
+
+function toggleLaunchMode() {
+    launchMode = !launchMode;
 }
 </script>
 
