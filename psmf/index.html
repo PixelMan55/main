@@ -977,7 +977,7 @@ Coin Multiplier
 Unlock All Swords
 
 <label class="switch">
-<input type="checkbox" id="unlockAllToggleLite" onchange="toggleUnlockAll()">
+<input type="checkbox" id="unlockAllToggleLite" onchange="toggleUnlockAllLite()">
 <span class="slider"></span>
 </label>
 
@@ -1911,7 +1911,30 @@ f.style.outline="none";
 
 }
 
-function toggleUnlockAll(){
+function toggleUnlockAllLite(){
+
+const toggle=document.getElementById("unlockAllToggle");
+
+if(toggle.checked){
+
+save.wins=999;
+save.unlockedRollSwords=rollSwords.map(s=>s.name);
+
+for(const a in achievements){
+save.achievements[a]=true;
+}
+
+}else{
+
+alert("Turning this off won't relock swords.");
+
+}
+
+saveData();
+
+}
+
+  function toggleUnlockAll(){
 
 const toggle=document.getElementById("unlockAllToggle");
 
@@ -3295,6 +3318,7 @@ box-shadow:0 0 10px gold;
 </div>
 </body>
 </html>
+
 
 
 
