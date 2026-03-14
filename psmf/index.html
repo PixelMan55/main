@@ -205,13 +205,8 @@ image-rendering:pixelated;
 .r-alienish{border-color:#00ffcc;box-shadow:0 0 8px #00ffcc}
 .r-demonic{border-color:#ff1744;box-shadow:0 0 10px #ff1744}
 .r-blessed{border-color:gold;box-shadow:0 0 12px gold}
-.r-eblessed{
-  border:2px solid transparent;
-  background:
-    linear-gradient(#333,#333) padding-box,
-    linear-gradient(45deg,gold,#d06bff) border-box;
-  box-shadow:0 0 14px gold,0 0 16px #d06bff;
-}
+.r-exclusive{broder-color:gold;box-shadow:0 0 14px blue}
+
 .swordBox{
   width:100px;height:50px;
   border:2px solid white;
@@ -659,6 +654,7 @@ Reward</button>
 <tr><td>Divine Longblade</td><td>Blessed</td><td>0.10%</td></tr>
 <tr><td>Celestial Edge</td><td>Blessed</td><td>0.10%</td></tr>
 <tr><td>Mythic Halo Blade</td><td>Blessed</td><td>0.10%</td></tr>
+<tr><td>???</td><td>Blessed</td><td>0.05%</td></tr>
 
 </table>
 
@@ -742,6 +738,7 @@ Coins:
 <input id="chanceAlienish" placeholder="Alienish %">
 <input id="chanceDemonic" placeholder="Demonic %">
 <input id="chanceBlessed" placeholder="Blessed %">
+<input id="chanceExclusive" placeholder="Exclusive %">
 
 <button onclick="updateRollChances()">Apply</button>
 <hr>
@@ -1306,15 +1303,17 @@ const rollSwords=[
 {name:"Infernal Cleaver",rarity:"demonic"},
 {name:"Divine Longblade",rarity:"blessed"},
 {name:"Celestial Edge",rarity:"blessed"},
-{name:"Mythic Halo Blade",rarity:"blessed"}
+{name:"Mythic Halo Blade",rarity:"blessed"},
+{name:"Pixel Slicer",rarity:"exclusive"}
 ];
 const rollChances=[
 {rarity:"decent",chance:45},
 {rarity:"great",chance:30},
 {rarity:"insane",chance:15},
 {rarity:"alienish",chance:7},
-{rarity:"demonic",chance:2.25,},
-{rarity:"blessed",chance:0.25}
+{rarity:"demonic",chance:2.20,},
+{rarity:"blessed",chance:0.25},
+{rarity:"exclusive",chance:0.05}
 ];
 /* ===== ADD ROLL SWORDS INTO SWORD SYSTEM ===== */
 
@@ -1328,7 +1327,8 @@ great:{dmg:16,knock:12,stun:14},
 insane:{dmg:22,knock:18,stun:18},
 alienish:{dmg:28,knock:22,stun:22},
 demonic:{dmg:34,knock:28,stun:26},
-blessed:{dmg:42,knock:36,stun:34}
+blessed:{dmg:42,knock:36,stun:34},
+exclusive:{dmg:50,knock:43,stun:45}
 };
 
 const st=stats[s.rarity];
@@ -1797,6 +1797,11 @@ const box = document.getElementById("rollReveal");
 
 if(sword.rarity === "blessed"){
 document.body.style.background = "gold";
+setTimeout(()=>{document.body.style.background="";},300);
+}
+
+if(sword.rarity === "exclusive"){
+document.body.style.background = "blue";
 setTimeout(()=>{document.body.style.background="";},300);
 }
 
