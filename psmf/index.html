@@ -10,6 +10,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBGRZF0m1WbGFCw1H9SPRYszvO_34UPYes",
@@ -654,7 +655,7 @@ Reward</button>
 <tr><td>Divine Longblade</td><td>Blessed</td><td>0.10%</td></tr>
 <tr><td>Celestial Edge</td><td>Blessed</td><td>0.10%</td></tr>
 <tr><td>Mythic Halo Blade</td><td>Blessed</td><td>0.10%</td></tr>
-<tr><td>???</td><td>Blessed</td><td>0.05%</td></tr>
+<tr><td>???</td><td>???</td><td>0.05%</td></tr>
 
 </table>
 
@@ -1064,6 +1065,11 @@ text-align:right;
 
 
 <script>
+
+let leaderboardPage = 0;
+const playersPerPage = 10;
+let leaderboardPlayers = [];
+
 let adminLevel = "none";
 
 function isFastRoll(){
@@ -1159,6 +1165,16 @@ function setCoinsLite() {
 <h2>🏆 Global Leaderboard</h2>
 
 <div id="leaderboardList"></div>
+
+<div style="text-align:center;margin-top:10px">
+
+<button id="lbLeft" onclick="prevLeaderboardPage()">⬅️</button>
+
+<span id="lbPageCounter" style="margin:0 10px;">Page 1 / 1</span>
+
+<button id="lbRight" onclick="nextLeaderboardPage()">➡️</button>
+
+</div>
 
 <br>
 
@@ -2045,31 +2061,40 @@ async function loadLeaderboard(){
 
 const snap=await getDocs(collection(db,"players"));
 
-let players=[];
+leaderboardPlayers=[];
 
 snap.forEach(doc=>{
 const data=doc.data();
 
 if(data.shadowBan || data.banned) return;
 
-players.push({
+leaderboardPlayers.push({
 id:doc.id,
 ...data
 });
 });
 
-players.sort((a,b)=>b.wins-a.wins);
+leaderboardPlayers.sort((a,b)=>b.wins-a.wins);
+
+renderLeaderboardPage();
+}
+
+function renderLeaderboardPage(){
+
+const start = leaderboardPage * playersPerPage;
+const end = start + playersPerPage;
+
+const pagePlayers = leaderboardPlayers.slice(start,end);
 
 let html="";
 
-players.forEach(p=>{
+pagePlayers.forEach(p=>{
 
 let name=p.username;
 
 if(name==="PixelMan"){
 name=`<span style="color:yellow">PixelMan [Creator]</span>`;
 }
-
 
 if(name==="THEFIREMOUSE"){
 name=`<span style="color:green">THEFIREMOUSE [Head Admin]</span>`;
@@ -2090,6 +2115,37 @@ style="cursor:pointer;margin:6px">
 });
 
 document.getElementById("leaderboardList").innerHTML=html;
+
+const totalPages = Math.ceil(leaderboardPlayers.length / playersPerPage);
+
+document.getElementById("lbPageCounter").textContent =
+`Page ${leaderboardPage + 1} / ${totalPages}`;
+
+updateLeaderboardButtons();
+}
+
+function nextLeaderboardPage(){
+if((leaderboardPage+1)*playersPerPage >= leaderboardPlayers.length) return;
+leaderboardPage++;
+renderLeaderboardPage();
+}
+
+function prevLeaderboardPage(){
+if(leaderboardPage===0) return;
+leaderboardPage--;
+renderLeaderboardPage();
+}
+
+function updateLeaderboardButtons(){
+
+const left=document.getElementById("lbLeft");
+const right=document.getElementById("lbRight");
+
+left.style.opacity = leaderboardPage===0 ? 0.3 : 1;
+
+right.style.opacity =
+((leaderboardPage+1)*playersPerPage >= leaderboardPlayers.length)
+? 0.3 : 1;
 
 }
 
@@ -2123,7 +2179,8 @@ function updateRollChances() {
     {id:"chanceInsane", rarity:"insane"},
     {id:"chanceAlienish", rarity:"alienish"},
     {id:"chanceDemonic", rarity:"demonic"},
-    {id:"chanceBlessed", rarity:"blessed"}
+    {id:"chanceBlessed", rarity:"blessed"},
+    {id:"chanceExclusive", rarity:"exclusive"}
   ];
 
   inputs.forEach((i, index) => {
@@ -2351,28 +2408,6 @@ author:""
 });
 
 document.getElementById("announcementBar").textContent="";
-
-}
-async function loadAnnouncement(){
-
-const snap=await getDocs(collection(db,"global"));
-
-snap.forEach(doc=>{
-
-if(doc.id==="announcement"){
-
-const data=doc.data();
-
-if(data.message){
-
-document.getElementById("announcementBar").innerHTML =
-`<span style="color:yellow">${data.author} [Creator]</span>: ${data.message}`;
-
-}
-
-}
-
-});
 
 }
 
@@ -2771,7 +2806,7 @@ const el=document.getElementById("admin_"+tab);
 if(el) el.style.display="block";
 
 }
-setInterval(loadAnnouncement,1000);
+
 
 function showAnnouncement(author,msg){
 
@@ -3301,6 +3336,40 @@ let launchMode = false;
 
 function toggleLaunchMode() {
     launchMode = !launchMode;
+}
+
+async function loadAnnouncement(){
+
+const snap = await getDocs(collection(db,"announcements"));
+
+snap.forEach(doc=>{
+
+const data = doc.data();
+
+if(!data.msg) return;
+
+showAnnouncement(data.author || "Server", data.msg);
+
+});
+
+}
+
+function listenAnnouncements(){
+
+const ref = doc(db,"announcements","global");
+
+onSnapshot(ref,(snap)=>{
+
+if(!snap.exists()) return;
+
+const data = snap.data();
+
+if(!data.message) return;
+
+showAnnouncement(data.author || "Server", data.message);
+
+});
+
 }
 </script>
 
