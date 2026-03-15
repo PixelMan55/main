@@ -560,6 +560,14 @@ opacity:1;
 
 }
 
+.exclusiveText{
+background: linear-gradient(90deg,#00c6ff,#0044ff);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+font-weight:bold;
+}
+
+
 </style>
 </head>
 
@@ -3342,23 +3350,28 @@ function toggleLaunchMode() {
 
 async function loadAnnouncement(){
 
-const snap = await getDocs(collection(db,"announcements"));
+const snap = await getDocs(collection(db,"global"));
 
 snap.forEach(doc=>{
 
+if(doc.id==="announcement"){
+
 const data = doc.data();
 
-if(!data.msg) return;
+if(data.message){
+showAnnouncement(data.author,data.message);
+}
 
-showAnnouncement(data.author || "Server", data.msg);
+}
 
 });
 
 }
 
-function listenAnnouncements(){
 
-const ref = doc(db,"announcements","global");
+async function listenForAnnouncements(){
+
+const ref = doc(db,"global","announcement");
 
 onSnapshot(ref,(snap)=>{
 
@@ -3366,13 +3379,35 @@ if(!snap.exists()) return;
 
 const data = snap.data();
 
-if(!data.message) return;
+const box = document.getElementById("globalAnnouncement");
 
-showAnnouncement(data.author || "Server", data.message);
+if(!data.message){
+box.style.display="none";
+return;
+}
+
+let name = data.author || "Server";
+
+if(name==="PixelMan"){
+name = `<span style="color:yellow">PixelMan [Creator]</span>`;
+}
+
+if(name==="THEFIREMOUSE"){
+name = `<span style="color:green">THEFIREMOUSE [Head Admin]</span>`;
+}
+
+box.innerHTML = `${name}: ${data.message}`;
+box.style.display="block";
 
 });
 
 }
+
+listenForAnnouncements();
+
+
+listenForAnnouncements();
+
 </script>
 
 <div id="globalAnnouncement" style="
