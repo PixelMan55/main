@@ -12,6 +12,7 @@ from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+
 const firebaseConfig = {
   apiKey: "AIzaSyBGRZF0m1WbGFCw1H9SPRYszvO_34UPYes",
   authDomain: "stickman-fighting-5bc1f.firebaseapp.com",
@@ -41,7 +42,7 @@ window.collection = collection;
 </script>
 <meta charset="UTF-8">
 <title>Pixel Stickman Fighting</title>
-<link rel="icon" href="https://pixelman55.github.io/main/7828e0e0-1679-47af-9b6b-055fb1c6572b.gif">
+<link rel="icon" href="pixelman55.github.io/main/7828e0e0-1679-47af-9b6b-055fb1c6572b.gif">
 
 <style>
 body{margin:0;background:#222;color:white;font-family:Arial;text-align:center}
@@ -194,6 +195,16 @@ image-rendering:pixelated;
   padding:6px;
   cursor:pointer
 }
+
+#menu button{
+transition:0.2s;
+}
+
+#menu button:hover{
+transform:scale(1.05);
+box-shadow:0 0 10px white;
+}
+
 .swordCard.locked{opacity:.4;cursor:default}
 .swordCard.selected{outline:3px solid gold}
 .swordName{font-weight:bold}
@@ -232,6 +243,28 @@ image-rendering:pixelated;
   height:10px;
   background:#6b3f1d
 }
+
+.hatPreview{
+position:relative;
+width:40px;
+height:20px;
+margin:0 auto;
+}
+
+.hatPreview .hat{
+position:relative;
+top:0;
+left:0;
+transform:none;
+margin:auto;
+}
+.hatBox{
+display:flex;
+align-items:center;
+justify-content:center;
+height:50px;
+}
+
 .lock{
   position:absolute;
   inset:0;
@@ -484,10 +517,56 @@ width:50px;
 height:26px;
 }
 
+#hatGrid{
+  display:grid;
+  grid-template-columns:repeat(4,150px);
+  gap:12px;
+  justify-content:center;
+}
+
+.hatCard{
+  border:2px solid white;
+  background:#333;
+  padding:6px;
+  cursor:pointer;
+}
+
+.hatCard.selected{
+  outline:3px solid gold;
+}
+
+.hatBox{
+  width:100px;
+  height:50px;
+  border:2px solid white;
+  margin:6px auto;
+  background:#111;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.hatItem.selected{
+border-color:gold;
+}
+
 .switch input{
 opacity:0;
 width:0;
 height:0;
+}
+
+.hat.ninja{
+background:black;
+height:10px;
+border-radius:2px;
+box-shadow:0 0 4px black;
+}
+
+.hat.cap{
+background:red;
+height:10px;
+border-radius:10px 10px 0 0;
 }
 
 .slider{
@@ -600,20 +679,18 @@ font-weight:bold;
 <button onclick="openLeaderboard()">Leaderboard 🏆</button>
 <button id="dailyRewardBtn" onclick="claimDailyReward()">🎁 Daily 
 Reward</button>
+<button onclick="openSettings()" class="hidden">⚙️ Settings</button>
+
 </div>
 
 <div id="editor" class="hidden">
   <h2>Edit Character</h2>
   <input type="color" id="colorPicker"><br><br>
-<h3>HATS COMING SOON</h3>
+<h2>Select Hat</h2>
 
-<select id="hatSelect" onchange="setHat(this.value)" class="hidden">
-<option value="none">None</option>
-<option value="cap">Cap</option>
-<option value="crown">Crown</option>
-<option value="ninja">Ninja</option>
-<option value="halo">Halo</option>
-</select>
+<div id="hatGrid" class="grid"></div>
+
+<h2>Select Sword</h2>
   <div id="swordGrid"></div>
   <button onclick="backToMenu()">Back</button>
 </div>
@@ -630,8 +707,123 @@ Reward</button>
   <button onclick="backToMenu()">Back</button>
 </div>
 
+<div id="fpsCounter" style="
+position:fixed;
+top:10px;
+left:10px;
+color:lime;
+font-family:monospace;
+display:none;
+z-index:2000;
+">
+FPS: 0
+</div>
 
+<div id="pauseMenu" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+z-index:999;
+justify-content:center;
+align-items:center;
+">
 
+<div id="endScreen" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+z-index:3000;
+justify-content:center;
+align-items:center;
+">
+
+<div style="
+background:#222;
+padding:30px;
+border-radius:12px;
+text-align:center;
+color:white;
+width:300px;
+">
+
+<h2 id="endTitle"></h2>
+<p id="endCoins"></p>
+
+<button onclick="playAgain()">Play Again</button><br><br>
+<button onclick="goToMenu()">Main Menu</button>
+
+</div>
+</div>
+
+<div id="settingsMenu" class="hidden" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+z-index:3000;
+justify-content:center;
+align-items:center;
+">
+
+<div style="
+background:#222;
+padding:25px;
+border-radius:12px;
+color:white;
+width:320px;
+text-align:center;
+">
+
+<h2>Settings</h2>
+
+<label>Volume</label><br>
+<input type="range" id="volumeSlider" min="0" max="1" step="0.01"><br><br>
+
+<label>Show FPS</label><br>
+<input type="checkbox" id="fpsToggle"><br><br>
+
+<label>Max FPS</label><br>
+<input type="number" id="fpsLimit" min="1" max="240"><br><br>
+
+<button onclick="toggleFullscreen()">Fullscreen</button><br><br>
+
+<button onclick="closeSettings()">Close</button>
+
+</div>
+</div>
+
+<div style="
+background:#222;
+padding:30px;
+border-radius:12px;
+text-align:center;
+color:white;
+width:300px;
+">
+
+<h2>Paused</h2>
+
+<button onclick="resumeGame()">Continue</button><br><br>
+<button onclick="goToMenu()">Main Menu</button><br><br>
+
+<label>Volume</label><br>
+<input type="range" min="0" max="1" step="0.01" id="volumeSlider"><br><br>
+
+<button onclick="toggleFullscreen()">Fullscreen</button><br><br>
+<button onclick="toggleFPS()">Toggle FPS</button>
+
+</div>
+</div>
 
 
 <div id="rollPage" class="hidden">
@@ -1078,6 +1270,12 @@ text-align:right;
 let leaderboardPage = 0;
 const playersPerPage = 10;
 let leaderboardPlayers = [];
+let lastFrameTime = performance.now();
+let settings = {
+volume:1,
+showFPS:false,
+fpsLimit:60
+};
 
 let adminLevel = "none";
 
@@ -1124,6 +1322,29 @@ function setLossesLite() {
   save.losses = Number(document.getElementById("liteLosses").value);
   saveData();
   alert("Losses updated");
+}
+
+function playAgain(){
+document.getElementById("endScreen").style.display="none";
+startGame();
+}
+
+function goToMenu(){
+document.getElementById("endScreen").style.display="none";
+backToMenu();
+}
+
+function showEndScreen(win, coins){
+
+const screen = document.getElementById("endScreen");
+const title = document.getElementById("endTitle");
+const coinText = document.getElementById("endCoins");
+
+title.textContent = win ? "You win! 🥳" : "You lose 😭";
+coinText.textContent = "+" + coins + " coins";
+
+screen.style.display = "flex";
+
 }
 
 function setCoinsLite() {
@@ -1211,7 +1432,25 @@ Status: <span id="statusDot">🔴</span>
 
 </div>
 
+<button id="pauseBtn" onclick="togglePause()" class="hidden" style="
+position:absolute;
+top:10px;
+right:10px;
+z-index:1000;
+padding:8px 12px;
+background:#222;
+color:white;
+border:1px solid white;
+border-radius:6px;
+cursor:pointer;
+">
+⏸
+</button>
+
 <div id="game" class="hidden">
+
+
+
   <div id="p1" class="fighter"></div>
   <div id="p2" class="fighter"></div>
   <div id="p1-health" class="health"></div>
@@ -1369,6 +1608,49 @@ rarity:s.rarity
 };
 
 });
+
+const hats = [
+{id:"none", name:"None"},
+{id:"crown", name:"Crown"},
+{id:"tophat", name:"Top Hat"},
+{id:"halo", name:"Halo"},
+{id:"ninja", name:"Ninja"},
+{id:"cap", name:"Cap"}
+];
+
+function renderHatGrid(){
+
+const grid = document.getElementById("hatGrid");
+grid.innerHTML = "";
+
+hats.forEach(hat=>{
+
+const card = document.createElement("div");
+card.className = "hatCard";
+
+if(save.hat === hat.id){
+card.classList.add("selected");
+}
+
+card.innerHTML = `
+<div class="hatBox">
+  <div class="hat ${hat.id}"></div>
+</div>
+<div class="hatName">${hat.name}</div>
+`;
+
+card.onclick = ()=>{
+save.hat = hat.id;
+saveData();
+renderHatGrid();
+};
+
+grid.appendChild(card);
+
+});
+
+}
+
 /* ================= UI ================= */
 
 const statsDiv=document.getElementById("stats");
@@ -1404,6 +1686,7 @@ colorPicker.value=save.color;
 colorPicker.oninput=()=>{save.color=colorPicker.value;saveData()};
 
 function backToMenu(){
+document.getElementById("pauseBtn").style.display = "none";
   stopGame();
   bgMusic.pause();
   bgMusic.currentTime = 0;
@@ -1426,6 +1709,7 @@ function openEditor(){
   menu.classList.add("hidden");
   game.classList.add("hidden");
   editor.classList.remove("hidden");
+renderHatGrid();
   renderSwords();
 }
 function openAchievements(){
@@ -1484,6 +1768,137 @@ populateSwordDropdown();
 loadPlayers();
 
 }
+
+let isPaused = false;
+
+// PRESS ESC TO TOGGLE
+document.addEventListener("keydown",(e)=>{
+if(e.key==="Escape" && running){
+togglePause();
+}
+});
+
+function togglePause(){
+
+isPaused = !isPaused;
+
+const menu = document.getElementById("pauseMenu");
+
+if(isPaused){
+menu.style.display = "flex";
+document.exitPointerLock?.();
+}else{
+menu.style.display = "none";
+lockCursor();
+}
+
+}
+
+// Resume
+function resumeGame(){
+isPaused = false;
+document.getElementById("pauseMenu").style.display="none";
+lockCursor();
+}
+
+// Go back to menu
+function goToMenu(){
+location.reload(); // or load your menu scene
+}
+
+function openSettings(){
+
+const menu = document.getElementById("menu");
+const settingsMenu = document.getElementById("settingsMenu");
+
+stopGame();
+
+menu.classList.add("hidden");
+
+// 🔥 THIS IS THE IMPORTANT PART
+settingsMenu.classList.remove("hidden");
+settingsMenu.style.display = "flex";
+
+}
+
+function closeSettings(){
+const menu = document.getElementById("menu");
+const settingsMenu = document.getElementById("settingsMenu");
+
+if(settingsMenu){
+settingsMenu.style.display = "none";
+settingsMenu.classList.add("hidden");
+}
+
+if(menu) menu.classList.remove("hidden");
+
+saveSettings();
+}
+
+const volumeSlider = document.getElementById("volumeSlider");
+
+volumeSlider.addEventListener("input",()=>{
+
+const volume = volumeSlider.value;
+
+// Example if you have audio
+document.querySelectorAll("audio").forEach(a=>{
+a.volume = volume;
+});
+
+});
+
+function toggleFullscreen(){
+if(!document.fullscreenElement){
+document.documentElement.requestFullscreen();
+}else{
+document.exitFullscreen();
+}
+}
+
+function saveSettings(){
+localStorage.setItem("settings", JSON.stringify(settings));
+}
+
+function loadSettings(){
+const s = JSON.parse(localStorage.getItem("settings"));
+if(!s) return;
+
+settings = s;
+
+vol.value = settings.volume;
+fpsT.checked = settings.showFPS;
+fpsL.value = settings.fpsLimit;
+}
+
+const vol = document.getElementById("volumeSlider");
+const fpsT = document.getElementById("fpsToggle");
+const fpsL = document.getElementById("fpsLimit");
+
+vol.oninput = ()=>{
+settings.volume = Number(vol.value);
+document.querySelectorAll("audio").forEach(a=>a.volume=settings.volume);
+};
+
+fpsT.onchange = ()=>{
+settings.showFPS = fpsT.checked;
+document.getElementById("fpsCounter").style.display = settings.showFPS ? "block":"none";
+};
+
+fpsL.oninput = ()=>{
+let val = Number(fpsL.value);
+if(val < 1) val = 1;
+if(val > 240) val = 240;
+settings.fpsLimit = val;
+};
+
+let showFPS = false;
+
+function toggleFPS(){
+showFPS = !showFPS;
+document.getElementById("fpsCounter").style.display = showFPS ? "block" : "none";
+}
+
 /*=================== Gambling js ==========================*/
 
 
@@ -1556,7 +1971,9 @@ addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 function makeStick(color,swordId){
   const s=swords[swordId];
   return `<div style="--c:${color}; position:relative;">
-    <div class="head"></div>
+   <div class="head">
+  ${save.hat && save.hat !== "none" ? `<div class="hat ${save.hat}"></div>` : ""}
+</div>
     <div class="body"></div>
 
 <div class="arms">
@@ -1583,6 +2000,7 @@ const p1Text=document.getElementById("p1-text");
 const p2Text=document.getElementById("p2-text");
 
 function startGame(){
+document.getElementById("pauseBtn").style.display = "block";
   menu.classList.add("hidden");
   game.classList.remove("hidden");
   const d=difficulties[save.difficulty];
@@ -1662,6 +2080,10 @@ setInterval(checkCommands,1000);
 
 function loop(){
 
+if(isPaused){
+requestAnimationFrame(loop);
+return;
+}
 
   if(!running)return;
 
@@ -1771,7 +2193,16 @@ if(p2.x < p1.x){
   p1Text.textContent=Math.max(p1.hp,0)+"%";
   p2Text.textContent=Math.max(p2.hp,0)+"%";
 
-  requestAnimationFrame(loop);
+const now = performance.now();
+const fps = Math.round(1000 / (now - lastFrameTime));
+lastFrameTime = now;
+
+if(showFPS){
+const el = document.getElementById("fpsCounter");
+if(el) el.textContent = "FPS: " + fps;
+}
+
+requestAnimationFrame(loop);
 }
 function renderStats(){
   let unlocked=0;
@@ -2417,8 +2848,7 @@ message:"",
 author:""
 });
 
-document.getElementById("announcementBar").textContent="";
-
+document.getElementById("globalAnnouncement").style.display="none";
 }
 
 async function loadPlayers(){
@@ -2818,26 +3248,38 @@ if(el) el.style.display="block";
 }
 
 
-function showAnnouncement(author,msg){
+function showAnnouncement(author, msg){
 
-const box=document.getElementById("globalAnnouncement");
+const box = document.getElementById("globalAnnouncement");
 
-let name=author;
+let name = author;
 
 if(author==="PixelMan"){
-name=`<span style="color:yellow">PixelMan [Creator]</span>`;
+name = `<span style="color:gold">PixelMan [Creator]</span>`;
 }
 
 if(author==="THEFIREMOUSE"){
-name=`<span style="color:green">THEFIREMOUSE [Head Admin]</span>`;
+name = `<span style="color:lime">THEFIREMOUSE [Head Admin]</span>`;
 }
 
-box.innerHTML=`${name}: ${msg}`;
-box.style.display="block";
+// Style + content
+box.innerHTML = `${name}: ${msg}`;
+box.style.display = "block";
+box.style.opacity = "1";
+box.style.transform = "translateY(0)";
+
+// Animate in
+box.style.transition = "all 0.4s ease";
+
+// Auto hide after 10 sec
+setTimeout(()=>{
+box.style.opacity = "0";
+box.style.transform = "translateY(-20px)";
+},10000);
 
 setTimeout(()=>{
-box.style.display="none";
-},3000);
+box.style.display = "none";
+},10400);
 
 }
 
@@ -3348,26 +3790,6 @@ function toggleLaunchMode() {
     launchMode = !launchMode;
 }
 
-async function loadAnnouncement(){
-
-const snap = await getDocs(collection(db,"global"));
-
-snap.forEach(doc=>{
-
-if(doc.id==="announcement"){
-
-const data = doc.data();
-
-if(data.message){
-showAnnouncement(data.author,data.message);
-}
-
-}
-
-});
-
-}
-
 
 async function listenForAnnouncements(){
 
@@ -3408,6 +3830,26 @@ listenForAnnouncements();
 
 listenForAnnouncements();
 
+function initAnnouncements(){
+
+const ref = doc(db,"global","announcement");
+
+onSnapshot(ref,(snap)=>{
+
+if(!snap.exists()) return;
+
+const data = snap.data();
+
+if(!data.message) return;
+
+showAnnouncement(data.author || "Server", data.message);
+
+});
+
+}
+
+initAnnouncements();
+
 </script>
 
 <div id="globalAnnouncement" style="
@@ -3426,7 +3868,6 @@ z-index:9999;
 box-shadow:0 0 10px gold;
 ">
 
-</div>
 </body>
 </html>
 
