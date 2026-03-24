@@ -396,15 +396,31 @@ height:12px;
 pointer-events:none;
 }
 
+.hat{
+position:absolute;
+left:50%;
+transform:translateX(-50%);
+pointer-events:none;
+}
+
+/* 👑 crown */
+.hat.crown{ top:-16px; }
+
+/* 🎩 top hat */
+.hat.tophat{ top:-20px; }
+
+/* 😇 halo (already good) */
+.hat.halo{ top:-28px; }
+
+/* 🥷 ninja */
+.hat.ninja{ top:-12px; }
+
+/* 🧢 cap */
+.hat.cap{ top:-14px; }
+
 .hat.crown{
 background:gold;
 clip-path:polygon(0 100%,20% 0,40% 100%,60% 0,80% 100%,100% 0,100% 100%);
-}
-
-.hat.tophat{
-background:black;
-height:14px;
-border-radius:2px;
 }
 
 .hat.halo{
@@ -417,6 +433,11 @@ height:8px;
 .attackMove{
   transform:translateY(16px);
 }
+
+.hatPreview .hat.crown{ top:0; }
+.hatPreview .hat.tophat{ top:0; }
+.hatPreview .hat.ninja{ top:0; }
+.hatPreview .hat.cap{ top:0; }
 
 /* WEAPON */
 .weapon{
@@ -556,17 +577,48 @@ width:0;
 height:0;
 }
 
-.hat.ninja{
-background:black;
+/* 🎩 TOP HAT */
+.hat.tophat{
+width:18px;
 height:10px;
+background:black;
 border-radius:2px;
-box-shadow:0 0 4px black;
+}
+.hat.tophat::after{
+content:"";
+position:absolute;
+bottom:-4px;
+left:-4px;
+width:26px;
+height:4px;
+background:black;
+border-radius:2px;
 }
 
+/* 🥷 NINJA */
+.hat.ninja{
+width:20px;
+height:6px;
+background:black;
+border-radius:2px;
+}
+
+/* 🧢 CAP */
 .hat.cap{
+width:18px;
+height:8px;
 background:red;
-height:10px;
 border-radius:10px 10px 0 0;
+}
+.hat.cap::after{
+content:"";
+position:absolute;
+right:-6px;
+top:3px;
+width:8px;
+height:3px;
+background:red;
+border-radius:2px;
 }
 
 .slider{
@@ -646,6 +698,46 @@ background: linear-gradient(90deg,#00c6ff,#0044ff);
 font-weight:bold;
 }
 
+.settingsCard{
+background:#1a1a1a;
+padding:25px;
+border-radius:14px;
+width:320px;
+margin:auto;
+display:flex;
+flex-direction:column;
+gap:15px;
+box-shadow:0 0 20px rgba(0,0,0,0.5);
+animation:fadeIn .25s ease;
+}
+
+.settingRow{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.settingsCard input[type="range"]{
+width:140px;
+}
+
+@keyframes fadeIn{
+from{opacity:0; transform:scale(0.9);}
+to{opacity:1; transform:scale(1);}
+}
+
+#eventGlow{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+pointer-events:none;
+z-index:999;
+
+opacity:0;
+transition:0.5s;
+}
 
 </style>
 </head>
@@ -674,12 +766,22 @@ font-weight:bold;
     <button onclick="window.location='https://pixelman55.github.io/main/log'">Update Log 📝</button>
 <br><br>
 
+
+<button onclick="openLeaderboard()">Leaderboard 🏆</button>
+<button id="dailyRewardBtn" onclick="claimDailyReward()">🎁 Daily Reward</button><button onclick="openEventsMenu()">Events 🥳</button>
+<br><br>
 <button onclick="openLogin()">Login</button>
 <button onclick="openSignup()">Sign Up</button>
-<button onclick="openLeaderboard()">Leaderboard 🏆</button>
-<button id="dailyRewardBtn" onclick="claimDailyReward()">🎁 Daily 
-Reward</button>
-<button onclick="openSettings()" class="hidden">⚙️ Settings</button>
+<button onclick="openSettings()">⚙️ Settings</button>
+
+</div>
+
+<div id="eventsMenu" class="hidden">
+
+<h2>Events</h2>
+<div id="eventsTable"></div>
+
+<button onclick="closeEventsMenu()">Close</button>
 
 </div>
 
@@ -763,6 +865,31 @@ width:300px;
 </div>
 </div>
 
+
+
+<div style="
+background:#222;
+padding:30px;
+border-radius:12px;
+text-align:center;
+color:white;
+width:300px;
+">
+
+<h2>Paused</h2>
+
+<button onclick="resumeGame()">Continue</button><br><br>
+<button onclick="goToMenu()">Main Menu</button><br><br>
+
+<label>Volume</label><br>
+<input type="range" min="0" max="1" step="0.01" id="volumeSlider"><br><br>
+
+<button onclick="toggleFullscreen()">Fullscreen</button><br><br>
+<button onclick="toggleFPS()">Toggle FPS</button>
+
+</div>
+</div>
+
 <div id="settingsMenu" class="hidden" style="
 position:fixed;
 top:0;
@@ -802,29 +929,18 @@ text-align:center;
 </div>
 </div>
 
-<div style="
-background:#222;
-padding:30px;
-border-radius:12px;
-text-align:center;
+<div id="eventDisplay" style="
+position:fixed;
+bottom:15px;
+right:15px;
+background:black;
 color:white;
-width:300px;
-">
-
-<h2>Paused</h2>
-
-<button onclick="resumeGame()">Continue</button><br><br>
-<button onclick="goToMenu()">Main Menu</button><br><br>
-
-<label>Volume</label><br>
-<input type="range" min="0" max="1" step="0.01" id="volumeSlider"><br><br>
-
-<button onclick="toggleFullscreen()">Fullscreen</button><br><br>
-<button onclick="toggleFPS()">Toggle FPS</button>
-
-</div>
-</div>
-
+padding:10px;
+border-radius:8px;
+font-size:14px;
+z-index:2000;
+display:none;
+"></div>
 
 <div id="rollPage" class="hidden">
 
@@ -1263,10 +1379,23 @@ color:white;
 text-align:right;
 "></div>
 
-
+<div id="eventGlow"></div>
 
 <script>
 
+let currentEvent = null;
+let eventEnd = 0;
+let nextEvent = null;
+let nextEventTime = 0;
+
+const eventsList = [
+{type:"luck", mult:2, duration:15},
+{type:"luck", mult:3, duration:10},
+{type:"luck", mult:4, duration:5},
+{type:"coins", mult:2, duration:15},
+{type:"coins", mult:3, duration:10},
+{type:"coins", mult:4, duration:5},
+];
 let leaderboardPage = 0;
 const playersPerPage = 10;
 let leaderboardPlayers = [];
@@ -1278,6 +1407,131 @@ fpsLimit:60
 };
 
 let adminLevel = "none";
+
+function startEventSystem(){
+
+setInterval(()=>{
+
+const now = new Date();
+const minutes = now.getMinutes();
+const seconds = now.getSeconds();
+
+// pick event at 45 min
+if(minutes === 45 && seconds < 2 && !nextEvent){
+nextEvent = pickRandomEvent();
+nextEventTime = Date.now() + (15*60*1000);
+}
+
+// start event at hour
+if(minutes === 0 && seconds < 2 && nextEvent){
+currentEvent = nextEvent;
+eventEnd = Date.now() + currentEvent.duration*60000;
+
+nextEvent = null;
+
+showAnnouncement("Event 🎉", formatEvent(currentEvent));
+}
+
+// 🔥 THIS WAS MISSING
+updateEventTiming();
+updateEventUI();
+renderEventsMenu();
+},1000);
+
+}
+
+startEventSystem();
+
+function updateEventTiming(){
+
+const now = new Date();
+
+// 🕐 get next hour (1:00, 2:00, etc)
+const nextHour = new Date(now);
+nextHour.setMinutes(0,0,0);
+nextHour.setHours(now.getHours() + 1);
+
+// ⏱ time until next hour
+const timeUntilNext = nextHour.getTime() - now.getTime();
+
+// 🔮 pick next event if not already picked
+if(!nextEvent){
+nextEvent = pickRandomEvent();
+nextEventTime = nextHour.getTime();
+}
+
+// 🎉 start event exactly on the hour
+if(now.getMinutes() === 0 && now.getSeconds() < 2 && nextEvent){
+currentEvent = nextEvent;
+eventEnd = Date.now() + currentEvent.duration * 60000;
+
+// 🎯 APPLY EFFECT
+if(currentEvent.type === "luck"){
+luckMultiplier = currentEvent.mult;
+coinMultiplier = 1;
+}
+
+if(currentEvent.type === "coins"){
+coinMultiplier = currentEvent.mult;
+luckMultiplier = 1;
+}
+
+nextEvent = null;
+
+showAnnouncement("Event 🎉", formatEvent(currentEvent));
+}
+
+}
+
+
+function updateEventUI(){
+
+const el = document.getElementById("eventDisplay");
+if(!el) return;
+
+const now = Date.now();
+
+if(currentEvent && now < eventEnd){
+
+const timeLeft = Math.floor((eventEnd - now)/1000);
+const min = Math.floor(timeLeft/60);
+const sec = timeLeft % 60;
+
+el.style.display = "block";
+el.textContent = `${currentEvent.mult}x ${currentEvent.type} : ${min}:${sec.toString().padStart(2,"0")}`;
+
+if(glow){
+
+if(currentEvent.type === "luck"){
+glow.style.background = "rgba(128,0,255,0.2)";
+glow.style.boxShadow = "0 0 60px purple inset";
+}
+
+if(currentEvent.type === "coins"){
+glow.style.background = "rgba(255,215,0,0.2)";
+glow.style.boxShadow = "0 0 60px gold inset";
+}
+
+}else{
+el.style.display = "none";
+
+const glow = document.getElementById("eventGlow");
+
+
+
+glow.style.opacity = "1";
+
+}
+// 🔥 RESET when event ends
+if(currentEvent){
+currentEvent = null;
+luckMultiplier = 1;
+coinMultiplier = 1;
+}
+}
+
+
+}
 
 function isFastRoll(){
 return document.getElementById("fastRollToggle").checked;
@@ -1459,15 +1713,52 @@ cursor:pointer;
   <div id="p2-text" class="healthText"></div>
 </div>
 
+<div id="eventDisplay" style="
+position:fixed;
+bottom:15px;
+right:15px;
+background:black;
+color:white;
+padding:10px;
+border-radius:8px;
+font-size:14px;
+z-index:2000;
+display:none;
+"></div>
+
 <script>
 
 let leaderboardInterval=null;
 
 let invincible=false;
 let instakill=false;
-
 let infiniteCoins = false;
 let storedCoins = 0;
+
+// ✅ GLOBAL EVENT STATE (FIRST)
+
+function updateEventUI(){
+
+const box = document.getElementById("eventDisplay");
+
+box.innerHTML="";
+
+activeEvents.forEach(e=>{
+
+const timeLeft = Math.max(0,Math.floor((e.endTime - Date.now())/1000));
+
+const min = Math.floor(timeLeft/60);
+const sec = timeLeft%60;
+
+const div = document.createElement("div");
+
+div.innerText = e.name+" | "+min+":"+sec.toString().padStart(2,"0");
+
+box.appendChild(div);
+
+});
+
+}
 
 function toggleInvincible(){
 invincible=!invincible;
@@ -1651,6 +1942,7 @@ grid.appendChild(card);
 
 }
 
+
 /* ================= UI ================= */
 
 const statsDiv=document.getElementById("stats");
@@ -1806,18 +2098,39 @@ function goToMenu(){
 location.reload(); // or load your menu scene
 }
 
+function updateEventUI(){
+
+const el = document.getElementById("eventDisplay");
+if(!el) return;
+
+const now = Date.now();
+
+if(currentEvent && now < eventEnd){
+
+const timeLeft = Math.floor((eventEnd - now)/1000);
+const min = Math.floor(timeLeft/60);
+const sec = timeLeft%60;
+
+el.style.display = "block";
+el.textContent = `${currentEvent.mult}x ${currentEvent.type} : ${min}:${sec.toString().padStart(2,"0")}`;
+
+}else{
+el.style.display = "none";
+}
+
+}
+
 function openSettings(){
 
 const menu = document.getElementById("menu");
-const settingsMenu = document.getElementById("settingsMenu");
+const eventsMenu = document.getElementById("settingsMenu");
 
-stopGame();
+if(menu) menu.classList.add("hidden");
 
-menu.classList.add("hidden");
-
-// 🔥 THIS IS THE IMPORTANT PART
+if(settingsMenu){
 settingsMenu.classList.remove("hidden");
 settingsMenu.style.display = "flex";
+}
 
 }
 
@@ -1854,6 +2167,78 @@ document.documentElement.requestFullscreen();
 }else{
 document.exitFullscreen();
 }
+}
+
+function renderEventsMenu(){
+
+const el = document.getElementById("eventsTable");
+if(!el) return;
+
+let nextText = "Not chosen yet";
+let countdownText = "--:--";
+let luckMultiplier = 1;
+let coinMultiplier = 1;
+const now = Date.now();
+
+if(nextEvent){
+nextText = formatEvent(nextEvent);
+
+const timeLeft = Math.max(0, Math.floor((nextEventTime - now)/1000));
+const min = Math.floor(timeLeft/60);
+const sec = timeLeft % 60;
+
+countdownText = `${min}:${sec.toString().padStart(2,"0")}`;
+}
+
+el.innerHTML = `
+<div style="margin-bottom:10px;">
+<b>Next Event:</b> ${nextText}
+</div>
+
+<div style="margin-bottom:15px;">
+<b>Starts In:</b> ${countdownText}
+</div>
+
+<hr>
+
+${eventsList.map(e =>
+`<div style="margin:6px 0;">
+${e.mult}x ${e.type} for ${e.duration} min
+</div>`
+).join("")}
+`;
+
+}
+
+function openEventsMenu(){
+
+const menu = document.getElementById("menu");
+const eventsMenu = document.getElementById("eventsMenu");
+
+if(menu) menu.classList.add("hidden");
+
+if(eventsMenu){
+eventsMenu.classList.remove("hidden");
+eventsMenu.style.display = "block";
+}
+
+// 🔥 render content when opened
+renderEventsMenu();
+
+}
+
+function closeEventsMenu(){
+
+const menu = document.getElementById("menu");
+const eventsMenu = document.getElementById("eventsMenu");
+
+if(eventsMenu){
+eventsMenu.style.display = "none";
+eventsMenu.classList.add("hidden");
+}
+
+if(menu) menu.classList.remove("hidden");
+
 }
 
 function saveSettings(){
@@ -2228,7 +2613,7 @@ if(save.coins < 100){
 }
 save.coins -= 100;
 
-let r=Math.random()*100;
+let r = Math.random() * 100;
 let total=0;
 let rarity="decent";
 
@@ -2269,6 +2654,15 @@ ${sword.name}
 <span style="font-size:16px">${rarity.toUpperCase()}</span>
 </div>
 `;
+}
+
+function saveEventState(){
+localStorage.setItem("eventState", JSON.stringify({
+currentEvent,
+eventEnd,
+nextEvent,
+nextEventTime
+}));
 }
 
 function unlockAllSwords(){
@@ -2613,6 +3007,77 @@ alert("Player banned");
 
 }
 
+let lastAnnouncement = "";
+
+function startAnnouncements(){
+
+const ref = doc(db,"global","announcement");
+
+onSnapshot(ref,(snap)=>{
+
+if(!snap.exists()) return;
+
+const data = snap.data();
+
+// must exist
+if(!data.message) return;
+
+// 🔥 ONLY trigger if new
+if(data.message === lastAnnouncement) return;
+
+lastAnnouncement = data.message;
+
+// 🚀 SHOW POPUP
+showAnnouncement(
+data.author || "Server",
+data.message
+);
+
+});
+}
+
+startAnnouncements();
+
+
+function startEventSystem(){
+
+setInterval(()=>{
+
+const now = Date.now();
+const minutes = new Date().getMinutes();
+
+// 🔮 Pick next event 15 min before hour
+if(minutes === 45 && !nextEvent){
+nextEvent = pickRandomEvent();
+nextEventTime = now + (15 * 60 * 1000);
+}
+
+// 🎉 Start event on hour
+if(minutes === 0 && nextEvent){
+currentEvent = nextEvent;
+eventEnd = now + (currentEvent.duration * 60 * 1000);
+
+nextEvent = null;
+
+showAnnouncement("Event 🎉", formatEvent(currentEvent));
+}
+
+updateEventUI();
+
+},1000);
+
+}
+
+function pickRandomEvent(){
+return eventsList[Math.floor(Math.random()*eventsList.length)];
+}
+
+
+
+function formatEvent(e){
+return `${e.mult}x ${e.type === "luck" ? "Luck" : "Coins"} (${e.duration}m)`;
+}
+
 function updateRollChances() {
   const inputs = [
     {id:"chanceDecent", rarity:"decent"},
@@ -2837,7 +3302,8 @@ message:msg,
 author:"PixelMan"
 });
 
-alert("Announcement sent!");
+document.body.style.background = "blue";
+setTimeout(()=>{document.body.style.background="";},300);
 
 }
 
@@ -3251,7 +3717,9 @@ if(el) el.style.display="block";
 function showAnnouncement(author, msg){
 
 const box = document.getElementById("globalAnnouncement");
+if(!box) return;
 
+// name styling
 let name = author;
 
 if(author==="PixelMan"){
@@ -3262,24 +3730,23 @@ if(author==="THEFIREMOUSE"){
 name = `<span style="color:lime">THEFIREMOUSE [Head Admin]</span>`;
 }
 
-// Style + content
+// show
 box.innerHTML = `${name}: ${msg}`;
 box.style.display = "block";
+
+// reset animation
 box.style.opacity = "1";
 box.style.transform = "translateY(0)";
 
-// Animate in
-box.style.transition = "all 0.4s ease";
-
-// Auto hide after 10 sec
+// hide after time
 setTimeout(()=>{
 box.style.opacity = "0";
 box.style.transform = "translateY(-20px)";
-},10000);
+},8000);
 
 setTimeout(()=>{
 box.style.display = "none";
-},10400);
+},8400);
 
 }
 
@@ -3508,32 +3975,10 @@ snap.forEach(doc=>{
 activeEvents.push(doc.data());
 });
 
+updateMultipliers();
 updateEventUI();
 
 });
-
-function updateEventUI(){
-
-const box = document.getElementById("eventDisplay");
-
-box.innerHTML="";
-
-activeEvents.forEach(e=>{
-
-const timeLeft = Math.max(0,Math.floor((e.endTime - Date.now())/1000));
-
-const min = Math.floor(timeLeft/60);
-const sec = timeLeft%60;
-
-const div = document.createElement("div");
-
-div.innerText = e.name+" | "+min+":"+sec.toString().padStart(2,"0");
-
-box.appendChild(div);
-
-});
-
-}
 
 async function spawnEvent(){
 
@@ -3685,6 +4130,25 @@ activeEvents=activeEvents.filter(e=>e.time>0);
 
 },1000);
 
+function updateMultipliers(){
+
+luckMultiplier = 1;
+coinMultiplier = 1;
+
+activeEvents.forEach(e=>{
+
+if(e.type.includes("luck")){
+luckMultiplier = e.multiplier;
+}
+
+if(e.type.includes("coins")){
+coinMultiplier = e.multiplier;
+}
+
+});
+
+}
+
 function claimDailyReward(){
 
 let last = localStorage.getItem("dailyRewardTime");
@@ -3789,66 +4253,6 @@ let launchMode = false;
 function toggleLaunchMode() {
     launchMode = !launchMode;
 }
-
-
-async function listenForAnnouncements(){
-
-const ref = doc(db,"global","announcement");
-
-onSnapshot(ref,(snap)=>{
-
-if(!snap.exists()) return;
-
-const data = snap.data();
-
-const box = document.getElementById("globalAnnouncement");
-
-if(!data.message){
-box.style.display="none";
-return;
-}
-
-let name = data.author || "Server";
-
-if(name==="PixelMan"){
-name = `<span style="color:yellow">PixelMan [Creator]</span>`;
-}
-
-if(name==="THEFIREMOUSE"){
-name = `<span style="color:green">THEFIREMOUSE [Head Admin]</span>`;
-}
-
-box.innerHTML = `${name}: ${data.message}`;
-box.style.display="block";
-
-});
-
-}
-
-listenForAnnouncements();
-
-
-listenForAnnouncements();
-
-function initAnnouncements(){
-
-const ref = doc(db,"global","announcement");
-
-onSnapshot(ref,(snap)=>{
-
-if(!snap.exists()) return;
-
-const data = snap.data();
-
-if(!data.message) return;
-
-showAnnouncement(data.author || "Server", data.message);
-
-});
-
-}
-
-initAnnouncements();
 
 </script>
 
