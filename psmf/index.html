@@ -1040,7 +1040,7 @@ Coins:
 <option value="luck2">2x Luck</option>
 <option value="luck3">3x Luck</option>
 <option value="luck4">4x Luck</option>
-<option value="zoinkfest">Zoink Fest (free temporary sword)</option>
+<option value="zoinkfest">Zoink Fest</option>
 
 </select>
 
@@ -4012,7 +4012,8 @@ if(type==="coins4"){name="4x Coins"; multiplier=4;}
 if(type==="luck2"){name="2x Luck"; multiplier=2;}
 if(type==="luck3"){name="3x Luck"; multiplier=3;}
 if(type==="luck4"){name="4x Luck"; multiplier=4;}
-
+  
+if(type==="zoinkfest"){name="Zoink Fest"; multiplier=1;}
 await setDoc(doc(db,"serverEvents",type),{
 
 name:name,
