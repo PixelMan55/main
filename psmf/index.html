@@ -450,6 +450,7 @@ height:8px;
   flex-direction:column;
   align-items:center;
   transition:transform .15s ease;
+  transform-origin: top center;
 }
 
 .handle{
@@ -461,6 +462,7 @@ height:8px;
 
 .blade{
   width:6px;
+height:32px;
   background:#eee;
   border-radius:4px;
 }
@@ -691,6 +693,19 @@ opacity:1;
 
 }
 
+.hat.zoink{
+background:url("https://pixelman55.github.io/main/cube_1.png") no-repeat center;
+background-size:contain;
+
+width:25px;
+height:25px;
+
+/* 🔥 PERFECT POSITION */
+top:-22px;
+left:50%;
+transform:translateX(-50%);
+}
+
 .exclusiveText{
 background: linear-gradient(90deg,#00c6ff,#0044ff);
 -webkit-background-clip:text;
@@ -737,6 +752,26 @@ z-index:999;
 
 opacity:0;
 transition:0.5s;
+}
+
+#zoinkGlow{
+position:fixed;
+top:0;
+left:0;
+width:100vw;
+height:100vh;
+pointer-events:none;
+z-index:9999;
+
+background:linear-gradient(45deg, cyan, blue);
+background-size:300% 300%;
+
+opacity:0;
+transition:0.3s;
+
+/* 🔥 thinner edge glow */
+mask:radial-gradient(circle at center, transparent 75%, black 100%);
+-webkit-mask:radial-gradient(circle at center, transparent 75%, black 100%);
 }
 
 </style>
@@ -860,7 +895,7 @@ width:300px;
 <p id="endCoins"></p>
 
 <button onclick="playAgain()">Play Again</button><br><br>
-<button onclick="goToMenu()">Main Menu</button>
+<button onclick="backToMenu()">Main Menu</button>
 
 </div>
 </div>
@@ -879,7 +914,7 @@ width:300px;
 <h2>Paused</h2>
 
 <button onclick="resumeGame()">Continue</button><br><br>
-<button onclick="goToMenu()">Main Menu</button><br><br>
+<button onclick="backToMenu()">Main Menu</button><br><br>
 
 <label>Volume</label><br>
 <input type="range" min="0" max="1" step="0.01" id="volumeSlider"><br><br>
@@ -1040,7 +1075,6 @@ Coins:
 <option value="luck2">2x Luck</option>
 <option value="luck3">3x Luck</option>
 <option value="luck4">4x Luck</option>
-<option value="zoinkfest">Zoink Fest</option>
 
 </select>
 
@@ -1382,6 +1416,7 @@ text-align:right;
 
 <div id="eventGlow"></div>
 
+<div id="zoinkGlow"></div>
 <script>
 
 let currentEvent = null;
@@ -1437,6 +1472,7 @@ showAnnouncement("Event 🎉", formatEvent(currentEvent));
 updateEventTiming();
 updateEventUI();
 renderEventsMenu();
+updateZoinkFest();
 },1000);
 
 }
@@ -1727,6 +1763,7 @@ z-index:2000;
 display:none;
 "></div>
 
+
 <script>
 
 let leaderboardInterval=null;
@@ -1735,6 +1772,9 @@ let invincible=false;
 let instakill=false;
 let infiniteCoins = false;
 let storedCoins = 0;
+let zoinkActive = false;
+let zoinkEnd = 0;
+let zoinkNextTime = 0;
 
 // ✅ GLOBAL EVENT STATE (FIRST)
 
@@ -1758,6 +1798,120 @@ div.innerText = e.name+" | "+min+":"+sec.toString().padStart(2,"0");
 box.appendChild(div);
 
 });
+
+}
+
+function updateZoinkFest(){
+
+const now = new Date();
+
+// next even hour (2,4,6,...)
+const next = new Date(now);
+next.setMinutes(0,0,0);
+
+let hour = next.getHours();
+if(hour % 2 !== 0) hour++; // make even
+next.setHours(hour);
+
+// if already passed, go to next
+if(next <= now){
+next.setHours(next.getHours() + 2);
+}
+
+zoinkNextTime = next.getTime();
+
+// 🎉 start event
+if(now.getMinutes() === 0 && now.getSeconds() < 2 && now.getHours() % 2 === 0){
+
+zoinkActive = true;
+zoinkEnd = Date.now() + (15 * 60 * 1000); // 15 min
+
+activateZoink();
+
+}
+
+// ⏹ end event
+if(zoinkActive && Date.now() > zoinkEnd){
+zoinkActive = false;
+deactivateZoink();
+}
+
+}
+
+function activateZoink(){
+
+// background
+document.body.style.backgroundImage = "url('https://pixelman55.github.io/main/gdbg.png')";
+document.body.style.backgroundSize = "cover";
+
+// ⚔️ GIVE SWORD
+window.zoinkActive = true;
+renderSwords();
+window.prevSword = save.sword;
+save.sword = "zoink";
+renderSwords();
+renderSwords();
+
+// 🎩 hat
+
+const glow = document.getElementById("zoinkGlow");
+glow.style.opacity = "1";
+
+window.zoinkGradient = setInterval(()=>{
+
+const x = Math.random()*100;
+const y = Math.random()*100;
+
+glow.style.backgroundPosition = `${x}% ${y}%`;
+
+},100);
+
+bgMusic.playbackRate = 1.5;
+bgMusic.volume = 1;
+window.zoinkActive = true;
+renderSwords();
+window.prevHat = save.hat;
+save.hat = "zoink";
+
+p1El.innerHTML = makeStick(save.color, save.sword);
+
+p1El.innerHTML = makeStick(save.color, save.sword);
+}
+
+function deactivateZoink(){
+
+
+save.hat = window.prevHat || "none";
+p1El.innerHTML = makeStick(save.color, save.sword);
+document.body.style.backgroundImage = "";
+
+clearInterval(window.zoinkGradient);
+
+const glow = document.getElementById("zoinkGlow");
+glow.style.opacity = "0";
+// remove sword
+
+// remove hat
+removeZoinkHat();
+save.hat = window.prevHat || "none";
+p1El.innerHTML = makeStick(save.color, save.sword);
+
+clearInterval(window.zoinkInterval);
+document.body.style.boxShadow = "";
+
+
+clearInterval(window.zoinkShake);
+document.body.style.transform = "";
+
+bgMusic.playbackRate = 1.5;
+bgMusic.volume = 1;
+
+window.zoinkActive = false;
+renderSwords();
+
+save.sword = window.prevSword || "dagger";
+
+p1El.innerHTML = makeStick(save.color, save.sword);
 
 }
 
@@ -1840,13 +1994,16 @@ const swords={
   greatsword:{name:"Great Sword",dmg:30,knock:30,stun:22,unlock:80,rarity:"demonic"},
   executioner:{name:"Executioner",dmg:38,knock:40,stun:30,unlock:100,rarity:"blessed"},
 
+
+
   ach_easy:{name:"Training Blade",dmg:10,knock:4,stun:8,achievement:"win_easy",rarity:"decent"},
   ach_normal:{name:"Steel Saber",dmg:14,knock:7,stun:10,achievement:"win_normal",rarity:"great"},
   ach_hard:{name:"Knight Longsword",dmg:18,knock:12,stun:14,achievement:"win_hard",rarity:"insane"},
   ach_expert:{name:"Runed Katana",dmg:22,knock:14,stun:18,achievement:"win_expert",rarity:"alienish"},
   ach_master:{name:"Obsidian Greatblade",dmg:28,knock:20,stun:22,achievement:"win_master",rarity:"demonic"},
   ach_nightmare:{name:"Cursed Reaver",dmg:34,knock:26,stun:28,achievement:"win_nightmare",rarity:"demonic"},
-  ach_impossible:{name:"Celestial Blade",dmg:40,knock:34,stun:34,achievement:"win_impossible",rarity:"blessed"}
+  ach_impossible:{name:"Celestial Blade",dmg:40,knock:34,stun:34,achievement:"win_impossible",rarity:"blessed"},
+zoink:{name:"The Zoink",rarity:"exclusive",dmg:90,knock:67,stun:67,unlock:"Zoink Fest"}
 };
 const rollSwords=[
 {name:"Iron Saber",rarity:"decent"},
@@ -1979,6 +2136,7 @@ colorPicker.value=save.color;
 colorPicker.oninput=()=>{save.color=colorPicker.value;saveData()};
 
 function backToMenu(){
+document.getElementById("pauseMenu").style.display="none";
 document.getElementById("pauseBtn").style.display = "none";
   stopGame();
   bgMusic.pause();
@@ -2191,6 +2349,19 @@ const sec = timeLeft % 60;
 countdownText = `${min}:${sec.toString().padStart(2,"0")}`;
 }
 
+let zoinkText = "--:--";
+
+if(zoinkNextTime){
+const now = Date.now();
+const t = Math.floor((zoinkNextTime - now)/1000);
+
+const h = Math.floor(t/3600);
+const m = Math.floor((t%3600)/60);
+const s = t%60;
+
+zoinkText = `${h}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;
+}
+
 el.innerHTML = `
 <div style="margin-bottom:10px;">
 <b>Next Event:</b> ${nextText}
@@ -2207,8 +2378,13 @@ ${eventsList.map(e =>
 ${e.mult}x ${e.type} for ${e.duration} min
 </div>`
 ).join("")}
-`;
 
+<hr>
+
+<div style="margin-top:10px;">
+<b>Zoink Fest:</b> ${zoinkText}
+</div>
+`;
 }
 
 function openEventsMenu(){
@@ -2299,21 +2475,39 @@ function renderSwords(){
   swordGrid.innerHTML="";
   for(const id in swords){
     const s=swords[id];
-let unlocked=false;
+let unlocked = false;
 
-if(s.roll){
-  unlocked=save.unlockedRollSwords.includes(s.name);
-}else if(s.unlock!==undefined){
-  unlocked=save.wins>=s.unlock;
-}else if(s.achievement){
-  unlocked=save.achievements[s.achievement];
+// 🔥 ZOINK FIRST (priority)
+if(s.name === "The Zoink"){
+  unlocked = zoinkActive === true;
+}
+
+// normal systems
+else if(s.roll){
+  unlocked = save.unlockedRollSwords.includes(s.name);
+}
+else if(s.unlock!==undefined){
+  unlocked = typeof s.unlock === "number"
+    ? save.wins >= s.unlock
+    : false;
+}
+else if(s.achievement){
+  unlocked = save.achievements[s.achievement];
 }
     let unlockText="";
+
+if(s.name === "The Zoink"){
+unlocked = zoinkActive === true;
+}
 
 if(s.roll){
   unlockText="Roll Only";
 }else if(s.unlock!==undefined){
-  unlockText=`Unlock: ${s.unlock} wins`;
+if(typeof s.unlock === "number"){
+unlockText = `Unlock: ${s.unlock} wins`;
+}else{
+unlockText = `Unlock: ${s.unlock}`;
+}
 }else if(s.achievement){
   unlockText=`Unlock: ${achievements[s.achievement].name}`;
 }
@@ -2365,7 +2559,7 @@ function makeStick(color,swordId){
 <div class="arms">
   <div class="armBar">
     <div class="weapon">
-<div class="blade" style="height:${s.dmg*2}px"></div>
+<div class="blade"></div>
 <div class="handle"></div>
     </div>
   </div>
@@ -2587,7 +2781,7 @@ if(showFPS){
 const el = document.getElementById("fpsCounter");
 if(el) el.textContent = "FPS: " + fps;
 }
-
+updateZoinkFest();
 requestAnimationFrame(loop);
 }
 function renderStats(){
@@ -2597,6 +2791,8 @@ function renderStats(){
     if(s.unlock!==undefined && save.wins>=s.unlock) unlocked++;
     if(s.achievement && save.achievements[s.achievement]) unlocked++;
   }
+
+
 
   statsContent.innerHTML=`
     <b>Victories:</b> ${save.wins}<br><br>
@@ -3771,6 +3967,8 @@ delete save.achievements[s.achievement];
 
 }
 
+
+
 saveData();
 renderSwords();
 
@@ -4012,8 +4210,7 @@ if(type==="coins4"){name="4x Coins"; multiplier=4;}
 if(type==="luck2"){name="2x Luck"; multiplier=2;}
 if(type==="luck3"){name="3x Luck"; multiplier=3;}
 if(type==="luck4"){name="4x Luck"; multiplier=4;}
-  
-if(type==="zoinkfest"){name="Zoink Fest"; multiplier=1;}
+
 await setDoc(doc(db,"serverEvents",type),{
 
 name:name,
