@@ -1798,6 +1798,9 @@ save.eventData.completed++;
 // replace quest
 save.eventData.quests[i] = randomQuest();
 
+  if(q.type === "quests"){
+q.progress++;
+}
 // 🔥 SAVE FIX
 saveData();
 
@@ -1868,6 +1871,7 @@ const types = [
 {type:"kills", goal:5, text:"Get 5 kills"},
 {type:"coins", goal:50, text:"Earn 50 coins"},
 {type:"roll", goal:2, text:"Roll 2 times"}
+{type:"quests", goal:1, text:"Complete 2 quests"}
 ];
 
 // 🔥 avoid duplicates
