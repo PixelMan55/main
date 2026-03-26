@@ -3298,7 +3298,8 @@ function toggleUnlockAllLite(){
 const toggle=document.getElementById("unlockAllToggle");
 
 if(toggle.checked){
-
+save.unlockedSpecial = save.unlockedSpecial || [];
+save.unlockedSpecial.push("zoink");
 save.wins=999;
 save.unlockedRollSwords=rollSwords.map(s=>s.name);
 
@@ -3322,6 +3323,9 @@ const toggle=document.getElementById("unlockAllToggle");
 
 if(toggle.checked){
 
+save.unlockedSpecial = save.unlockedSpecial || [];
+save.unlockedSpecial.push("zoink");
+  
 save.wins=999;
 save.unlockedRollSwords=rollSwords.map(s=>s.name);
 
