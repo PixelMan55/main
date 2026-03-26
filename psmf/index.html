@@ -714,6 +714,40 @@ background: linear-gradient(90deg,#00c6ff,#0044ff);
 font-weight:bold;
 }
 
+.battlepass{
+padding:20px;
+color:white;
+}
+
+#bpProgress{
+height:20px;
+background:#222;
+border-radius:10px;
+margin-bottom:15px;
+overflow:hidden;
+}
+
+#bpProgress::after{
+content:"";
+display:block;
+height:100%;
+background:linear-gradient(90deg, cyan, purple);
+width:var(--progress);
+transition:0.3s;
+}
+
+.bpRewards{
+display:flex;
+justify-content:space-between;
+margin-top:15px;
+}
+
+.tier{
+background:#111;
+padding:10px;
+border-radius:10px;
+}
+
 .settingsCard{
 background:#1a1a1a;
 padding:25px;
@@ -775,6 +809,47 @@ mask:radial-gradient(circle at center, transparent 75%, black 100%);
 -webkit-mask:radial-gradient(circle at center, transparent 75%, black 100%);
 }
 
+.battlepass{
+color:white;
+padding:20px;
+}
+
+#bpProgress{
+height:20px;
+background:#222;
+border-radius:10px;
+overflow:hidden;
+margin-bottom:10px;
+}
+
+#bpProgress::after{
+content:"";
+display:block;
+height:100%;
+background:linear-gradient(90deg, cyan, purple);
+width:var(--progress);
+transition:0.3s;
+}
+
+#eventQuests div{
+background:#111;
+padding:10px;
+margin:8px 0;
+border-radius:10px;
+}
+
+.bpRewards{
+display:flex;
+justify-content:space-between;
+margin-top:20px;
+}
+
+.tier{
+background:#111;
+padding:10px;
+border-radius:10px;
+}
+
 </style>
 </head>
 
@@ -805,6 +880,7 @@ mask:radial-gradient(circle at center, transparent 75%, black 100%);
 
 <button onclick="openLeaderboard()">Leaderboard 🏆</button>
 <button id="dailyRewardBtn" onclick="claimDailyReward()">🎁 Daily Reward</button><button onclick="openEventsMenu()">Events 🥳</button>
+<button onclick="openEventQuests()">Event Quests 👑</button>
 <br><br>
 <button onclick="openLogin()">Login</button>
 <button onclick="openSignup()">Sign Up</button>
@@ -856,22 +932,7 @@ z-index:2000;
 ">
 FPS: 0
 </div>
-
-<div id="pauseMenu" style="
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.7);
-z-index:999;
-justify-content:center;
-align-items:center;
-">
-
-<div id="endScreen" style="
-display:none;
+<div id="endScreen" class="hidden" style="
 position:fixed;
 top:0;
 left:0;
@@ -900,6 +961,20 @@ width:300px;
 
 </div>
 </div>
+<div id="pauseMenu" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+z-index:999;
+justify-content:center;
+align-items:center;
+">
+
+
 
 
 
@@ -978,6 +1053,33 @@ z-index:2000;
 display:none;
 "></div>
 
+<div id="eventMenu" class="hidden" class="battlepass">
+
+<h2>Zoink Fest Quests</h2>
+
+<!-- 🔥 PROGRESS -->
+<div id="bpProgress"></div>
+<div id="bpText"></div>
+
+<!-- 🔥 QUESTS -->
+
+
+<!-- 🔥 REWARDS -->
+<div class="bpRewards">
+
+<div class="tier">25 🎁 2,500 Coins</div>
+<div class="tier">50 🎩 Zoink Cube</div>
+<div class="tier">75 🎁 7,500 Coins</div>
+<div class="tier">100 ⚔️ The Zoink</div>
+
+</div>
+<div id="eventQuests" style="margin-top:20px;"></div>
+<br>
+<button onclick="backToMenu()">Back</button>
+
+</div>
+
+</div>
 <div id="rollPage" class="hidden">
 
 <h2>🎲 Sword Roll</h2>
@@ -1054,7 +1156,8 @@ Coins:
 <button onclick="setCoins()">Apply</button>
 
 </div>
-
+<input id="setEventQuestsInput" type="number" placeholder="Set Event Quests">
+<button onclick="setEventQuests()">Set Quests</button>
 <hr>
 
 <h3>Leaderboard Control</h3>
@@ -1368,6 +1471,8 @@ Show Hitboxes
   Wins: <input type="number" id="liteWins"><button onclick="setWinsLite()">Apply</button><br><br>
   Losses: <input type="number" id="liteLosses"><button onclick="setLossesLite()">Apply</button><br><br>
   Coins: <input type="number" id="liteCoins"><button onclick="setCoinsLite()">Apply</button><br><br>
+<input id="setEventQuestsInput" type="number" placeholder="Set Event Quests">
+<button onclick="setEventQuests()">Set Quests</button><br><br>
 <hr>
 
 <h3>Live Player List</h3>
@@ -1590,6 +1695,114 @@ function unbanPlayerLite() {
   alert("Player unbanned");
 }
 
+function openEventQuests(){
+
+menu.classList.add("hidden");
+document.getElementById("eventMenu").classList.remove("hidden");
+
+renderEventQuests();
+
+}
+
+function renderEventQuests(){
+
+document.getElementById("bpText").textContent =
+"Completed: " + save.eventData.completed + " / 100";
+const box = document.getElementById("eventQuests");
+box.innerHTML = "";
+
+const prog = Math.min(save.eventData.completed / 100 * 100, 100);
+document.getElementById("bpProgress").style.setProperty("--progress", prog + "%");
+
+if(!window.zoinkActive){
+
+box.innerHTML = `
+<div style="
+position:absolute;
+inset:0;
+background:rgba(0,0,0,0.7);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:20px;
+">
+<p>Wait for Zoink Fest to complete quests</p>
+<button onclick="backToMenu()">Ok</button>
+</div>
+
+`;
+
+return;
+}
+
+save.eventData.quests.forEach((q,i)=>{
+
+const done = q.progress >= q.goal;
+
+const div = document.createElement("div");
+
+div.innerHTML = `
+${q.text} (${q.progress}/${q.goal})
+<button onclick="claimQuest(${i})" ${!done ? "disabled" : ""}>
+Claim
+</button>
+`;
+
+box.appendChild(div);
+
+});
+}
+
+function checkEventMilestones(){
+
+const c = save.eventData.completed;
+
+save.bpRewards = save.bpRewards || {};
+
+if(c >= 25 && !save.bpRewards["25"]){
+save.coins += 2500;
+save.bpRewards["25"] = true;
+}
+
+if(c >= 50 && !save.bpRewards["50"]){
+save.hatUnlocks = save.hatUnlocks || [];
+save.hatUnlocks.push("zoink");
+save.bpRewards["50"] = true;
+}
+
+if(c >= 75 && !save.bpRewards["75"]){
+save.coins += 7500;
+save.bpRewards["75"] = true;
+}
+
+if(c >= 100 && !save.bpRewards["100"]){
+save.unlockedSpecial = save.unlockedSpecial || [];
+save.unlockedSpecial.push("zoink");
+save.bpRewards["100"] = true;
+}
+
+}
+
+function claimQuest(i){
+
+const q = save.eventData.quests[i];
+
+if(q.progress < q.goal) return;
+
+// reward
+save.coins += 50;
+save.eventData.completed++;
+
+// replace quest
+save.eventData.quests[i] = randomQuest();
+
+// 🔥 SAVE FIX
+saveData();
+
+renderEventQuests();
+checkEventMilestones();
+}
+
 function shadowBanLite() {
   const uid = document.getElementById("liteTargetUID").value;
   if(!uid) return alert("Enter a UID");
@@ -1602,6 +1815,15 @@ function unshadowBanLite() {
   if(!uid) return alert("Enter a UID");
   setDoc(doc(db,"players",uid), { shadowBan:false }, { merge:true });
   alert("Shadow ban removed");
+}
+
+function setEventQuests(){
+ 
+save.eventData.completed = Number(document.getElementById("setEventQuestsInput").value);
+
+alert("Set Quest Amount")
+
+saveData();
 }
 
 function setWinsLite() {
@@ -1626,16 +1848,69 @@ document.getElementById("endScreen").style.display="none";
 backToMenu();
 }
 
+function randomQuest(){
+
+const types = [
+{type:"wins", goal:3, text:"Win 3 games"},
+{type:"wins", goal:5, text:"Win 5 games"},
+{type:"kills", goal:3, text:"Get 3 kills"},
+{type:"coins", goal:50, text:"Earn 50 coins"},
+{type:"roll", goal:2, text:"Roll 2 times"}
+];
+
+// 🔥 avoid duplicates
+let q;
+do{
+q = types[Math.floor(Math.random()*types.length)];
+}while(save.eventData.quests.some(x=>x.text === q.text));
+
+return {...q, progress:0};
+
+}
+
+function initEventQuests(){
+
+if(save.eventData.quests.length === 0){
+for(let i=0;i<3;i++){
+save.eventData.quests.push(randomQuest());
+}
+}
+
+}
+
 function showEndScreen(win, coins){
 
+endScreen.classList.remove("hidden");
 const screen = document.getElementById("endScreen");
 const title = document.getElementById("endTitle");
 const coinText = document.getElementById("endCoins");
+
+// ✅ safety fixes
+win = !!win;
+coins = Number(coins) || 0;
 
 title.textContent = win ? "You win! 🥳" : "You lose 😭";
 coinText.textContent = "+" + coins + " coins";
 
 screen.style.display = "flex";
+
+// ✅ quest system (fixed + safe)
+if(window.zoinkActive){
+
+save.eventData.quests.forEach(q=>{
+
+if(q.type === "wins" && win){
+q.progress++;
+}
+
+if(q.type === "coins"){
+q.progress += coins;
+}
+
+});
+
+saveData();
+}
 
 }
 
@@ -1821,13 +2096,33 @@ next.setHours(next.getHours() + 2);
 
 zoinkNextTime = next.getTime();
 
-// 🎉 start event
-if(now.getMinutes() === 0 && now.getSeconds() < 2 && now.getHours() % 2 === 0){
+let lastZoinkHour = -1;
+
+function updateZoinkFest(){
+
+const now = new Date();
+const hour = now.getHours();
+const minute = now.getMinutes();
+
+// ✅ START RELIABLE
+if(hour % 2 === 0 && minute === 0 && lastZoinkHour !== hour){
+
+lastZoinkHour = hour;
 
 zoinkActive = true;
-zoinkEnd = Date.now() + (15 * 60 * 1000); // 15 min
+zoinkEnd = Date.now() + (15 * 60 * 1000);
 
 activateZoink();
+
+}
+
+// END
+if(zoinkActive && Date.now() > zoinkEnd){
+zoinkActive = false;
+deactivateZoink();
+}
+
+
 
 }
 
@@ -1848,8 +2143,6 @@ document.body.style.backgroundSize = "cover";
 // ⚔️ GIVE SWORD
 window.zoinkActive = true;
 renderSwords();
-window.prevSword = save.sword;
-save.sword = "zoink";
 renderSwords();
 renderSwords();
 
@@ -1872,7 +2165,6 @@ bgMusic.volume = 1;
 window.zoinkActive = true;
 renderSwords();
 window.prevHat = save.hat;
-save.hat = "zoink";
 
 p1El.innerHTML = makeStick(save.color, save.sword);
 
@@ -1882,7 +2174,6 @@ p1El.innerHTML = makeStick(save.color, save.sword);
 function deactivateZoink(){
 
 
-save.hat = window.prevHat || "none";
 p1El.innerHTML = makeStick(save.color, save.sword);
 document.body.style.backgroundImage = "";
 
@@ -1893,8 +2184,7 @@ glow.style.opacity = "0";
 // remove sword
 
 // remove hat
-removeZoinkHat();
-save.hat = window.prevHat || "none";
+
 p1El.innerHTML = makeStick(save.color, save.sword);
 
 clearInterval(window.zoinkInterval);
@@ -1909,8 +2199,6 @@ bgMusic.volume = 1;
 
 window.zoinkActive = false;
 renderSwords();
-
-save.sword = window.prevSword || "dagger";
 
 p1El.innerHTML = makeStick(save.color, save.sword);
 
@@ -1942,6 +2230,18 @@ let save=JSON.parse(localStorage.getItem(saveKey))||{
   achievements:{},
   unlockedRollSwords:[]
 };
+
+
+if(!save.eventData){
+save.eventData = {
+quests: [],
+completed: 0,
+claimed: []
+};
+}
+
+initEventQuests();
+
 save.coins = Number(save.coins || 0);
 
 if(save.coins === undefined) save.coins = 0;
@@ -2065,7 +2365,8 @@ const hats = [
 {id:"tophat", name:"Top Hat"},
 {id:"halo", name:"Halo"},
 {id:"ninja", name:"Ninja"},
-{id:"cap", name:"Cap"}
+{id:"cap", name:"Cap"},
+{id:"zoink", name:"Zoink Cube"}
 ];
 
 function renderHatGrid(){
@@ -2137,9 +2438,11 @@ colorPicker.value=save.color;
 colorPicker.oninput=()=>{save.color=colorPicker.value;saveData()};
 
 function backToMenu(){
+
 document.getElementById("pauseMenu").style.display="none";
 document.getElementById("pauseBtn").style.display = "none";
   stopGame();
+isPaused = false;
   bgMusic.pause();
   bgMusic.currentTime = 0;
   clearInterval(leaderboardInterval);
@@ -2149,12 +2452,15 @@ document.getElementById("pauseBtn").style.display = "none";
   statsDiv.classList.add("hidden");
   rollPage.classList.add("hidden");
   adminPanel.classList.add("hidden");
+document.getElementById("eventMenu").classList.add("hidden");
 document.getElementById("liteAdminPanel").classList.add("hidden");
 document.getElementById("leaderboard").classList.add("hidden");
 document.getElementById("loginPage").classList.add("hidden");
 document.getElementById("signupPage").classList.add("hidden");
-
+  endScreen.classList.add("hidden");
+  document.getElementById("endScreen").style.display = "none";
   menu.classList.remove("hidden");
+
 }
 function openEditor(){
   stopGame();
@@ -2480,7 +2786,7 @@ let unlocked = false;
 
 // 🔥 ZOINK FIRST (priority)
 if(s.name === "The Zoink"){
-  unlocked = zoinkActive === true;
+unlocked = save.unlockedSpecial?.includes("zoink");
 }
 
 // normal systems
@@ -2497,9 +2803,7 @@ else if(s.achievement){
 }
     let unlockText="";
 
-if(s.name === "The Zoink"){
-unlocked = zoinkActive === true;
-}
+
 
 if(s.roll){
   unlockText="Roll Only";
@@ -2596,36 +2900,50 @@ bgMusic.play().catch(()=>{});
 }
 
 function endGame(win){
-  running=false;
+  running = false;
+
+  let reward = 0; // ✅ FIX: define OUTSIDE
+
   if(win){
-const rewards={
-  easy:5,
-  normal:10,
-  hard:15,
-  expert:20,
-  master:25,
-  nightmare:30,
-  impossible:35
-
-};
-
-save.coins = Number(save.coins) + (rewards[save.difficulty] || 5);
-updateCoins();
-    save.wins++;
-    const map={
-      easy:"win_easy",normal:"win_normal",hard:"win_hard",
-      expert:"win_expert",master:"win_master",
-      nightmare:"win_nightmare",impossible:"win_impossible"
+    const rewards = {
+      easy:5,
+      normal:10,
+      hard:15,
+      expert:20,
+      master:25,
+      nightmare:30,
+      impossible:35
     };
-    save.achievements[map[save.difficulty]]=true;
-    saveData();
+
+    reward = rewards[save.difficulty] || 5;
+
+    save.coins = Number(save.coins) + reward;
+    updateCoins();
+
+    save.wins++;
+
+    const map = {
+      easy:"win_easy",
+      normal:"win_normal",
+      hard:"win_hard",
+      expert:"win_expert",
+      master:"win_master",
+      nightmare:"win_nightmare",
+      impossible:"win_impossible"
+    };
+
+    save.achievements[map[save.difficulty]] = true;
+
   } else {
-    save.losses = (save.losses||0) + 1; 
+    save.losses = (save.losses || 0) + 1;
   }
-  alert(win?"You Win!":"You Lose!");
-savePlayerStats();
-  backToMenu();
+
+  saveData();
+
+  // ✅ ALWAYS SAFE NOW
+  showEndScreen(win, reward);
 }
+
 
 async function checkCommands(){
 
@@ -2808,6 +3126,14 @@ save.coins = Number(save.coins || 0); // force coins to be a number
 if(save.coins < 100){
   alert("Not enough coins!");
   return;
+}
+
+if(window.zoinkActive){
+save.eventData.quests.forEach(q=>{
+if(q.type === "roll"){
+q.progress++;
+}
+});
 }
 save.coins -= 100;
 
@@ -3075,7 +3401,7 @@ signInWithEmailAndPassword(auth,email,pass)
 alert("Logged in!");
 
 
-
+loadPlayerData();
 savePlayerStats();
 updateUserBar();
 
@@ -3088,7 +3414,29 @@ backToMenu();
 }
 
 
+async function loadPlayerData(uid){
 
+const docRef = doc(db, "players", uid);
+const snap = await getDoc(docRef);
+
+if(snap.exists()){
+
+const data = snap.data();
+
+// 🔥 LOAD INTO SAVE
+save.wins = data.wins || 0;
+save.losses = data.losses || 0;
+save.eventData = data.eventData || save.eventData;
+
+saveData();
+
+renderEventQuests();
+renderSwords();
+updateCoins();
+
+}
+
+}
 
 async function loadLeaderboard(){
 
@@ -3656,6 +4004,7 @@ if(liteLock) liteLock.appendChild(new Option(name,id));
 window.onload = () => {
   updateCoins();
   populateSwordDropdown();
+initEventQuests();
 };
 
 async function shadowBan(){
@@ -4374,8 +4723,15 @@ document.getElementById("dailyRewardBtn").onclick = claimDailyReward;
 save.hat = save.hat || "none";
 
 function setHat(h){
+
+if(h === "zoink" && !save.hatUnlocks?.includes("zoink")){
+alert("Locked!");
+return;
+}
+
 save.hat = h;
 saveData();
+
 }
 
 if(save.hat === "cap"){
