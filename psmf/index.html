@@ -1158,6 +1158,8 @@ Coins:
 </div>
 <input id="setEventQuestsInput" type="number" placeholder="Set Event Quests">
 <button onclick="setEventQuests()">Set Quests</button>
+  <br><hr><hr>
+  <button onclick="activateZoink()">Activate Zoink Fest</button>
 <hr>
 
 <h3>Leaderboard Control</h3>
@@ -1179,7 +1181,7 @@ Coins:
 <option value="luck2">2x Luck</option>
 <option value="luck3">3x Luck</option>
 <option value="luck4">4x Luck</option>
-
+<option value="activateZoink()">4x Luck</option>
 </select>
 
 <input id="eventTime" placeholder="5:00 or 1:00:00">
@@ -1406,8 +1408,8 @@ Coin Multiplier
 
 </div>
 
-<!-- Add this inside your body -->
-<div id="liteAdminPanel" class="hidden">
+<div id="liteAdminPanel">
+<div id="liteSetQuests" class="hidden">
   <h2>LITE ADMIN PANEL</h2>
 
 <label>Invincible
