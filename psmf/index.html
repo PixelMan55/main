@@ -1422,8 +1422,6 @@ Coin Multiplier
 <br><br>
 
 
-  <input id="setEventQuestsInput" type="number" placeholder="Set Event Quests">
-<button onclick="setEventQuests()">Set Quests</button>
   <br><br>
 <label>Instakill
 <label class="switch">
@@ -1478,8 +1476,8 @@ Show Hitboxes
   Wins: <input type="number" id="liteWins"><button onclick="setWinsLite()">Apply</button><br><br>
   Losses: <input type="number" id="liteLosses"><button onclick="setLossesLite()">Apply</button><br><br>
   Coins: <input type="number" id="liteCoins"><button onclick="setCoinsLite()">Apply</button><br><br>
-<input id="setEventQuestsInput" type="number" placeholder="Set Event Quests">
-<button onclick="setEventQuests()">Set Quests</button><br><br>
+<input id="setEventQuestsInputLite" type="number" placeholder="Set Event Quests">
+<button onclick="setEventQuestsLite()">Set Quests</button>
 <hr>
 <h3>Live Player List</h3>
 
@@ -1826,6 +1824,15 @@ function unshadowBanLite() {
 function setEventQuests(){
  
 save.eventData.completed = Number(document.getElementById("setEventQuestsInput").value);
+
+alert("Set Quest Amount")
+
+saveData();
+}
+
+  function setEventQuestsLite(){
+ 
+save.eventData.completed = Number(document.getElementById("setEventQuestsInputLite").value);
 
 alert("Set Quest Amount")
 
