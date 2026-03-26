@@ -1867,8 +1867,6 @@ function randomQuest(){
 const types = [
 {type:"wins", goal:3, text:"Win 3 games"},
 {type:"wins", goal:5, text:"Win 5 games"},
-{type:"kills", goal:3, text:"Get 3 kills"},
-{type:"kills", goal:5, text:"Get 5 kills"},
 {type:"coins", goal:50, text:"Earn 50 coins"},
 {type:"roll", goal:2, text:"Roll 2 times"}
 {type:"quests", goal:1, text:"Complete 2 quests"}
@@ -1922,6 +1920,7 @@ q.progress++;
 if(q.type === "coins"){
 q.progress += coins;
 }
+  
 if(q.type === "kills" && win){
 q.progress++;
 }
