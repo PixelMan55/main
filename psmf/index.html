@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script type="module">
-
+import { getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { setPersistence, browserLocalPersistence }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -1764,23 +1764,31 @@ save.bpRewards = save.bpRewards || {};
 if(c >= 25 && !save.bpRewards["25"]){
 save.coins += 2500;
 save.bpRewards["25"] = true;
+
+showMilestonePopup("25 Quests Completed", "2,500 Coins"); // ✅
 }
 
 if(c >= 50 && !save.bpRewards["50"]){
 save.hatUnlocks = save.hatUnlocks || [];
 save.hatUnlocks.push("zoink");
 save.bpRewards["50"] = true;
+
+showMilestonePopup("50 Quests Completed", "Zoink Hat"); // ✅
 }
 
 if(c >= 75 && !save.bpRewards["75"]){
 save.coins += 7500;
 save.bpRewards["75"] = true;
+
+showMilestonePopup("75 Quests Completed", "7,500 Coins"); // ✅
 }
 
 if(c >= 100 && !save.bpRewards["100"]){
 save.unlockedSpecial = save.unlockedSpecial || [];
 save.unlockedSpecial.push("zoink");
 save.bpRewards["100"] = true;
+
+showMilestonePopup("100 Quests Completed", "Zoink Sword"); // ✅
 }
 
 }
@@ -2259,7 +2267,10 @@ initEventQuests();
 save.coins = Number(save.coins || 0);
 
 if(save.coins === undefined) save.coins = 0;
-const saveData=()=>localStorage.setItem(saveKey,JSON.stringify(save));
+const saveData = () => {
+  localStorage.setItem(saveKey, JSON.stringify(save));
+  savePlayerStats(); // 🔥 AUTO SYNC TO FIREBASE
+};
 
 /* ================= STOP GAME ================= */
 let running=false;
@@ -2416,6 +2427,42 @@ grid.appendChild(card);
 
 }
 
+function showMilestonePopup(text, reward){
+
+const div = document.createElement("div");
+
+div.style = `
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:#111;
+color:white;
+padding:20px;
+border-radius:12px;
+font-size:20px;
+z-index:5000;
+text-align:center;
+box-shadow:0 0 20px gold;
+`;
+
+div.innerHTML = `
+<div style="font-size:24px;font-weight:bold;margin-bottom:10px;">
+🎉 Milestone Reached!
+</div>
+<div>${text}</div>
+<div style="margin-top:10px;color:gold;">
+Reward: ${reward}
+</div>
+`;
+
+document.body.appendChild(div);
+
+setTimeout(()=>{
+div.remove();
+},3000);
+
+}
 
 /* ================= UI ================= */
 
@@ -3407,55 +3454,71 @@ backToMenu();
 
 }
 
-function login(){
+async function login(){
 
-const email=document.getElementById("loginEmail").value;
-const pass=document.getElementById("loginPass").value;
+  const email = document.getElementById("loginEmail").value;
+  const pass = document.getElementById("loginPass").value;
 
-signInWithEmailAndPassword(auth,email,pass)
+  try{
+    const cred = await signInWithEmailAndPassword(auth, email, pass);
+    const user = cred.user;
 
-.then(()=>{
+    alert("Logged in!");
 
-alert("Logged in!");
+    // ✅ WAIT FOR FIREBASE
+    await loadPlayerData(user.uid);
 
+    updateUserBar();
+    backToMenu();
 
-loadPlayerData();
-savePlayerStats();
-updateUserBar();
-
-backToMenu();
-
-})
-
-.catch(e=>alert(e.message));
-
+  }catch(e){
+    alert(e.message);
+  }
 }
 
 
 async function loadPlayerData(uid){
 
-const docRef = doc(db, "players", uid);
-const snap = await getDoc(docRef);
+  try{
+const snap = await getDocs(collection(db,"players"));
 
-if(snap.exists()){
+let found = false;
 
-const data = snap.data();
+snap.forEach(docSnap => {
 
-// 🔥 LOAD INTO SAVE
-save.wins = data.wins || 0;
-save.losses = data.losses || 0;
-save.eventData = data.eventData || save.eventData;
+  if(docSnap.id === uid){
 
-saveData();
+    found = true;
 
-renderEventQuests();
-renderSwords();
-updateCoins();
+    const data = docSnap.data();
 
+    save = {
+      ...save,
+      ...data
+    };
+
+    localStorage.setItem(saveKey, JSON.stringify(save));
+
+    updateCoins();
+    renderSwords();
+    renderHatGrid();
+
+    console.log("✅ Player data loaded");
+  }
+
+});
+
+if(!found){
+  console.warn("No save data found");
 }
 
-}
 
+
+  }catch(err){
+    alert("Load failed: " + err.message);
+    console.error(err);
+  }
+}
 async function loadLeaderboard(){
 
 const snap=await getDocs(collection(db,"players"));
@@ -3680,7 +3743,9 @@ async function savePlayerStats() {
   const playerData = {
     username: username || "Player",
     wins: save.wins,
-    losses: save.losses
+    losses: save.losses,
+    coins: save.coins,
+    eventData: save.eventData
   };
   
   await setDoc(playerRef, playerData, { merge: true });
@@ -4840,7 +4905,6 @@ box-shadow:0 0 10px gold;
 
 </body>
 </html>
-
 
 
 
