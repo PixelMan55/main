@@ -3720,7 +3720,9 @@ async function savePlayerStats() {
     losses: save.losses,
     coins: save.coins,
     eventData: save.eventData,
-    achievements: save.achievements
+    achievements: save.achievements,
+    HatUnlocks: save.hatUnlocks,
+    EventRewards: save.bpRewards
   };
   
   await setDoc(playerRef, playerData, { merge: true });
