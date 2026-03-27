@@ -3724,7 +3724,8 @@ async function savePlayerStats() {
     HatUnlocks: save.hatUnlocks,
     EventRewards: save.bpRewards,
     sword: save.sword,
-    rollSowrds: save.unlockedRollSwords
+    rollSowrds: save.unlockedRollSwords,
+    eventSwords: save.unlockedSpecial
   };
   
   await setDoc(playerRef, playerData, { merge: true });
