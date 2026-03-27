@@ -1803,12 +1803,13 @@ if(q.progress < q.goal) return;
 save.coins += 50;
 save.eventData.completed++;
 
-// replace quest
-save.eventData.quests[i] = randomQuest();
-
-  if(q.type === "quests"){
-q.progress++;
+// ✅ progress BEFORE replacing
+if(q.type === "quests"){
+save.eventData.completed++; // this is what that quest actually means
 }
+
+// replace quest AFTER
+save.eventData.quests[i] = randomQuest();
 // 🔥 SAVE FIX
 saveData();
 
@@ -2099,25 +2100,6 @@ box.appendChild(div);
 
 }
 
-function updateZoinkFest(){
-
-const now = new Date();
-
-// next even hour (2,4,6,...)
-const next = new Date(now);
-next.setMinutes(0,0,0);
-
-let hour = next.getHours();
-if(hour % 2 !== 0) hour++; // make even
-next.setHours(hour);
-
-// if already passed, go to next
-if(next <= now){
-next.setHours(next.getHours() + 2);
-}
-
-zoinkNextTime = next.getTime();
-
 let lastZoinkHour = -1;
 
 function updateZoinkFest(){
@@ -2126,8 +2108,8 @@ const now = new Date();
 const hour = now.getHours();
 const minute = now.getMinutes();
 
-// ✅ START RELIABLE
-if(hour % 2 === 0 && minute === 0 && lastZoinkHour !== hour){
+// ✅ START (every 2 hours exactly at :00)
+if(minute === 0 && lastZoinkHour !== hour){{
 
 lastZoinkHour = hour;
 
@@ -2135,20 +2117,9 @@ zoinkActive = true;
 zoinkEnd = Date.now() + (15 * 60 * 1000);
 
 activateZoink();
-
 }
 
-// END
-if(zoinkActive && Date.now() > zoinkEnd){
-zoinkActive = false;
-deactivateZoink();
-}
-
-
-
-}
-
-// ⏹ end event
+// ⏹ END after 15 minutes
 if(zoinkActive && Date.now() > zoinkEnd){
 zoinkActive = false;
 deactivateZoink();
@@ -2253,6 +2224,9 @@ let save=JSON.parse(localStorage.getItem(saveKey))||{
   unlockedRollSwords:[]
 };
 
+if(!save.hatUnlocks){
+  save.hatUnlocks = [];
+}
 
 if(!save.eventData){
 save.eventData = {
