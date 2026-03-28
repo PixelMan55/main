@@ -30,6 +30,8 @@ setPersistence(auth, browserLocalPersistence)
 .catch(e=>console.error(e));
 const db = getFirestore(app);
 
+
+
 window.auth = auth;
 window.db = db;
 window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
@@ -161,6 +163,40 @@ padding:6px;
 
 /* MENUS */
 #menu,#editor,#achievements{margin-top:30px}
+
+
+
+.leaderboard {
+  margin: auto;
+  background: #111;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.6);
+}
+
+.lbRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  margin: 6px 0;
+  background: #1f1f1f;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+
+.lbRow:hover {
+  transform: scale(1.03);
+  background: #2a2a2a;
+}
+
+.lbRank {
+  font-weight: bold;
+  color: gold;
+}
+
+.lbTop1 { background: linear-gradient(90deg, gold, orange); color:black; }
+.lbTop2 { background: silver; color:black; }
+.lbTop3 { background: #cd7f32; color:black; }
 
 /*gamblling css*/
 
@@ -1085,7 +1121,20 @@ display:none;
 
 <div id="eventMenu" class="hidden" class="battlepass">
 
-<h2>Zoink Fest Quests</h2>
+<div class="tabBar">
+  <button class="tab active" onclick="switchEventTab('zoinkTab', this)">Zoink Fest</button>
+  <button class="tab" onclick="switchEventTab('comingSoonTab', this)">Coming Soon</button>
+</div>
+
+<div id="zoinkTab">
+  <!-- EXISTING ZOINK CONTENT -->
+
+<div id="comingSoonTab" class="hidden" style="padding:20px;">
+  <h2 style="color:gold;">🚧 Coming Soon</h2>
+  <p>New events are being worked on...</p>
+</div>
+
+<h2>Zoink Fest Quests (Leaving Soon)</h2>
 
 <!-- 🔥 PROGRESS -->
 <div id="bpProgress"></div>
@@ -1103,7 +1152,8 @@ display:none;
 <div class="tier">100 ⚔️ The Zoink</div>
 
 </div>
-<div id="eventQuests" style="margin-top:20px;"></div>
+<div id="eventQuests" style="margin-top:20px;"></div></div>
+
 <br>
 <button onclick="backToMenu()">Back</button>
 
@@ -2020,6 +2070,16 @@ q.progress += coins;
 saveData();
 }
 
+}
+
+function switchEventTab(id, btn) {
+  document.querySelectorAll("#eventMenu .tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+
+  document.getElementById("zoinkTab").classList.add("hidden");
+  document.getElementById("comingSoonTab").classList.add("hidden");
+
+  document.getElementById(id).classList.remove("hidden");
 }
 
 function setCoinsLite() {
@@ -3693,7 +3753,7 @@ if(leaderboardTab === "event"){
 }
 
 
-html+=`<div onclick="openProfile('${p.id}')"
+html+=`<div onclick="openProfile('${p.id}')" class="leaderboard" style"text-align:center"
 style="cursor:pointer;margin:6px">
 <b>${name}</b> — ${line}
 </div>`;
@@ -4963,8 +5023,8 @@ e.time--;
 
 if(e.time<=0) return;
 
-box.innerHTML+=
-"<div>"+e.type+" | "+e.time+"s</div>";
+let label = e.type === "zoink" ? "Zoink Fest" : e.type;
+html += `<div>${label} | ${e.time}s</div>`;
 
 });
 
