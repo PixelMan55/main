@@ -219,6 +219,7 @@ background:linear-gradient(to left, gold, blue);
 .r-demonic{border-color:#ff1744;box-shadow:0 0 10px #ff1744}
 .r-blessed{border-color:gold;box-shadow:0 0 12px gold}
 .r-exclusive{broder-color:gold;box-shadow:0 0 14px blue}
+.r-limited{broder-color:red;box-shadow:0 0 16px orange}
 
 .swordBox{
   width:100px;height:50px;
@@ -707,6 +708,35 @@ left:50%;
 transform:translateX(-50%);
 }
 
+.tabBar{
+  display:flex;
+  gap:6px;
+  margin-bottom:10px;
+}
+
+.tab{
+  flex:1;
+  padding:8px;
+  background:#222;
+  color:white;
+  border:none;
+  cursor:pointer;
+  border-radius:6px 6px 0 0;
+  opacity:0.6;
+  transition:0.2s;
+}
+
+.tab:hover{
+  opacity:1;
+}
+
+.tab.active{
+  background:#111;
+  border-bottom:2px solid gold;
+  opacity:1;
+  font-weight:bold;
+}
+
 .exclusiveText{
 background: linear-gradient(90deg,#00c6ff,#0044ff);
 -webkit-background-clip:text;
@@ -1158,8 +1188,9 @@ Coins:
 </div>
 <input id="setEventQuestsInput" type="number" placeholder="Set Event Quests">
 <button onclick="setEventQuests()">Set Quests</button>
-  <br><hr><hr>
+  <br><hr>
   <button onclick="activateZoink()">Activate Zoink Fest</button>
+<button onclick="startGlobalZoink()">Start Zoink Fest (Global)</button>
 <hr>
 
 <h3>Leaderboard Control</h3>
@@ -1532,6 +1563,7 @@ let eventEnd = 0;
 let nextEvent = null;
 let nextEventTime = 0;
 
+
 const eventsList = [
 {type:"luck", mult:2, duration:15},
 {type:"luck", mult:3, duration:10},
@@ -1818,6 +1850,57 @@ renderEventQuests();
 checkEventMilestones();
 }
 
+let zoinkGlobalTimer = null;
+
+function startGlobalZoink(){
+
+  // 🔥 stop existing
+  if(zoinkGlobalTimer){
+    clearInterval(zoinkGlobalTimer);
+  }
+
+  // activate event
+  window.zoinkActive = true;
+
+  // remove old zoink if exists
+  activeEvents = activeEvents.filter(e=>e.type !== "zoink");
+
+  let timeLeft = 15 * 60;
+
+  activeEvents.push({
+    type: "zoink",
+    multiplier: 4,
+    time: timeLeft
+  });
+
+  // 🔥 announcement
+  showAnnouncement("EVENT", "Zoink Fest started! (15 min)");
+
+  zoinkGlobalTimer = setInterval(()=>{
+
+    timeLeft--;
+
+    const e = activeEvents.find(e=>e.type === "zoink");
+    if(e) e.time = timeLeft;
+
+    if(timeLeft <= 0){
+
+      clearInterval(zoinkGlobalTimer);
+      zoinkGlobalTimer = null;
+
+      // end event
+      window.zoinkActive = false;
+
+      activeEvents = activeEvents.filter(e=>e.type !== "zoink");
+
+      showAnnouncement("EVENT", "Zoink Fest ended");
+
+    }
+
+  },1000);
+
+}
+
 function shadowBanLite() {
   const uid = document.getElementById("liteTargetUID").value;
   if(!uid) return alert("Enter a UID");
@@ -1986,6 +2069,12 @@ function setCoinsLite() {
 
 <h2>🏆 Global Leaderboard</h2>
 
+
+<div class="tabBar">
+  <button id="tab_global" class="tab active" onclick="setLeaderboardTab('global')">Global</button>
+  <button id="tab_event" class="tab" onclick="setLeaderboardTab('event')">Event</button>
+</div>
+
 <div id="leaderboardList"></div>
 
 <div style="text-align:center;margin-top:10px">
@@ -2076,6 +2165,9 @@ let storedCoins = 0;
 let zoinkActive = false;
 let zoinkEnd = 0;
 let zoinkNextTime = 0;
+let leaderboardTab = "global";
+let zoinkTimer = null;
+let zoinkTimeLeft = 0;
 
 // ✅ GLOBAL EVENT STATE (FIRST)
 
@@ -2305,7 +2397,7 @@ const swords={
   ach_master:{name:"Obsidian Greatblade",dmg:28,knock:20,stun:22,achievement:"win_master",rarity:"demonic"},
   ach_nightmare:{name:"Cursed Reaver",dmg:34,knock:26,stun:28,achievement:"win_nightmare",rarity:"demonic"},
   ach_impossible:{name:"Celestial Blade",dmg:40,knock:34,stun:34,achievement:"win_impossible",rarity:"blessed"},
-zoink:{name:"The Zoink",rarity:"exclusive",dmg:52,knock:45,stun:43,unlock:"Zoink Fest"}
+zoink:{name:"The Zoink",rarity:"limited",dmg:52,knock:45,stun:43,unlock:"Zoink Fest"}
 };
 const rollSwords=[
 {name:"Iron Saber",rarity:"decent"},
@@ -2418,6 +2510,13 @@ grid.appendChild(card);
 
 });
 
+}
+
+function setLeaderboardTab(tab){
+  leaderboardTab = tab;
+  leaderboardPage = 0; // reset page
+  renderLeaderboardPage();
+  updateTabUI();
 }
 
 function showMilestonePopup(text, reward){
@@ -3532,7 +3631,15 @@ id:doc.id,
 });
 });
 
-leaderboardPlayers.sort((a,b)=>b.wins-a.wins);
+if(leaderboardTab === "global"){
+  leaderboardPlayers.sort((a,b)=>b.wins - a.wins);
+}
+
+if(leaderboardTab === "event"){
+  leaderboardPlayers.sort((a,b)=>
+    (b.eventData?.completed || 0) - (a.eventData?.completed || 0)
+  );
+}
 
 renderLeaderboardPage();
 }
@@ -3566,9 +3673,29 @@ if(name==="lil_Jim"){
 name=`<span style="color:green">lil_Jim [Admin]</span>`;
 }
 
+
+let line = "";
+
+if(leaderboardTab === "global"){
+  line = `${p.wins} Wins | ${p.losses} Losses`;
+}
+
+if(leaderboardTab === "event"){
+  const completed = p.eventData?.completed || 0;
+
+  let milestone = "None";
+  if(completed >= 100) milestone = "100";
+  else if(completed >= 75) milestone = "75";
+  else if(completed >= 50) milestone = "50";
+  else if(completed >= 25) milestone = "25";
+
+  line = `Quests: ${completed} | Milestone: ${milestone}`;
+}
+
+
 html+=`<div onclick="openProfile('${p.id}')"
 style="cursor:pointer;margin:6px">
-<b>${name}</b> — ${p.wins} Wins | ${p.losses} Losses
+<b>${name}</b> — ${line}
 </div>`;
 });
 
@@ -3580,6 +3707,37 @@ document.getElementById("lbPageCounter").textContent =
 `Page ${leaderboardPage + 1} / ${totalPages}`;
 
 updateLeaderboardButtons();
+
+function renderLeaderboard(){
+
+  const list = document.getElementById("leaderboardList");
+  list.innerHTML = "";
+
+  leaderboardPlayers.forEach(p=>{
+
+    const div = document.createElement("div");
+
+    if(leaderboardTab === "global"){
+      div.textContent = `${p.name} | Wins: ${p.wins}`;
+    }
+
+    if(leaderboardTab === "event"){
+      const completed = p.eventData?.completed || 0;
+
+      let milestone = "None";
+      if(completed >= 100) milestone = "100";
+      else if(completed >= 75) milestone = "75";
+      else if(completed >= 50) milestone = "50";
+      else if(completed >= 25) milestone = "25";
+
+      div.textContent = `${p.name} | Quests: ${completed} | Milestone: ${milestone}`;
+    }
+
+    list.appendChild(div);
+
+  });
+
+}
 }
 
 function nextLeaderboardPage(){
@@ -3613,7 +3771,7 @@ menu.classList.add("hidden");
 document.getElementById("leaderboard").classList.remove("hidden");
 
 loadLeaderboard();
-
+updateTabUI();
 leaderboardInterval=setInterval(loadLeaderboard,1000);
 
 }
@@ -3738,6 +3896,7 @@ async function savePlayerStats() {
         username = d.data().username;
       }
     });
+saveData();
   }
 
   const playerData = {
@@ -3900,10 +4059,41 @@ if(s.achievement) return !save.achievements[s.achievement];
 
 <br><br>
 
+
+
 <button onclick="sendDuelRequest('${id}')">
 ⚔️ Challenge Player to 1v1
 </button>
 `;
+
+function renderProfile(p){
+
+function renderProfile(p){
+
+  const box = document.getElementById("profileContent");
+
+  const swordCount = (p.unlockedRollSwords?.length || 0) +
+                     (p.unlockedSpecial?.length || 0);
+
+  const totalSwords = Object.keys(swords).length + 1; // + zoink
+
+  const achievementsCount = Object.keys(p.achievements || {}).length;
+
+  box.innerHTML = `
+    Name: ${p.name || "Unknown"}<br>
+    Coins: ${p.coins || 0}<br>
+    Swords: ${swordCount}/${totalSwords}<br>
+    Achievements: ${achievementsCount}
+  `;
+
+  // 🔥 ONLINE STATUS FIX
+  const online = Date.now() - (p.lastOnline || 0) < 60000;
+
+  document.getElementById("statusDot").textContent = online ? "🟢" : "🔴";
+  document.getElementById("statusText").textContent = online ? "Online" : "Offline";
+}
+}
+
 
 
 }
@@ -4331,6 +4521,14 @@ text.textContent="Offline";
 
 setInterval(updateOnlineStatus,3000);
 
+setInterval(()=>{
+  if(auth.currentUser){
+    setDoc(doc(db,"players",auth.currentUser.uid),{
+      lastOnline: Date.now()
+    },{merge:true});
+  }
+}, 10000);
+
 function openAdminTab(tab){
 
 document.querySelectorAll(".adminTab").forEach(t=>{
@@ -4710,6 +4908,16 @@ frozen:true
 });
 
 consoleLog("Player frozen");
+
+}
+
+function updateTabUI(){
+
+  document.getElementById("tab_global").classList.remove("active");
+  document.getElementById("tab_event").classList.remove("active");
+
+  const active = document.getElementById("tab_" + leaderboardTab);
+  if(active) active.classList.add("active");
 
 }
 
