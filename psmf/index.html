@@ -2383,6 +2383,22 @@ if(save.hat === hat.id){
 card.classList.add("selected");
 }
 
+const unlocked = save.hatUnlocks.includes(hat.id);
+
+card.classList.add("hatCard");
+
+if(!unlocked){
+  card.classList.add("locked");
+  card.innerHTML += `<div class="lock">🔒</div>`;
+}
+
+card.onclick = () => {
+  if(!unlocked) return; // EXACTLY like swords
+  save.hat = hat.id;
+  saveData();
+  renderHats();
+};
+
 card.innerHTML = `
 <div class="hatBox">
   <div class="hat ${hat.id}"></div>
@@ -2397,6 +2413,7 @@ renderHatGrid();
 };
 
 grid.appendChild(card);
+
 
 });
 
@@ -2549,6 +2566,9 @@ document.getElementById("liteAdminPanel").classList.remove("hidden");
 
 document.getElementById("liteAdminPanel").classList.remove("hidden");
 
+}else if(username === "mid4567"){
+
+document.getElementById("liteAdminPanel").classList.remove("hidden");
 
 }else{
 
@@ -3537,6 +3557,10 @@ if(name==="THEFIREMOUSE"){
 name=`<span style="color:green">THEFIREMOUSE [Head Admin]</span>`;
 }
 
+if(name==="mid4567"){
+name=`<span style="color:cyan">mid4567 [Dev]</span>`;
+}
+
 if(name==="lil_Jim"){
 name=`<span style="color:green">lil_Jim [Admin]</span>`;
 }
@@ -3755,7 +3779,7 @@ username=d.data().username;
 }
 });
 
-if(username === "PixelMan" || username === "THEFIREMOUSE" || username === "lil_Jim"){
+if(username === "PixelMan" || username === "THEFIREMOUSE" || username === "lil_Jim" || username === "mid4567"){
 document.getElementById("adminBtn").style.display="block";
 }else{
 document.getElementById("adminBtn").style.display="none";
@@ -3841,6 +3865,10 @@ name=`<span style="color:yellow">PixelMan [Creator]</span>`;
 
 if(name==="THEFIREMOUSE"){
 name=`<span style="color:green">THEFIREMOUSE [Admin]</span>`;
+}
+
+if(name==="mid4567"){
+name=`<span style="color:cyan">mid4567 [Dev]</span>`;
 }
 
 if(name==="lil_Jim"){
