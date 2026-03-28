@@ -1458,7 +1458,7 @@ Show Hitboxes
 <br><br>
   <hr>
   <button onclick="activateZoink()">Activate Zoink Fest</button>
-
+  <button onclick="savePlayerStats()"> Save Game </button>
   <hr>
   <h3>Player Commands</h3>
   <input id="liteTargetUID" placeholder="Player UID"><br><br>
@@ -3787,7 +3787,7 @@ document.getElementById("adminBtn").style.display="none";
 
 bar.innerHTML=
 `<b>${username}</b>
-<button onclick="logout()">Sign Out</button>`;
+<button onclick="logout()">Sign Out</button>  <button onclick="savePlayerStats()"> Save Game </button>`;
 
 localStorage.setItem("username",username);
 
