@@ -9,8 +9,8 @@ from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDocs, collection, onSnapshot } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
 const firebaseConfig = {
@@ -30,7 +30,20 @@ setPersistence(auth, browserLocalPersistence)
 .catch(e=>console.error(e));
 const db = getFirestore(app);
 
+const globalEventRef = doc(db, "global", "events");
 
+let lastZoinkTimestamp = 0;
+
+onSnapshot(globalEventRef, (snap) => {
+  const data = snap.data();
+  if (!data) return;
+
+  if (data.zoinkTimestamp && data.zoinkTimestamp !== lastZoinkTimestamp) {
+    lastZoinkTimestamp = data.zoinkTimestamp;
+
+    activateZoink(); // 🔥 USE YOUR EXISTING FUNCTION
+  }
+});
 
 window.auth = auth;
 window.db = db;
@@ -40,6 +53,12 @@ window.setDoc = setDoc;
 window.doc = doc;
 window.getDocs = getDocs;
 window.collection = collection;
+
+window.triggerGlobalZoink = async function() {
+  await setDoc(doc(db, "global", "events"), {
+    zoinkTimestamp: Date.now()
+  });
+};
 
 </script>
 <meta charset="UTF-8">
@@ -1240,7 +1259,7 @@ Coins:
 <button onclick="setEventQuests()">Set Quests</button>
   <br><hr>
   <button onclick="activateZoink()">Activate Zoink Fest</button>
-<button onclick="startGlobalZoink()">Start Zoink Fest (Global)</button>
+<button onclick="triggerGlobalZoink()">Start Zoink Fest (Global)</button>
 <hr>
 
 <h3>Leaderboard Control</h3>
@@ -1539,7 +1558,7 @@ Show Hitboxes
 <br><br>
   <hr>
   <button onclick="activateZoink()">Activate Zoink Fest</button>
-  <button onclick="savePlayerStats()"> Save Game </button>
+  <button onclick="triggerGlobalZoink()">Start Zoink Fest (Global)</button>
   <hr>
   <h3>Player Commands</h3>
   <input id="liteTargetUID" placeholder="Player UID"><br><br>
