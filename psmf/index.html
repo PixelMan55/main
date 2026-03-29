@@ -32,16 +32,23 @@ const db = getFirestore(app);
 
 const globalEventRef = doc(db, "global", "events");
 
-let lastZoinkTimestamp = 0;
-
 onSnapshot(globalEventRef, (snap) => {
   const data = snap.data();
   if (!data) return;
 
-  if (data.zoinkTimestamp && data.zoinkTimestamp !== lastZoinkTimestamp) {
-    lastZoinkTimestamp = data.zoinkTimestamp;
+  // ❌ DO NOT auto-run if no event
+  if (!data.zoinkStart || !data.zoinkEnd) return;
 
-    activateZoink(); // 🔥 USE YOUR EXISTING FUNCTION
+  const now = Date.now();
+
+  // ✅ ONLY run if event is ACTIVE
+  if (now >= data.zoinkStart && now < data.zoinkEnd) {
+    activateZoink(data);
+  }
+
+  // ✅ STOP instantly if expired
+  if (now >= data.zoinkEnd) {
+    deactivateZoink();
   }
 });
 
@@ -56,7 +63,9 @@ window.collection = collection;
 
 window.triggerGlobalZoink = async function() {
   await setDoc(doc(db, "global", "events"), {
-    zoinkTimestamp: Date.now()
+    zoinkStart: Date.now(),
+    zoinkEnd: Date.now() + (15 * 60 * 1000), // 15 min
+    spawnedBy: auth.currentUser?.email || "System"
   });
 };
 
@@ -1558,7 +1567,7 @@ Show Hitboxes
 <br><br>
   <hr>
   <button onclick="activateZoink()">Activate Zoink Fest</button>
-  <button onclick="triggerGlobalZoink()">Start Zoink Fest (Global)</button>
+  <button onclick="savePlayerStats()"> Save Game </button>
   <hr>
   <h3>Player Commands</h3>
   <input id="liteTargetUID" placeholder="Player UID"><br><br>
@@ -1921,54 +1930,6 @@ checkEventMilestones();
 
 let zoinkGlobalTimer = null;
 
-function startGlobalZoink(){
-
-  // 🔥 stop existing
-  if(zoinkGlobalTimer){
-    clearInterval(zoinkGlobalTimer);
-  }
-
-  // activate event
-  window.zoinkActive = true;
-
-  // remove old zoink if exists
-  activeEvents = activeEvents.filter(e=>e.type !== "zoink");
-
-  let timeLeft = 15 * 60;
-
-  activeEvents.push({
-    type: "zoink",
-    multiplier: 4,
-    time: timeLeft
-  });
-
-  // 🔥 announcement
-  showAnnouncement("EVENT", "Zoink Fest started! (15 min)");
-
-  zoinkGlobalTimer = setInterval(()=>{
-
-    timeLeft--;
-
-    const e = activeEvents.find(e=>e.type === "zoink");
-    if(e) e.time = timeLeft;
-
-    if(timeLeft <= 0){
-
-      clearInterval(zoinkGlobalTimer);
-      zoinkGlobalTimer = null;
-
-      // end event
-      window.zoinkActive = false;
-
-      activeEvents = activeEvents.filter(e=>e.type !== "zoink");
-
-      showAnnouncement("EVENT", "Zoink Fest ended");
-
-    }
-
-  },1000);
-
-}
 
 function shadowBanLite() {
   const uid = document.getElementById("liteTargetUID").value;
@@ -2300,7 +2261,21 @@ deactivateZoink();
 
 }
 
-function activateZoink(){
+
+let zoinkRunning = false;
+let zoinkTimerInterval;
+
+function activateZoink(spawnedBy = "System"){
+
+  if (zoinkRunning) return;
+  zoinkRunning = true;
+
+  // 🔥 POPUP MESSAGE
+  showAnnouncement(`Spawned Zoink event: 15 min`);
+
+
+
+
 
 // background
 document.body.style.backgroundImage = "url('https://pixelman55.github.io/main/gdbg.png')";
@@ -2336,6 +2311,8 @@ p1El.innerHTML = makeStick(save.color, save.sword);
 
 p1El.innerHTML = makeStick(save.color, save.sword);
 }
+
+
 
 function deactivateZoink(){
 
