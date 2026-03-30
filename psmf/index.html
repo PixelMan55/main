@@ -50,6 +50,21 @@ onSnapshot(globalEventRef, (snap) => {
   if (now >= data.zoinkEnd) {
     deactivateZoink();
   }
+
+  // ❌ DO NOT auto-run if no event
+  if (!data.easterStart || !data.easterEnd) return;
+
+if (data.easterStart && data.easterEnd) {
+  const now = Date.now();
+
+  if (now >= data.easterStart && now < data.easterEnd) {
+    startEasterEvent(data);
+  }
+
+  if (now >= data.easterEnd) {
+    deactivateEaster();
+  }
+}
 });
 
 window.auth = auth;
@@ -66,6 +81,24 @@ window.triggerGlobalZoink = async function() {
     zoinkStart: Date.now(),
     zoinkEnd: Date.now() + (15 * 60 * 1000), // 15 min
     spawnedBy: auth.currentUser?.email || "System"
+  });
+};
+
+// 🌍 GLOBAL EASTER
+window.triggerGlobalEaster = async function() {
+  await setDoc(doc(db, "global", "events"), {
+    easterStart: Date.now(),
+    easterEnd: Date.now() + (15 * 60 * 1000),
+    spawnedBy: auth.currentUser?.email || "System"
+  });
+};
+
+// 🧪 LOCAL EASTER
+window.startLocalEaster = function(){
+  startEasterEvent({
+    easterStart: Date.now(),
+    easterEnd: Date.now() + (15 * 60 * 1000),
+    spawnedBy: "Local Admin"
   });
 };
 
@@ -944,6 +977,71 @@ padding:10px;
 border-radius:10px;
 }
 
+#bunnyDialogue {
+  background: linear-gradient(180deg, #1a1a1a, #000);
+  border: 3px solid gold;
+  border-radius: 14px;
+  padding: 15px;
+  margin: 15px;
+  font-size: 18px;
+  color: white;
+  text-align: left;
+  min-height: 60px;
+  box-shadow: 0 0 15px rgba(255,215,0,0.5);
+}
+
+#bunnyDialogue::before {
+  content: "🐰 Easter Bunny:";
+  display: block;
+  color: gold;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+#easterTab button {
+  background: #222;
+  color: white;
+  border: 2px solid gold;
+  padding: 10px 15px;
+  margin: 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+#easterTab button:hover {
+  background: gold;
+  color: black;
+  transform: scale(1.05);
+}
+
+#fallingEggs {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.egg {
+  position: absolute;
+  top: -20px;
+  font-size: 20px;
+  animation: fall linear infinite;
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(110vh);
+  }
+}
+
+
+body.easterActive {
+  background: radial-gradient(circle, #2a1a2a, #000);
+}
 </style>
 </head>
 
@@ -981,6 +1079,8 @@ border-radius:10px;
 <button onclick="openSettings()">⚙️ Settings</button>
 
 </div>
+
+<div id="fallingEggs"></div>
 
 <div id="eventsMenu" class="hidden">
 
@@ -1150,18 +1250,38 @@ display:none;
 <div id="eventMenu" class="hidden" class="battlepass">
 
 <div class="tabBar">
-  <button class="tab active" onclick="switchEventTab('zoinkTab', this)">Zoink Fest</button>
-  <button class="tab" onclick="switchEventTab('comingSoonTab', this)">Easter Shop</button>
+  <button class="tab active" onclick="switchEventTab('easterTab', this)">Easter Event</button>
+  <button class="tab" onclick="switchEventTab('zoinkTab', this)">Zoink Fest</button>
 </div>
 
+<div id="easterTab">
 
-  <!-- EXISTING ZOINK CONTENT -->
+  <div style="text-align:center; margin-top:20px;">
+    <img src="https://pixelman55.github.io/main/eb.png" width="120">
+  </div>
 
-<div id="comingSoonTab" class="hidden" style="padding:20px;">
-  <h2 style="color:gold;">🚧 Coming Soon</h2>
-  <p>New events are being worked on...</p>
+
+
+  <div id="bunnyDialogue" style="
+    background:#111;
+    border-radius:10px;
+    padding:15px;
+    margin:15px;
+    text-align:center;
+  ">
+    🐰 Hello! What would you like?
+  </div>
+
+  <div style="text-align:center;">
+    <button onclick="giveCarrots()">Give 10 Carrots</button>
+    <button onclick="showRewards()">Possible Rewards</button>
+    <button onclick="showHowTo()">How to Play</button>
+  </div>
+<div id="carrotDisplay"></div>
+
 </div>
-<div id="zoinkTab">
+
+<div id="zoinkTab" class="hidden">
 <h2>Zoink Fest Quests (Leaving 04/02)</h2>
 
 <!-- 🔥 PROGRESS -->
@@ -1269,6 +1389,8 @@ Coins:
   <br><hr>
   <button onclick="activateZoink()">Activate Zoink Fest</button>
 <button onclick="triggerGlobalZoink()">Start Zoink Fest (Global)</button>
+<button onclick="startLocalEaster()">Start Easter (Local)</button>
+<button onclick="triggerGlobalEaster()">Start Easter (Global)</button>
 <hr>
 
 <h3>Leaderboard Control</h3>
@@ -1568,6 +1690,8 @@ Show Hitboxes
   <hr>
   <button onclick="activateZoink()">Activate Zoink Fest</button>
   <button onclick="triggerGlobalZoink()">Start Zoink Fest (Global)</button>
+<button onclick="startLocalEaster()">Start Easter (Local)</button>
+<button onclick="triggerGlobalEaster()">Start Easter (Global)</button>
   <hr>
   <h3>Player Commands</h3>
   <input id="liteTargetUID" placeholder="Player UID"><br><br>
@@ -1698,6 +1822,36 @@ saveplayerstats()
 
 startEventSystem();
 
+function spawnEgg(){
+  const egg = document.createElement("div");
+  egg.className = "egg";
+  egg.innerText = "🥚";
+
+  egg.style.left = Math.random() * 100 + "vw";
+  egg.style.animationDuration = (3 + Math.random()*3) + "s";
+
+  document.getElementById("fallingEggs").appendChild(egg);
+
+  setTimeout(()=>egg.remove(), 6000);
+}
+
+setInterval(()=>{
+  if(window.easterActive){
+    spawnEgg();
+  }
+}, 300);
+
+setInterval(()=>{
+  updateCarrotUI()
+}, 300);
+
+function updateCarrotUI(){
+  const el = document.getElementById("carrotDisplay");
+  if (!el) return;
+
+  el.innerText = `Carrots🥕: ${save.carrots || 0}`;
+}
+
 function updateEventTiming(){
 
 const now = new Date();
@@ -1739,6 +1893,52 @@ showAnnouncement("Event 🎉", formatEvent(currentEvent));
 
 }
 
+
+let easterTimer = null;
+
+function startEasterEvent(data){
+
+
+document.body.classList.add("easterActive");
+  if(window.easterActive) return;
+  window.easterActive = true;
+
+  let timeLeft = Math.floor((data.easterEnd - Date.now()) / 1000);
+
+  showAnnouncement(data.spawnedBy || "System", "Started Easter Event 🐣");
+
+  if(easterTimer) clearInterval(easterTimer);
+
+  easterTimer = setInterval(()=>{
+
+    timeLeft--;
+
+    const div = document.getElementById("easterEvent");
+    if(div){
+      const m = Math.floor(timeLeft/60);
+      const s = timeLeft%60;
+      div.innerText = `Easter Event: ${m}:${s.toString().padStart(2,'0')}`;
+      div.classList.remove("hidden");
+    }
+
+    if(timeLeft <= 0){
+      deactivateEaster();
+    }
+
+  },1000);
+}
+
+function deactivateEaster(){
+  window.easterActive = false;
+document.body.classList.remove("easterActive");
+  if(easterTimer){
+    clearInterval(easterTimer);
+    easterTimer = null;
+  }
+
+  const div = document.getElementById("easterEvent");
+  if(div) div.classList.add("hidden");
+}
 
 function updateEventUI(){
 
@@ -1827,26 +2027,6 @@ box.innerHTML = "";
 const prog = Math.min(save.eventData.completed / 100 * 100, 100);
 document.getElementById("bpProgress").style.setProperty("--progress", prog + "%");
 
-if(!window.zoinkActive){
-
-box.innerHTML = `
-<div style="
-position:absolute;
-inset:0;
-background:rgba(0,0,0,0.7);
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:20px;
-">
-<p>Wait for Zoink Fest to complete quests</p>
-<button onclick="backToMenu()">Ok</button>
-</div>
-
-`;
-
-return;
-}
 
 save.eventData.quests.forEach((q,i)=>{
 
@@ -2016,6 +2196,27 @@ save.eventData.quests.push(randomQuest());
 
 }
 
+function showRewards(){
+  document.getElementById("bunnyDialogue").innerHTML = `
+    <b>Possible Rewards:</b><br><br>
+
+    500 Coins — Common (50%)<br>
+    1500 Coins — Rare (30%)<br>
+    Egg Blade — Limited (15%)<br>
+    Golden Carrot Blade — Limited (5%)
+  `;
+}
+
+function showHowTo(){
+  document.getElementById("bunnyDialogue").innerHTML = `
+    <b>How to Play:</b><br><br>
+
+    🥕 Win matches to earn carrots<br>
+    🎁 Give 10 carrots to get rewards<br>
+    🐣 Limited items only available during event!
+  `;
+}
+
 function showEndScreen(win, coins){
 
 endScreen.classList.remove("hidden");
@@ -2047,6 +2248,35 @@ q.progress += coins;
 
 });
 
+// 🥕 Easter carrots reward
+if (window.easterActive) {
+  const rand = Math.random();
+  let carrots = 0;
+
+  if (rand < 0.5) carrots = 1;
+  else if (rand < 0.8) carrots = 2;
+  else carrots = 3;
+
+  save.carrots = (save.carrots || 0) + carrots;
+
+  // 🔥 STORE FOR END SCREEN
+  window.lastCarrotsEarned = carrots;
+
+  savePlayerStats();
+}
+
+// 🥕 Show carrots earned (ONLY during Easter)
+if (window.easterActive) {
+  const carrotsEarned = window.lastCarrotsEarned || 0;
+
+  const el = document.createElement("div");
+  el.style.fontSize = "20px";
+  el.style.marginTop = "10px";
+  el.innerText = `🥕 +${carrotsEarned} Carrots`;
+
+  document.getElementById("endScreen").appendChild(el);
+}
+
 saveData();
 }
 
@@ -2057,7 +2287,7 @@ function switchEventTab(id, btn) {
   btn.classList.add("active");
 
   document.getElementById("zoinkTab").classList.add("hidden");
-  document.getElementById("comingSoonTab").classList.add("hidden");
+  document.getElementById("easterTab").classList.add("hidden");
 
   document.getElementById(id).classList.remove("hidden");
 }
@@ -2310,6 +2540,56 @@ window.prevHat = save.hat;
 p1El.innerHTML = makeStick(save.color, save.sword);
 
 p1El.innerHTML = makeStick(save.color, save.sword);
+}
+
+function giveCarrots(){
+
+  const dialogue = document.getElementById("bunnyDialogue");
+
+  if((save.carrots || 0) < 10){
+    updateBunnyText("You need 10 carrots first!");
+    return;
+  }
+
+  save.carrots -= 10;
+
+  const rand = Math.random();
+  let reward;
+
+  if(rand < 0.40){
+    reward = { type:"coins", amount:750 };
+  }
+  else if(rand < 0.70){
+    reward = { type:"coins", amount:2000 };
+  }
+  else if(rand < 0.90){
+    reward = { type:"hat", name:"Bunny Ears" };
+  }
+  else if(rand < 0.98){
+    reward = { type:"sword", name:"Egg Blade" };
+  }
+  else{
+    reward = { type:"wins", amount:5 };
+  }
+
+  giveReward(reward);
+}
+
+function updateBunnyText(text){
+
+  const el = document.getElementById("bunnyDialogue");
+
+  let i = 0;
+  el.innerText = "";
+
+  const interval = setInterval(()=>{
+    el.innerText += text[i];
+    i++;
+
+    if(i >= text.length){
+      clearInterval(interval);
+    }
+  }, 20);
 }
 
 
@@ -2776,6 +3056,35 @@ function goToMenu(){
 location.reload(); // or load your menu scene
 }
 
+function giveReward(reward){
+
+function giveReward(reward){
+
+  if(reward.type === "coins"){
+    save.coins += reward.amount;
+    updateBunnyText(`You got ${reward.amount} coins!`);
+  }
+
+  else if(reward.type === "hat"){
+    save.hatUnlocks = save.hatUnlocks || [];
+    save.hatUnlocks.push(reward.name);
+    updateBunnyText(`You got ${reward.name}!`);
+  }
+
+  else if(reward.type === "sword"){
+    unlockSword(reward.name);
+    updateBunnyText(`You got ${reward.name}!`);
+  }
+
+  else if(reward.type === "wins"){
+    save.wins += reward.amount;
+    updateBunnyText(`+${reward.amount} Wins!`);
+  }
+
+  saveData();
+}
+}
+
 function updateEventUI(){
 
 const el = document.getElementById("eventDisplay");
@@ -2907,6 +3216,7 @@ ${e.mult}x ${e.type} for ${e.duration} min
 }
 
 function openEventsMenu(){
+
 
 const menu = document.getElementById("menu");
 const eventsMenu = document.getElementById("eventsMenu");
@@ -3782,7 +4092,7 @@ function renderLeaderboard(){
     }
 
     if(leaderboardTab === "event"){
-      const completed = p.eventData?.completed || 0;
+      players.sort((a,b)=>(b.carrots||0)-(a.carrots||0));
 
       let milestone = "None";
       if(completed >= 100) milestone = "100";
@@ -3790,7 +4100,7 @@ function renderLeaderboard(){
       else if(completed >= 50) milestone = "50";
       else if(completed >= 25) milestone = "25";
 
-      div.textContent = `${p.name} | Quests: ${completed} | Milestone: ${milestone}`;
+      div.textContent = `${p.name} | ${p.carrots || 0} 🥕`;
     }
 
     list.appendChild(div);
@@ -3954,6 +4264,7 @@ async function savePlayerStats() {
     snap.forEach(d=>{
       if(d.id === user.uid){
         username = d.data().username;
+       updateCarrotUI();
       }
     });
 saveData();
@@ -3970,7 +4281,8 @@ saveData();
     EventRewards: save.bpRewards,
     sword: save.sword,
     rollSowrds: save.unlockedRollSwords,
-    eventSwords: save.unlockedSpecial
+    eventSwords: save.unlockedSpecial,
+    carrots: save.carrots
   };
   
   await setDoc(playerRef, playerData, { merge: true });
