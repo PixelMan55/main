@@ -1,30 +1,5208 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login to PixelMan</title>
-    <link rel="stylesheet" type="text/css" href="style3.css">
-    <link rel="icon" href="7828e0e0-1679-47af-9b6b-055fb1c6572b.gif">
-    <script src="script.js"></script>
-    <audio src="menuLoop.mp3" autoplay loop></audio>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Teko:wght@300..700&display=swap" rel="stylesheet">
+<script type="module">
+import { getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { setPersistence, browserLocalPersistence }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDocs, collection, onSnapshot } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBGRZF0m1WbGFCw1H9SPRYszvO_34UPYes",
+  authDomain: "stickman-fighting-5bc1f.firebaseapp.com",
+  projectId: "stickman-fighting-5bc1f",
+  storageBucket: "stickman-fighting-5bc1f.firebasestorage.app",
+  messagingSenderId: "728024005848",
+  appId: "1:728024005848:web:7e2c59b4be2658987c2bad",
+  measurementId: "G-ZY4L50RKSB"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+setPersistence(auth, browserLocalPersistence)
+.catch(e=>console.error(e));
+const db = getFirestore(app);
+
+const globalEventRef = doc(db, "global", "events");
+
+onSnapshot(globalEventRef, (snap) => {
+  const data = snap.data();
+  if (!data) return;
+
+  // ❌ DO NOT auto-run if no event
+  if (!data.zoinkStart || !data.zoinkEnd) return;
+
+  const now = Date.now();
+
+  // ✅ ONLY run if event is ACTIVE
+  if (now >= data.zoinkStart && now < data.zoinkEnd) {
+    activateZoink(data);
+  }
+
+  // ✅ STOP instantly if expired
+  if (now >= data.zoinkEnd) {
+    deactivateZoink();
+  }
+});
+
+window.auth = auth;
+window.db = db;
+window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+window.setDoc = setDoc;
+window.doc = doc;
+window.getDocs = getDocs;
+window.collection = collection;
+
+window.triggerGlobalZoink = async function() {
+  await setDoc(doc(db, "global", "events"), {
+    zoinkStart: Date.now(),
+    zoinkEnd: Date.now() + (15 * 60 * 1000), // 15 min
+    spawnedBy: auth.currentUser?.email || "System"
+  });
+};
+
+</script>
+<meta charset="UTF-8">
+<title>Pixel Stickman Fighting</title>
+<link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTWaGDop7Y1PylY6vILfMcZyf4IMDc_TTe4Jw&s">
+
+<style>
+body{margin:0;background:#222;color:white;font-family:Arial;text-align:center}
+button,select{padding:10px;font-size:16px;margin:6px}
+.hidden{display:none}
+
+.rollReveal{
+font-size:30px;
+animation: glowReveal 1s ease;
+}
+
+@keyframes glowReveal{
+
+0%{
+transform:scale(0.6);
+opacity:0;
+filter:blur(10px);
+}
+
+100%{
+transform:scale(1);
+opacity:1;
+
+}
+
+}
+
+
+#game{
+  width:800px;height:400px;margin:20px auto;
+  background:linear-gradient(#444,#222);
+  border:2px solid white;
+  position:relative;
+  overflow:hidden
+}
+
+.admin-console{
+background:#000;
+color:#00ff9c;
+font-family:monospace;
+width:420px;
+height:300px;
+border:2px solid #00ff9c;
+display:flex;
+flex-direction:column;
+}
+
+.blessedReveal{
+
+font-size:40px;
+font-weight:bold;
+
+color:gold;
+
+text-shadow:
+0 0 10px gold,
+0 0 20px gold,
+0 0 40px gold;
+
+animation: blessedPop 1.4s ease;
+
+}
+
+@keyframes blessedPop{
+
+0%{
+transform:scale(0.3) rotate(-8deg);
+opacity:0;
+filter:blur(10px);
+}
+
+60%{
+transform:scale(1.2);
+}
+
+100%{
+transform:scale(1);
+opacity:1;
+filter:blur(0);
+}
+
+}
+
+.console-header{
+background:#111;
+padding:6px;
+text-align:center;
+border-bottom:1px solid #00ff9c;
+}
+
+.console-output{
+flex:1;
+overflow-y:auto;
+padding:6px;
+font-size:13px;
+}
+
+.console-input-row{
+display:flex;
+border-top:1px solid #00ff9c;
+}
+
+.console-prefix{
+padding:6px;
+}
+
+#consoleInput{
+flex:1;
+background:black;
+border:none;
+color:#00ff9c;
+outline:none;
+font-family:monospace;
+padding:6px;
+}
+
+/* MENUS */
+#menu,#editor,#achievements{margin-top:30px}
+
+
+
+.leaderboard {
+  margin: auto;
+  background: #111;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.6);
+}
+
+.lbRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  margin: 6px 0;
+  background: #1f1f1f;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+
+.lbRow:hover {
+  transform: scale(1.03);
+  background: #2a2a2a;
+}
+
+.lbRank {
+  font-weight: bold;
+  color: gold;
+}
+
+.lbTop1 { background: linear-gradient(90deg, gold, orange); color:black; }
+.lbTop2 { background: silver; color:black; }
+.lbTop3 { background: #cd7f32; color:black; }
+
+/*gamblling css*/
+
+#coinDisplay{
+position:absolute;
+top:10px;
+right:20px;
+display:flex;
+align-items:center;
+gap:8px;
+font-size:22px;
+font-weight:bold;
+}
+
+#coinDisplay img{
+width:32px;
+height:32px;
+image-rendering:pixelated;
+}
+
+
+/* SWORD GRID */
+#swordGrid{
+  display:grid;
+  grid-template-columns:repeat(4,150px);
+  gap:12px;
+  justify-content:center
+}
+.swordCard{
+  border:2px solid white;
+  background:#333;
+  padding:6px;
+  cursor:pointer
+}
+
+#menu button{
+transition:0.2s;
+}
+
+#menu button:hover{
+transform:scale(1.05);
+box-shadow:0 0 13px gold;
+background:linear-gradient(to left, gold, blue);
+}
+
+.swordCard.locked{opacity:.4;cursor:default}
+.swordCard.selected{outline:3px solid gold}
+.swordName{font-weight:bold}
+
+/* RARITY COLORS */
+.r-common{border-color:#bbb}
+.r-decent{border-color:#4caf50}
+.r-great{border-color:#2196f3}
+.r-insane{border-color:#9c27b0}
+.r-alienish{border-color:#00ffcc;box-shadow:0 0 8px #00ffcc}
+.r-demonic{border-color:#ff1744;box-shadow:0 0 10px #ff1744}
+.r-blessed{border-color:gold;box-shadow:0 0 12px gold}
+.r-exclusive{border-color:blue;box-shadow:0 0 14px blue}
+.r-limited{border-color:orange;box-shadow:0 0 16px orange}
+
+.swordBox{
+  width:100px;height:50px;
+  border:2px solid white;
+  margin:6px auto;
+  background:#111;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative
+}
+.swordMini{
+  height:4px;
+  background:#eee;
+  position:relative
+}
+.swordMini::before{
+  content:"";
+  position:absolute;
+  left:-6px;
+  top:-3px;
+  width:6px;
+  height:10px;
+  background:#6b3f1d
+}
+
+.hatPreview{
+position:relative;
+width:40px;
+height:20px;
+margin:0 auto;
+}
+
+.hatPreview .hat{
+position:relative;
+top:0;
+left:0;
+transform:none;
+margin:auto;
+}
+.hatBox{
+display:flex;
+align-items:center;
+justify-content:center;
+height:50px;
+}
+
+.lock{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:24px
+}
+.swordStats{font-size:11px}
+
+/* ACHIEVEMENTS */
+.achievement{
+  width:320px;
+  margin:10px auto;
+  border:2px solid white;
+  background:#333;
+  padding:10px
+}
+.achievement.locked{opacity:.4}
+
+
+/* HEAD */
+.head{
+  width:26px;
+  height:26px;
+  background:var(--c);
+  border-radius:50%;
+  box-shadow:0 0 4px rgba(0,0,0,0.4);
+}
+
+.fighter{
+  position:absolute;
+  width:70px;
+  height:170px;
+}
+
+/dr/
+
+#dailyRewardBtn{
+position:fixed;
+bottom:15px;
+right:15px;
+background:gold;
+color:black;
+border:none;
+padding:12px 16px;
+font-weight:bold;
+border-radius:10px;
+cursor:pointer;
+box-shadow:0 0 10px gold;
+z-index:1000;
+}
+
+#dailyRewardBtn:hover{
+transform:scale(1.05);
+}
+
+/* INNER STICK CONTAINER */
+.fighter > div{
+  position:relative;
+  width:70px;
+  height:170px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.facingLeft .weapon{
+  right:auto;
+  left:-8px;
+}
+
+.facingRight .weapon{
+  left:auto;
+  right:-8px;
+}
+/* HEAD */
+.head{
+  width:26px;
+  height:26px;
+  background:var(--c);
+  border-radius:50%;
+  box-shadow:0 0 4px rgba(0,0,0,0.4);
+}
+
+/* BODY */
+.body{
+  width:12px;
+  height:46px;
+  background:var(--c);
+  border-radius:20px;
+  margin-top:4px;
+  box-shadow:0 0 4px rgba(0,0,0,0.4);
+}
+
+/* ARMS */
+.arms{
+  position:absolute;
+  top:50px;             /* centered vertically */
+  left:50%;             /* center horizontally */
+  transform:translateX(-50%);
+  width:50px;
+  height:10px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  transition:transform .12s;
+}
+
+.armBar{
+  width:50px;
+  height:10px;
+  background:var(--c);
+  border-radius:20px;
+  position:relative;
+  box-shadow:0 0 3px rgba(0,0,0,0.3);
+}
+
+.swing{
+  transform:translateX(-50%) rotate(65deg);
+}
+
+.hat{
+position:absolute;
+top:-18px;
+left:50%;
+transform:translateX(-50%);
+width:22px;
+height:12px;
+pointer-events:none;
+}
+
+.hat{
+position:absolute;
+left:50%;
+transform:translateX(-50%);
+pointer-events:none;
+}
+
+/* 👑 crown */
+.hat.crown{ top:-16px; }
+
+/* 🎩 top hat */
+.hat.tophat{ top:-20px; }
+
+/* 😇 halo (already good) */
+.hat.halo{ top:-28px; }
+
+/* 🥷 ninja */
+.hat.ninja{ top:-12px; }
+
+/* 🧢 cap */
+.hat.cap{ top:-14px; }
+
+.hat.crown{
+background:gold;
+clip-path:polygon(0 100%,20% 0,40% 100%,60% 0,80% 100%,100% 0,100% 100%);
+}
+
+.hat.halo{
+border:3px solid yellow;
+border-radius:50%;
+background:transparent;
+height:8px;
+}
+
+.attackMove{
+  transform:translateY(16px);
+}
+
+.hatPreview .hat.crown{ top:0; }
+.hatPreview .hat.tophat{ top:0; }
+.hatPreview .hat.ninja{ top:0; }
+.hatPreview .hat.cap{ top:0; }
+
+/* WEAPON */
+.weapon{
+  position:absolute;
+  right:-8px;              /* attach to right end of arm */
+  top:-28px;               /* lift above arm */
+  width:6px;
+  height:auto;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  transition:transform .15s ease;
+  transform-origin: top center;
+}
+
+.handle{
+  width:6px;
+  height:14px;
+  background:#6b3f1d;
+  border-radius:3px;
+}
+
+.blade{
+  width:6px;
+height:32px;
+  background:#eee;
+  border-radius:4px;
+}
+
+.legs{
+  position:relative;
+  width:36px;
+  height:36px;   /* increased from 30px */
+  margin-top:2px;
+}
+
+.legs::before,
+.legs::after{
+  content:"";
+  position:absolute;
+  top:0;
+  width:10px;
+  height:40px;   /* increased from 32px */
+  background:var(--c);
+  border-radius:20px;
+  box-shadow:0 0 3px rgba(0,0,0,0.3);
+  transform-origin:top center;
+}
+
+#adminBtn{
+position:absolute;
+top:10px;
+left:10px;
+padding:6px 10px;
+font-size:12px;
+}
+
+/* WALKING ANIMATION */
+.walking .legs::before{
+  animation:walkLeft .18s infinite alternate ease-in-out;
+}
+
+.walking .legs::after{
+  animation:walkRight .18s infinite alternate ease-in-out;
+}
+
+@keyframes walkLeft{
+  from{ transform:translateX(-50%) rotate(35deg); }
+  to{   transform:translateX(-50%) rotate(10deg); }
+}
+
+@keyframes walkRight{
+  from{ transform:translateX(-50%) rotate(-35deg); }
+  to{   transform:translateX(-50%) rotate(-10deg); }
+}
+
+/* left leg */
+.legs::before{
+  left:50%;
+  transform:translateX(-50%) rotate(25deg);
+}
+
+/* right leg */
+.legs::after{
+  left:50%;
+  transform:translateX(-50%) rotate(-25deg);
+}.health{position:absolute;top:10px;height:10px;background:red}
+.healthText{position:absolute;top:24px;font-size:12px}
+#p1-health{left:10px}
+#p2-health{right:10px}
+#p1-text{left:10px}
+#p2-text{right:10px}
+
+/* TOGGLE SWITCH */
+
+.switch{
+position:relative;
+display:inline-block;
+width:50px;
+height:26px;
+}
+
+#hatGrid{
+  display:grid;
+  grid-template-columns:repeat(4,150px);
+  gap:12px;
+  justify-content:center;
+}
+
+.hatCard{
+  border:2px solid white;
+  background:#333;
+  padding:6px;
+  cursor:pointer;
+}
+
+.hatCard.selected{
+  outline:3px solid gold;
+}
+
+.hatBox{
+  width:100px;
+  height:50px;
+  border:2px solid white;
+  margin:6px auto;
+  background:#111;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.hatItem.selected{
+border-color:gold;
+}
+
+.switch input{
+opacity:0;
+width:0;
+height:0;
+}
+
+/* 🎩 TOP HAT */
+.hat.tophat{
+width:18px;
+height:10px;
+background:black;
+border-radius:2px;
+}
+.hat.tophat::after{
+content:"";
+position:absolute;
+bottom:-4px;
+left:-4px;
+width:26px;
+height:4px;
+background:black;
+border-radius:2px;
+}
+
+/* 🥷 NINJA */
+.hat.ninja{
+width:20px;
+height:6px;
+background:black;
+border-radius:2px;
+}
+
+/* 🧢 CAP */
+.hat.cap{
+width:18px;
+height:8px;
+background:red;
+border-radius:10px 10px 0 0;
+}
+.hat.cap::after{
+content:"";
+position:absolute;
+right:-6px;
+top:3px;
+width:8px;
+height:3px;
+background:red;
+border-radius:2px;
+}
+
+.slider{
+position:absolute;
+cursor:pointer;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background-color:#777;
+transition:.25s;
+border-radius:26px;
+}
+
+.slider:before{
+position:absolute;
+content:"";
+height:20px;
+width:20px;
+left:3px;
+bottom:3px;
+background:white;
+transition:.25s;
+border-radius:50%;
+}
+
+.switch input:checked + .slider{
+background:#4caf50;
+}
+
+.switch input:checked + .slider:before{
+transform:translateX(24px);
+}
+#rollDisplay{
+position:relative;
+height:120px;
+margin-top:20px;
+overflow:hidden;
+}
+
+.blessedReveal{
+font-size:40px;
+font-weight:bold;
+color:gold;
+text-align:center;
+
+text-shadow:
+0 0 8px gold,
+0 0 16px gold,
+0 0 32px gold;
+
+animation: blessedPop 1.2s ease;
+}
+
+@keyframes blessedPop{
+
+0%{
+transform:scale(0.4);
+opacity:0;
+}
+
+60%{
+transform:scale(1.25);
+}
+
+100%{
+transform:scale(1);
+opacity:1;
+}
+
+}
+
+.hat.zoink{
+background:url("https://pixelman55.github.io/main/cube_1.png") no-repeat center;
+background-size:contain;
+
+width:25px;
+height:25px;
+
+/* 🔥 PERFECT POSITION */
+top:-22px;
+left:50%;
+transform:translateX(-50%);
+}
+
+.tabBar{
+  display:flex;
+  gap:6px;
+  margin-bottom:10px;
+}
+
+.tab{
+  flex:1;
+  padding:8px;
+  background:#222;
+  color:white;
+  border:none;
+  cursor:pointer;
+  border-radius:6px 6px 0 0;
+  opacity:0.6;
+  transition:0.2s;
+}
+
+.tab:hover{
+  opacity:1;
+}
+
+.tab.active{
+  background:#111;
+  border-bottom:2px solid gold;
+  opacity:1;
+  font-weight:bold;
+}
+
+.exclusiveText{
+background: linear-gradient(90deg,#00c6ff,#0044ff);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+font-weight:bold;
+}
+
+.battlepass{
+padding:20px;
+color:white;
+}
+
+#bpProgress{
+height:20px;
+background:#222;
+border-radius:10px;
+margin-bottom:15px;
+overflow:hidden;
+}
+
+#bpProgress::after{
+content:"";
+display:block;
+height:100%;
+background:linear-gradient(90deg, cyan, purple);
+width:var(--progress);
+transition:0.3s;
+}
+
+.bpRewards{
+display:flex;
+justify-content:space-between;
+margin-top:15px;
+}
+
+.tier{
+background:#111;
+padding:10px;
+border-radius:10px;
+}
+
+.settingsCard{
+background:#1a1a1a;
+padding:25px;
+border-radius:14px;
+width:320px;
+margin:auto;
+display:flex;
+flex-direction:column;
+gap:15px;
+box-shadow:0 0 20px rgba(0,0,0,0.5);
+animation:fadeIn .25s ease;
+}
+
+.settingRow{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.settingsCard input[type="range"]{
+width:140px;
+}
+
+@keyframes fadeIn{
+from{opacity:0; transform:scale(0.9);}
+to{opacity:1; transform:scale(1);}
+}
+
+#eventGlow{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+pointer-events:none;
+z-index:999;
+
+opacity:0;
+transition:0.5s;
+}
+
+#zoinkGlow{
+position:fixed;
+top:0;
+left:0;
+width:100vw;
+height:100vh;
+pointer-events:none;
+z-index:9999;
+
+background:linear-gradient(45deg, cyan, blue);
+background-size:300% 300%;
+
+opacity:0;
+transition:0.3s;
+
+/* 🔥 thinner edge glow */
+mask:radial-gradient(circle at center, transparent 75%, black 100%);
+-webkit-mask:radial-gradient(circle at center, transparent 75%, black 100%);
+}
+
+.battlepass{
+color:white;
+padding:20px;
+}
+
+#bpProgress{
+height:20px;
+background:#222;
+border-radius:10px;
+overflow:hidden;
+margin-bottom:10px;
+}
+
+#bpProgress::after{
+content:"";
+display:block;
+height:100%;
+background:linear-gradient(90deg, cyan, purple);
+width:var(--progress);
+transition:0.3s;
+}
+
+#eventQuests div{
+background:#111;
+padding:10px;
+margin:8px 0;
+border-radius:10px;
+}
+
+.bpRewards{
+display:flex;
+justify-content:space-between;
+margin-top:20px;
+}
+
+.tier{
+background:#111;
+padding:10px;
+border-radius:10px;
+}
+
+</style>
 </head>
+
 <body>
-    <div class="form">
-    <p>Login</p>
-        <input type="text" name="username" id="usernameinput" placeholder="username" oninput="login()">
-        <input type="password" name="password" placeholder="password" id="passwordinput">
-        <button onclick="submit()">Login</button>
-        <p class="message">No account? <a href="signup.html">Create one!</a></p>
-        <p id="Messsage_incorrect"></p>
-    </div>
-    <div class="codediv">
-    <button class="Code" onclick="code()">code</button>
+
+<div id="menu">
+<div id="coinDisplay">
+<img src="https://e7.pngegg.com/pngimages/1003/599/png-clipart-pixel-art-mario-coin-text-rectangle-thumbnail.png">
+<span id="coinText">0</span>
 </div>
+  <h1>Pixel Stickman Fighting</h1>
+<div id="announcementBar" style="color:gold;margin:10px;font-weight:bold"></div>
+<div id="userBar"></div>
+  <label><b>Choose Difficulty:</b>
+    <select id="difficulty"></select>
+  </label><br>
+<button id="adminBtn" onclick="openAdmin()" style="display:none">AP</button>
+  <button onclick="startGame()">Play ⚔️</button>
+  <button onclick="openEditor()">Edit Character 🎨</button>
+  <button onclick="openRoll()">Roll 🎲</button>
+  <button onclick="openAchievements()">Achievements ✅</button>
+  <button onclick="openStats()">Stats 👌</button>
+  <button onclick="window.location='https://forms.gle/d8683hHXeeWaPd5z8'">Poll 🗳️
+</button>
+    <button onclick="window.location='https://pixelman55.github.io/main/log'">Update Log 📝</button>
+<br><br>
+
+
+<button onclick="openLeaderboard()">Leaderboard 🏆</button>
+<button id="dailyRewardBtn" onclick="claimDailyReward()">🎁 Daily Reward</button><button onclick="openEventsMenu()">Events 🥳</button>
+<button onclick="openEventQuests()">Event Quests 👑</button>
+<br><br>
+<button onclick="openLogin()">Login</button>
+<button onclick="openSignup()">Sign Up</button>
+<button onclick="openSettings()">⚙️ Settings</button>
+
+</div>
+
+<div id="eventsMenu" class="hidden">
+
+<h2>Events</h2>
+<div id="eventsTable"></div>
+
+<button onclick="closeEventsMenu()">Close</button>
+
+</div>
+
+<div id="editor" class="hidden">
+  <h2>Edit Character</h2>
+  <input type="color" id="colorPicker"><br><br>
+<h2>Select Hat</h2>
+
+<div id="hatGrid" class="grid"></div>
+
+<h2>Select Sword</h2>
+  <div id="swordGrid"></div>
+  <button onclick="backToMenu()">Back</button>
+</div>
+
+<div id="achievements" class="hidden">
+  <h2>Achievements</h2>
+  <div id="achList"></div>
+  <button onclick="backToMenu()">Back</button>
+</div>
+
+<div id="stats" class="hidden">
+  <h2>Stats</h2>
+  <div id="statsContent"></div>
+  <button onclick="backToMenu()">Back</button>
+</div>
+
+<div id="fpsCounter" style="
+position:fixed;
+top:10px;
+left:10px;
+color:lime;
+font-family:monospace;
+display:none;
+z-index:2000;
+">
+FPS: 0
+</div>
+<div id="endScreen" class="hidden" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+z-index:3000;
+justify-content:center;
+align-items:center;
+">
+
+<div style="
+background:#222;
+padding:30px;
+border-radius:12px;
+text-align:center;
+color:white;
+width:300px;
+">
+
+<h2 id="endTitle"></h2>
+<p id="endCoins"></p>
+
+<button onclick="playAgain()">Play Again</button><br><br>
+<button onclick="backToMenu()">Main Menu</button>
+
+</div>
+</div>
+<div id="pauseMenu" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+z-index:999;
+justify-content:center;
+align-items:center;
+">
+
+
+
+
+
+<div style="
+background:#222;
+padding:30px;
+border-radius:12px;
+text-align:center;
+color:white;
+width:300px;
+">
+
+<h2>Paused</h2>
+
+<button onclick="resumeGame()">Continue</button><br><br>
+<button onclick="backToMenu()">Main Menu</button><br><br>
+
+<label>Volume</label><br>
+<input type="range" min="0" max="1" step="0.01" id="volumeSlider"><br><br>
+
+<button onclick="toggleFullscreen()">Fullscreen</button><br><br>
+<button onclick="toggleFPS()">Toggle FPS</button>
+
+</div>
+</div>
+
+<div id="settingsMenu" class="hidden" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+z-index:3000;
+justify-content:center;
+align-items:center;
+">
+
+<div style="
+background:#222;
+padding:25px;
+border-radius:12px;
+color:white;
+width:320px;
+text-align:center;
+">
+
+<h2>Settings</h2>
+
+<label>Volume</label><br>
+<input type="range" id="volumeSlider" min="0" max="1" step="0.01"><br><br>
+
+<label>Show FPS</label><br>
+<input type="checkbox" id="fpsToggle"><br><br>
+
+<label>Max FPS</label><br>
+<input type="number" id="fpsLimit" min="1" max="240"><br><br>
+
+<button onclick="toggleFullscreen()">Fullscreen</button><br><br>
+
+<button onclick="closeSettings()">Close</button>
+
+</div>
+</div>
+
+<div id="eventDisplay" style="
+position:fixed;
+bottom:15px;
+right:15px;
+background:black;
+color:white;
+padding:10px;
+border-radius:8px;
+font-size:14px;
+z-index:2000;
+display:none;
+"></div>
+
+<div id="eventMenu" class="hidden" class="battlepass">
+
+<div class="tabBar">
+  <button class="tab active" onclick="switchEventTab('easterTab', this)">Easter Event</button>
+  <button class="tab active" onclick="switchEventTab('zoinkTab', this)">Zoink Fest</button>
+</div>
+
+<div id="easterTab">
+
+  <div style="text-align:center; margin-top:20px;">
+    <img src="https://i.imgur.com/9Qh6K0M.png" width="120">
+  </div>
+
+  <div id="bunnyDialogue" style="
+    background:#111;
+    border-radius:10px;
+    padding:15px;
+    margin:15px;
+    text-align:center;
+  ">
+    🐰 Hello! What would you like?
+  </div>
+
+  <div style="text-align:center;">
+    <button onclick="giveCarrots()">Give 10 Carrots</button>
+    <button onclick="showRewards()">Possible Rewards</button>
+    <button onclick="showHowTo()">How to Play</button>
+  </div>
+
+</div>
+
+<div id="zoinkTab">
+<h2>Zoink Fest Quests (Leaving 04/02)</h2>
+
+<!-- 🔥 PROGRESS -->
+<div id="bpProgress"></div>
+<div id="bpText"></div>
+
+<!-- 🔥 QUESTS -->
+
+
+<!-- 🔥 REWARDS -->
+<div class="bpRewards">
+
+<div class="tier">25 🎁 2,500 Coins</div>
+<div class="tier">50 🎩 Zoink Cube</div>
+<div class="tier">75 🎁 7,500 Coins</div>
+<div class="tier">100 ⚔️ The Zoink</div>
+
+</div>
+<div id="eventQuests" style="margin-top:20px;"></div></div>
+
+<br>
+<button onclick="backToMenu()">Back</button>
+
+</div>
+
+</div>
+<div id="rollPage" class="hidden">
+
+<h2>🎲 Sword Roll</h2>
+
+<h3>Drop Chances</h3>
+
+<table style="margin:auto;border-collapse:collapse">
+<tr>
+<th style="padding:6px;border:1px solid white">Sword</th>
+<th style="padding:6px;border:1px solid white">Rarity</th>
+<th style="padding:6px;border:1px solid white">Chance</th>
+</tr>
+
+<tr><td>Iron Saber</td><td>Decent</td><td>20%</td></tr>
+<tr><td>Knight Blade</td><td>Decent</td><td>20%</td></tr>
+
+<tr><td>Emerald Cutter</td><td>Great</td><td>15%</td></tr>
+<tr><td>Crystal Edge</td><td>Great</td><td>15%</td></tr>
+
+<tr><td>Storm Katana</td><td>Insane</td><td>10%</td></tr>
+<tr><td>Shadow Reaver</td><td>Insane</td><td>10%</td></tr>
+
+<tr><td>Void Greatsword</td><td>Alienish</td><td>3.50%</td></tr>
+
+<tr><td>Infernal Cleaver</td><td>Demonic</td><td>3.70%</td></tr>
+
+<tr><td>Divine Longblade</td><td>Blessed</td><td>0.10%</td></tr>
+<tr><td>Celestial Edge</td><td>Blessed</td><td>0.10%</td></tr>
+<tr><td>Mythic Halo Blade</td><td>Blessed</td><td>0.10%</td></tr>
+<tr><td>Celestial razor</td><td>Blessed</td><td>0.10%</td></tr>
+<tr><td>???</td><td>???</td><td>0.05%</td></tr>
+
+</table>
+
+<br>
+
+<button onclick="rollSword()">🎲 Roll (100 Coins)</button>
+
+
+
+<div id="rollReveal" style="
+margin-top:20px;
+font-size:32px;
+font-weight:bold;
+"></div>
+
+<br><br>
+
+<button onclick="backToMenu()">Back</button>
+
+</div><div id="adminPanel" class="hidden">
+
+<h2>ADMIN PANEL</h2>
+
+<!-- INPUT SECTION -->
+<h3>Inputs</h3>
+
+<div>
+
+Wins:
+<input type="number" id="adminWins">
+<button onclick="setWins()">Apply</button>
+
+<br><br>
+
+Losses:
+<input type="number" id="adminLosses">
+<button onclick="setLosses()">Apply</button>
+
+<br><br>
+
+Coins:
+<input type="number" id="adminCoins">
+<button onclick="setCoins()">Apply</button>
+
+</div>
+<input id="setEventQuestsInput" type="number" placeholder="Set Event Quests">
+<button onclick="setEventQuests()">Set Quests</button>
+  <br><hr>
+  <button onclick="activateZoink()">Activate Zoink Fest</button>
+<button onclick="triggerGlobalZoink()">Start Zoink Fest (Global)</button>
+<hr>
+
+<h3>Leaderboard Control</h3>
+
+<input id="deleteUserID" placeholder="Player UID">
+
+<button onclick="deletePlayer()">Ban Player</button>
+
+<hr>
+
+<h3>Spawn Event</h3>
+
+<select id="eventType">
+
+<option value="coins2">2x Coins</option>
+<option value="coins3">3x Coins</option>
+<option value="coins4">4x Coins</option>
+
+<option value="luck2">2x Luck</option>
+<option value="luck3">3x Luck</option>
+<option value="luck4">4x Luck</option>
+<option value="activateZoink()">4x Luck</option>
+</select>
+
+<input id="eventTime" placeholder="5:00 or 1:00:00">
+
+<button onclick="spawnEvent()">Spawn Event</button>
+<hr>
+
+<h3>Edit Roll Chances</h3>
+
+<input id="chanceDecent" placeholder="Decent %">
+<input id="chanceGreat" placeholder="Great %">
+<input id="chanceInsane" placeholder="Insane %">
+<input id="chanceAlienish" placeholder="Alienish %">
+<input id="chanceDemonic" placeholder="Demonic %">
+<input id="chanceBlessed" placeholder="Blessed %">
+<input id="chanceExclusive" placeholder="Exclusive %">
+
+<button onclick="updateRollChances()">Apply</button>
+<hr>
+
+<!-- TOGGLES -->
+<h3>Toggles</h3>
+
+<div>
+
+Launch Mode
+
+<label class="switch">
+<input type="checkbox" onchange="toggleLaunchMode()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Infinite Coins
+
+<label class="switch">
+<input type="checkbox" id="infiniteCoinsToggle" onchange="toggleInfiniteCoins()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+Show Hitboxes
+
+<label class="switch">
+<input type="checkbox" onchange="toggleHitboxes()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Unlock All Swords
+
+<label class="switch">
+<input type="checkbox" id="unlockAllToggle" onchange="toggleUnlockAll()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Invincible
+
+<label class="switch">
+<input type="checkbox" onchange="toggleInvincible()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Instakill
+
+<label class="switch">
+<input type="checkbox" onchange="toggleInstakill()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+</div>
+
+<hr>
+
+<!-- UNLOCK AREA -->
+<h3>Sword Controls</h3>
+
+<!-- Inject sword -->
+Give Sword (Injection):
+<select id="giveSword"></select>
+<button onclick="injectSword()">Give Sword</button>
+
+<br><br>
+
+<!-- Event sword -->
+Event Sword:
+<select id="eventSword"></select>
+<button onclick="giveEventSword()">Give Event Sword</button>
+
+<br><br>
+
+<!-- Unlock sword -->
+Unlock Specific Sword:
+<select id="swordDropdown"></select>
+<button onclick="unlockSelectedSword()">Unlock Sword</button>
+
+<br><br>
+
+Lock Specific Sword:
+<select id="lockSwordDropdown"></select>
+<button onclick="lockSelectedSword()">Lock Sword</button>
+
+<hr>
+
+<hr>
+
+<h3>Global Announcement</h3>
+
+<input id="announcementInput" placeholder="Write announcement">
+
+<button onclick="sendAnnouncement()">Send</button>
+<button onclick="clearAnnouncement()">Clear</button>
+
+<hr>
+
+<h3>Live Player List</h3>
+
+<input id="playerSearch" placeholder="Search player">
+<button onclick="loadPlayers()">Refresh</button>
+
+<div id="playerList" style="max-height:200px;overflow:auto"></div>
+
+<hr>
+
+<h3>Player Controls</h3>
+
+<input id="targetUID" placeholder="Player UID">
+
+<br><br>
+
+Coins:
+<input type="number" id="giveCoins">
+
+<button onclick="giveCoins()">Give Coins</button>
+
+<br><br>
+
+Sword:
+<select id="giveSword"></select>
+
+<button onclick="giveSword()">Give Sword</button>
+
+<br><br>
+
+
+
+<br>
+
+<button onclick="banPlayer()">Ban Player</button>
+<button onclick="unbanPlayer()">Unban Player</button>
+
+<br><br>
+
+<button onclick="shadowBan()">Shadow Ban</button>
+<button onclick="unshadowBan()">Remove Shadow Ban</button>
+
+<br><br>
+
+<button onclick="deleteAccount()" style="color:red">
+Delete Account
+</button>
+
+<hr>
+
+<h3>Server Log</h3>
+
+<div id="serverLog"
+style="
+height:160px;
+overflow:auto;
+background:#111;
+border:1px solid white;
+padding:6px;
+font-size:12px">
+</div>
+
+<hr>
+
+<div id="adminConsole" class="admin-console">
+<div class="console-header">Admin Console</div>
+
+<div id="consoleOutput" class="console-output"></div>
+
+<div class="console-input-row">
+<span class="console-prefix">></span>
+<input id="consoleInput" type="text" placeholder="type command..." autocomplete="off">
+</div>
+</div>
+<button onclick="runAdminCommand(consoleInput.value)">Execute</button>
+<button onclick="toggleConsole()">Console</button>
+
+<hr>
+
+<h3>Economy Controls</h3>
+
+Coin Multiplier
+<input type="number" id="coinMultiplier" value="1">
+
+<button onclick="setMultiplier()">Apply</button>
+
+<br><br>
+
+<button onclick="disableRolling()">Disable Rolling</button>
+<button onclick="enableRolling()">Enable Rolling</button>
+
+<hr>
+
+<h3>Event Swords</h3>
+
+<select id="eventSword"></select>
+
+<button onclick="enableEventSword()">Enable Event</button>
+<button onclick="disableEventSword()">Disable Event</button>
+
+<button onclick="backToMenu()">Exit</button>
+
+</div>
+
+
+<div id="liteAdminPanel" class="hidden">
+  <h2>LITE ADMIN PANEL</h2>
+
+<label>Invincible
+<label class="switch">
+<input type="checkbox" id="liteInvincible" onchange="toggleInvincible()">
+<span class="slider"></span>
+</label>
+</label>
+
+<br><br>
+
+<label>Instakill
+<label class="switch">
+<input type="checkbox" id="liteInstakill" onchange="toggleInstakill()">
+<span class="slider"></span>
+</label>
+</label>
+
+<br><br>
+
+Unlock All Swords
+
+<label class="switch">
+<input type="checkbox" id="unlockAllToggleLite" onchange="toggleUnlockAllLite()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Infinite Coins
+
+<label class="switch">
+<input type="checkbox" id="liteInfiniteCoins" onchange="toggleInfiniteCoins()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Show Hitboxes
+
+<label class="switch">
+<input type="checkbox" id="liteHitboxes" onchange="toggleHitboxes()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+  <hr>
+  <button onclick="activateZoink()">Activate Zoink Fest</button>
+  <button onclick="triggerGlobalZoink()">Start Zoink Fest (Global)</button>
+  <hr>
+  <h3>Player Commands</h3>
+  <input id="liteTargetUID" placeholder="Player UID"><br><br>
+
+  <button onclick="banPlayer()">Ban Player</button>
+  <button onclick="unbanPlayer()">Unban Player</button><br><br>
+
+  <button onclick="shadowBan()">Shadow Ban</button>
+  <button onclick="unshadowBan()">Remove Shadow Ban</button>
+
+  <hr>
+  <h3>Inputs</h3>
+  Wins: <input type="number" id="liteWins"><button onclick="setWinsLite()">Apply</button><br><br>
+  Losses: <input type="number" id="liteLosses"><button onclick="setLossesLite()">Apply</button><br><br>
+  Coins: <input type="number" id="liteCoins"><button onclick="setCoinsLite()">Apply</button><br><br>
+<input id="setEventQuestsInputLite" type="number" placeholder="Set Event Quests">
+<button onclick="setEventQuestsLite()">Set Quests</button>
+<hr>
+<h3>Live Player List</h3>
+
+<div id="playerListLite" style="max-height:200px;overflow:auto"></div>
+
+<hr>
+
+<h3>Server Log</h3>
+
+<div id="serverLogLite"
+style="
+height:120px;
+overflow:auto;
+background:#111;
+border:1px solid white;
+padding:6px;
+font-size:12px">
+</div>
+<hr>
+
+<h3>Sword Controls</h3>
+
+Unlock Specific Sword:
+
+<select id="liteSwordDropdown"></select>
+
+<button onclick="unlockLiteSword()">Unlock Sword</button>
+<br><br>
+
+Lock Specific Sword:
+<select id="liteLockSwordDropdown"></select>
+<button onclick="lockSelectedSwordLite()">Lock Sword</button>
+
+
+  <button onclick="backToMenu()">Exit</button>
+</div>
+
+<div id="eventDisplay" style="
+position:absolute;
+right:10px;
+bottom:10px;
+font-family:monospace;
+color:white;
+text-align:right;
+"></div>
+
+<div id="eventGlow"></div>
+
+<div id="zoinkGlow"></div>
+<script>
+
+let currentEvent = null;
+let eventEnd = 0;
+let nextEvent = null;
+let nextEventTime = 0;
+
+
+const eventsList = [
+{type:"luck", mult:2, duration:15},
+{type:"luck", mult:3, duration:10},
+{type:"luck", mult:4, duration:5},
+{type:"coins", mult:2, duration:15},
+{type:"coins", mult:3, duration:10},
+{type:"coins", mult:4, duration:5},
+];
+let leaderboardPage = 0;
+const playersPerPage = 10;
+let leaderboardPlayers = [];
+let lastFrameTime = performance.now();
+let settings = {
+volume:1,
+showFPS:false,
+fpsLimit:60
+};
+
+let adminLevel = "none";
+
+function startEventSystem(){
+
+setInterval(()=>{
+
+const now = new Date();
+const minutes = now.getMinutes();
+const seconds = now.getSeconds();
+
+// pick event at 45 min
+if(minutes === 45 && seconds < 2 && !nextEvent){
+nextEvent = pickRandomEvent();
+nextEventTime = Date.now() + (15*60*1000);
+}
+
+// start event at hour
+if(minutes === 0 && seconds < 2 && nextEvent){
+currentEvent = nextEvent;
+eventEnd = Date.now() + currentEvent.duration*60000;
+
+nextEvent = null;
+
+showAnnouncement("Event 🎉", formatEvent(currentEvent));
+}
+
+// 🔥 THIS WAS MISSING
+updateEventTiming();
+updateEventUI();
+renderEventsMenu();
+updateZoinkFest();
+saveplayerstats()
+},1000);
+
+}
+
+startEventSystem();
+
+function updateEventTiming(){
+
+const now = new Date();
+
+// 🕐 get next hour (1:00, 2:00, etc)
+const nextHour = new Date(now);
+nextHour.setMinutes(0,0,0);
+nextHour.setHours(now.getHours() + 1);
+
+// ⏱ time until next hour
+const timeUntilNext = nextHour.getTime() - now.getTime();
+
+// 🔮 pick next event if not already picked
+if(!nextEvent){
+nextEvent = pickRandomEvent();
+nextEventTime = nextHour.getTime();
+}
+
+// 🎉 start event exactly on the hour
+if(now.getMinutes() === 0 && now.getSeconds() < 2 && nextEvent){
+currentEvent = nextEvent;
+eventEnd = Date.now() + currentEvent.duration * 60000;
+
+// 🎯 APPLY EFFECT
+if(currentEvent.type === "luck"){
+luckMultiplier = currentEvent.mult;
+coinMultiplier = 1;
+}
+
+if(currentEvent.type === "coins"){
+coinMultiplier = currentEvent.mult;
+luckMultiplier = 1;
+}
+
+nextEvent = null;
+
+showAnnouncement("Event 🎉", formatEvent(currentEvent));
+}
+
+}
+
+
+function updateEventUI(){
+
+const el = document.getElementById("eventDisplay");
+if(!el) return;
+
+const now = Date.now();
+
+if(currentEvent && now < eventEnd){
+
+const timeLeft = Math.floor((eventEnd - now)/1000);
+const min = Math.floor(timeLeft/60);
+const sec = timeLeft % 60;
+
+el.style.display = "block";
+el.textContent = `${currentEvent.mult}x ${currentEvent.type} : ${min}:${sec.toString().padStart(2,"0")}`;
+
+if(glow){
+
+if(currentEvent.type === "luck"){
+glow.style.background = "rgba(128,0,255,0.2)";
+glow.style.boxShadow = "0 0 60px purple inset";
+}
+
+if(currentEvent.type === "coins"){
+glow.style.background = "rgba(255,215,0,0.2)";
+glow.style.boxShadow = "0 0 60px gold inset";
+}
+
+}else{
+el.style.display = "none";
+
+const glow = document.getElementById("eventGlow");
+
+
+
+glow.style.opacity = "1";
+
+}
+// 🔥 RESET when event ends
+if(currentEvent){
+currentEvent = null;
+luckMultiplier = 1;
+coinMultiplier = 1;
+}
+}
+
+
+}
+
+function isFastRoll(){
+return document.getElementById("fastRollToggle").checked;
+}
+// Check if current user is THEFIREMOUSE to show lite panel
+// Lite Admin Functions (reuse your main admin logic)
+function banPlayerLite() {
+  const uid = document.getElementById("liteTargetUID").value;
+  if(!uid) return alert("Enter a UID");
+  setDoc(doc(db,"players",uid), { banned:true }, { merge:true });
+  alert("Player banned");
+}
+
+function unbanPlayerLite() {
+  const uid = document.getElementById("liteTargetUID").value;
+  if(!uid) return alert("Enter a UID");
+  setDoc(doc(db,"players",uid), { banned:false }, { merge:true });
+  alert("Player unbanned");
+}
+
+function openEventQuests(){
+
+menu.classList.add("hidden");
+document.getElementById("eventMenu").classList.remove("hidden");
+
+renderEventQuests();
+
+}
+
+function renderEventQuests(){
+
+document.getElementById("bpText").textContent =
+"Completed: " + save.eventData.completed + " / 100";
+const box = document.getElementById("eventQuests");
+box.innerHTML = "";
+
+const prog = Math.min(save.eventData.completed / 100 * 100, 100);
+document.getElementById("bpProgress").style.setProperty("--progress", prog + "%");
+
+
+save.eventData.quests.forEach((q,i)=>{
+
+const done = q.progress >= q.goal;
+
+const div = document.createElement("div");
+
+div.innerHTML = `
+${q.text} (${q.progress}/${q.goal})
+<button onclick="claimQuest(${i})" ${!done ? "disabled" : ""}>
+Claim
+</button>
+`;
+
+box.appendChild(div);
+
+});
+}
+
+function checkEventMilestones(){
+
+const c = save.eventData.completed;
+
+save.bpRewards = save.bpRewards || {};
+
+if(c >= 25 && !save.bpRewards["25"]){
+save.coins += 2500;
+save.bpRewards["25"] = true;
+
+showMilestonePopup("25 Quests Completed", "2,500 Coins"); // ✅
+}
+
+if(c >= 50 && !save.bpRewards["50"]){
+save.hatUnlocks = save.hatUnlocks || [];
+save.hatUnlocks.push("zoink");
+save.bpRewards["50"] = true;
+
+showMilestonePopup("50 Quests Completed", "Zoink Hat"); // ✅
+}
+
+if(c >= 75 && !save.bpRewards["75"]){
+save.coins += 7500;
+save.bpRewards["75"] = true;
+
+showMilestonePopup("75 Quests Completed", "7,500 Coins"); // ✅
+}
+
+if(c >= 100 && !save.bpRewards["100"]){
+save.unlockedSpecial = save.unlockedSpecial || [];
+save.unlockedSpecial.push("zoink");
+save.bpRewards["100"] = true;
+
+showMilestonePopup("100 Quests Completed", "Zoink Sword"); // ✅
+}
+
+}
+
+function claimQuest(i){
+
+const q = save.eventData.quests[i];
+
+if(q.progress < q.goal) return;
+
+// reward
+save.coins += 50;
+save.eventData.completed++;
+
+// ✅ progress BEFORE replacing
+if(q.type === "quests"){
+save.eventData.completed++; // this is what that quest actually means
+}
+
+// replace quest AFTER
+save.eventData.quests[i] = randomQuest();
+// 🔥 SAVE FIX
+saveData();
+
+renderEventQuests();
+checkEventMilestones();
+}
+
+let zoinkGlobalTimer = null;
+
+
+function shadowBanLite() {
+  const uid = document.getElementById("liteTargetUID").value;
+  if(!uid) return alert("Enter a UID");
+  setDoc(doc(db,"players",uid), { shadowBan:true }, { merge:true });
+  alert("Player shadow banned");
+}
+
+function unshadowBanLite() {
+  const uid = document.getElementById("liteTargetUID").value;
+  if(!uid) return alert("Enter a UID");
+  setDoc(doc(db,"players",uid), { shadowBan:false }, { merge:true });
+  alert("Shadow ban removed");
+}
+
+function setEventQuests(){
+ 
+save.eventData.completed = Number(document.getElementById("setEventQuestsInput").value);
+
+alert("Set Quest Amount")
+
+saveData();
+}
+
+  function setEventQuestsLite(){
+ 
+save.eventData.completed = Number(document.getElementById("setEventQuestsInputLite").value);
+
+alert("Set Quest Amount")
+
+saveData();
+}
+
+function setWinsLite() {
+  save.wins = Number(document.getElementById("liteWins").value);
+  saveData();
+  alert("Wins updated");
+}
+
+function setLossesLite() {
+  save.losses = Number(document.getElementById("liteLosses").value);
+  saveData();
+  alert("Losses updated");
+}
+
+function playAgain(){
+document.getElementById("endScreen").style.display="none";
+startGame();
+}
+
+function goToMenu(){
+document.getElementById("endScreen").style.display="none";
+backToMenu();
+}
+
+function randomQuest(){
+
+const types = [
+{type:"wins", goal:3, text:"Win 3 games"},
+{type:"wins", goal:5, text:"Win 5 games"},
+{type:"coins", goal:50, text:"Earn 50 coins"},
+{type:"coins", goal:75, text:"Earn 75 coins"},
+{type:"roll", goal:2, text:"Roll 2 times"},
+{type:"roll", goal:3, text:"Roll 3 times"}
+];
+
+// 🔥 avoid duplicates
+let q;
+do{
+q = types[Math.floor(Math.random()*types.length)];
+}while(save.eventData.quests.some(x=>x.text === q.text));
+
+return {...q, progress:0};
+
+}
+
+function initEventQuests(){
+
+if(save.eventData.quests.length === 0){
+for(let i=0;i<3;i++){
+save.eventData.quests.push(randomQuest());
+}
+}
+
+}
+
+function showEndScreen(win, coins){
+
+endScreen.classList.remove("hidden");
+const screen = document.getElementById("endScreen");
+const title = document.getElementById("endTitle");
+const coinText = document.getElementById("endCoins");
+
+// ✅ safety fixes
+win = !!win;
+coins = Number(coins) || 0;
+
+title.textContent = win ? "You win! 🥳" : "You lose 😭";
+coinText.textContent = "+" + coins + " coins";
+
+screen.style.display = "flex";
+
+// ✅ quest system (fixed + safe)
+if(window.zoinkActive){
+
+save.eventData.quests.forEach(q=>{
+
+if(q.type === "wins" && win){
+q.progress++;
+}
+
+if(q.type === "coins"){
+q.progress += coins;
+}
+
+});
+
+// 🥕 Easter carrots reward
+if (window.easterActive) {
+  const rand = Math.random();
+  let carrots = 0;
+
+  if (rand < 0.5) carrots = 1;
+  else if (rand < 0.8) carrots = 2;
+  else carrots = 3;
+
+  playerData.carrots = (playerData.carrots || 0) + carrots;
+
+  showAnnouncement("Easter Bunny", `You got ${carrots} 🥕!`);
+}
+
+saveData();
+}
+
+}
+
+function switchEventTab(id, btn) {
+  document.querySelectorAll("#eventMenu .tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+
+  document.getElementById("zoinkTab").classList.add("hidden");
+  document.getElementById("easterTab").classList.add("hidden");
+
+  document.getElementById(id).classList.remove("hidden");
+}
+
+function setCoinsLite() {
+  save.coins = Number(document.getElementById("liteCoins").value);
+  updateCoins();
+  saveData();
+  alert("Coins updated");
+}
+
+// Call this on page load or login
+</script>
+
+<div id="loginPage" class="hidden" border-color="gold" background="red">
+
+<h2>Login</h2>
+
+<input id="loginEmail" placeholder="Email"><br><br>
+<input id="loginPass" type="password" placeholder="Password"><br><br>
+
+<button onclick="login()">Login</button>
+
+<br><br>
+
+
+<button onclick="backToMenu()">Back</button>
+
+</div>
+
+
+<div id="signupPage" class="hidden" border-color="gold" background="red">
+
+<h2>Sign Up</h2>
+
+<input id="signupUser" placeholder="Username"><br><br>
+<input id="signupEmail" placeholder="Email"><br><br>
+<input id="signupPass" type="password" placeholder="Password"><br><br>
+
+<button onclick="signup()">Create Account</button>
+
+<br><br>
+
+<button onclick="backToMenu()">Back</button>
+
+</div>
+
+<div id="leaderboard" class="hidden">
+
+<h2>🏆 Global Leaderboard</h2>
+
+
+<div class="tabBar">
+  <button id="tab_global" class="tab active" onclick="setLeaderboardTab('global')">Global</button>
+  <button id="tab_event" class="tab" onclick="setLeaderboardTab('event')">Event</button>
+</div>
+
+<div id="leaderboardList"></div>
+
+<div style="text-align:center;margin-top:10px">
+
+<button id="lbLeft" onclick="prevLeaderboardPage()">⬅️</button>
+
+<span id="lbPageCounter" style="margin:0 10px;">Page 1 / 1</span>
+
+<button id="lbRight" onclick="nextLeaderboardPage()">➡️</button>
+
+</div>
+
+<br>
+
+<button onclick="backToMenu()">Back</button>
+
+</div>
+
+<div id="profilePage" class="hidden">
+
+<h2>Player Profile</h2>
+
+<div id="profileContent"></div>
+
+<div id="playerStatus" style="
+font-weight:bold;
+margin-bottom:6px;
+font-size:14px;">
+Status: <span id="statusDot">🔴</span>
+<span id="statusText">Offline</span>
+</div>
+
+<br>
+
+<button onclick="backToLeaderboard()">Back</button>
+
+</div>
+
+<button id="pauseBtn" onclick="togglePause()" class="hidden" style="
+position:absolute;
+top:10px;
+right:10px;
+z-index:1000;
+padding:8px 12px;
+background:#222;
+color:white;
+border:1px solid white;
+border-radius:6px;
+cursor:pointer;
+">
+⏸
+</button>
+
+<div id="game" class="hidden">
+
+
+
+  <div id="p1" class="fighter"></div>
+  <div id="p2" class="fighter"></div>
+  <div id="p1-health" class="health"></div>
+  <div id="p2-health" class="health"></div>
+  <div id="p1-text" class="healthText"></div>
+  <div id="p2-text" class="healthText"></div>
+</div>
+
+<div id="eventDisplay" style="
+position:fixed;
+bottom:15px;
+right:15px;
+background:black;
+color:white;
+padding:10px;
+border-radius:8px;
+font-size:14px;
+z-index:2000;
+display:none;
+"></div>
+
+
+<script>
+
+let leaderboardInterval=null;
+
+let invincible=false;
+let instakill=false;
+let infiniteCoins = false;
+let storedCoins = 0;
+let zoinkActive = false;
+let zoinkEnd = 0;
+let zoinkNextTime = 0;
+let leaderboardTab = "global";
+let zoinkTimer = null;
+let zoinkTimeLeft = 0;
+
+// ✅ GLOBAL EVENT STATE (FIRST)
+
+function updateEventUI(){
+
+const box = document.getElementById("eventDisplay");
+
+box.innerHTML="";
+
+activeEvents.forEach(e=>{
+
+const timeLeft = Math.max(0,Math.floor((e.endTime - Date.now())/1000));
+
+const min = Math.floor(timeLeft/60);
+const sec = timeLeft%60;
+
+const div = document.createElement("div");
+
+div.innerText = e.name+" | "+min+":"+sec.toString().padStart(2,"0");
+
+box.appendChild(div);
+
+});
+
+}
+
+let lastZoinkHour = -1;
+
+function updateZoinkFest(){
+
+const now = new Date();
+const hour = now.getHours();
+const minute = now.getMinutes();
+
+// ✅ START (every 2 hours exactly at :00)
+if(minute === 0 && lastZoinkHour !== hour){
+
+lastZoinkHour = hour;
+
+zoinkActive = true;
+zoinkEnd = Date.now() + (15 * 60 * 1000);
+
+activateZoink();
+}
+
+// ⏹ END after 15 minutes
+if(zoinkActive && Date.now() > zoinkEnd){
+zoinkActive = false;
+deactivateZoink();
+}
+
+}
+
+
+let zoinkRunning = false;
+let zoinkTimerInterval;
+
+function activateZoink(spawnedBy = "System"){
+
+  if (zoinkRunning) return;
+  zoinkRunning = true;
+
+  // 🔥 POPUP MESSAGE
+  showAnnouncement("Sapwned Zoink Event", "15 min");
+
+
+
+
+
+// background
+document.body.style.backgroundImage = "url('https://pixelman55.github.io/main/gdbg.png')";
+document.body.style.backgroundSize = "cover";
+
+// ⚔️ GIVE SWORD
+window.zoinkActive = true;
+renderSwords();
+renderSwords();
+renderSwords();
+
+// 🎩 hat
+
+const glow = document.getElementById("zoinkGlow");
+glow.style.opacity = "1";
+
+window.zoinkGradient = setInterval(()=>{
+
+const x = Math.random()*100;
+const y = Math.random()*100;
+
+glow.style.backgroundPosition = `${x}% ${y}%`;
+
+},100);
+
+bgMusic.playbackRate = 1.5;
+bgMusic.volume = 1;
+window.zoinkActive = true;
+renderSwords();
+window.prevHat = save.hat;
+
+p1El.innerHTML = makeStick(save.color, save.sword);
+
+p1El.innerHTML = makeStick(save.color, save.sword);
+}
+
+
+
+function deactivateZoink(){
+
+
+p1El.innerHTML = makeStick(save.color, save.sword);
+document.body.style.backgroundImage = "";
+
+clearInterval(window.zoinkGradient);
+
+const glow = document.getElementById("zoinkGlow");
+glow.style.opacity = "0";
+// remove sword
+
+// remove hat
+
+p1El.innerHTML = makeStick(save.color, save.sword);
+
+clearInterval(window.zoinkInterval);
+document.body.style.boxShadow = "";
+
+
+clearInterval(window.zoinkShake);
+document.body.style.transform = "";
+
+bgMusic.playbackRate = 1.5;
+bgMusic.volume = 1;
+
+window.zoinkActive = false;
+renderSwords();
+
+p1El.innerHTML = makeStick(save.color, save.sword);
+
+}
+
+function toggleInvincible(){
+invincible=!invincible;
+alert("Invincible: "+invincible);
+}
+
+function toggleInstakill(){
+instakill=!instakill;
+alert("Instakill: "+instakill);
+}
+
+const bgMusic = new Audio("https://cdn.pixabay.com/download/audio/2025/12/19/audio_d47cb60a82.mp3?filename=paulyudin-action-453990.mp3");
+bgMusic.loop = true;
+bgMusic.volume = 0.5; // change if too loud
+
+/* ================= SAVE ================= */
+const saveKey="stickSave";
+let save=JSON.parse(localStorage.getItem(saveKey))||{
+  color:"#ffffff",
+  sword:"dagger",
+  wins:0,
+  losses:0,
+  coins:0,
+  difficulty:"easy",
+  achievements:{},
+  unlockedRollSwords:[]
+};
+
+if(!save.hatUnlocks){
+  save.hatUnlocks = [];
+}
+
+if(!save.eventData){
+save.eventData = {
+quests: [],
+completed: 0,
+claimed: []
+};
+}
+
+initEventQuests();
+
+save.coins = Number(save.coins || 0);
+
+if(save.coins === undefined) save.coins = 0;
+const saveData = () => {
+  localStorage.setItem(saveKey, JSON.stringify(save));
+  savePlayerStats(); // 🔥 AUTO SYNC TO FIREBASE
+};
+
+/* ================= STOP GAME ================= */
+let running=false;
+function stopGame(){running=false}
+
+/* ================= DIFFICULTIES ================= */
+const difficulties={
+  easy:{label:"Easy",npcSpeed:0.6,npcHP:70,npcAI:0},
+  normal:{label:"Normal",npcSpeed:1,npcHP:90,npcAI:1},
+  hard:{label:"Hard",npcSpeed:1.4,npcHP:110,npcAI:2},
+  expert:{label:"Expert",npcSpeed:1.8,npcHP:130,npcAI:2},
+  master:{label:"Master",npcSpeed:2.2,npcHP:150,npcAI:3},
+  nightmare:{label:"Nightmare",npcSpeed:2.6,npcHP:180,npcAI:3},
+  impossible:{label:"Impossible",npcSpeed:3,npcHP:220,npcAI:3}
+};
+
+const diffSelect=document.getElementById("difficulty");
+for(const k in difficulties){
+  const o=document.createElement("option");
+  o.value=k;o.textContent=difficulties[k].label;
+  diffSelect.appendChild(o);
+}
+diffSelect.value=save.difficulty;
+diffSelect.onchange=()=>{save.difficulty=diffSelect.value;saveData()};
+
+/* ================= ACHIEVEMENTS ================= */
+const achievements={
+  win_easy:{name:"Beginner Fighter",desc:"Win on Easy"},
+  win_normal:{name:"Skilled Fighter",desc:"Win on Normal"},
+  win_hard:{name:"Veteran Fighter",desc:"Win on Hard"},
+  win_expert:{name:"Elite Fighter",desc:"Win on Expert"},
+  win_master:{name:"Master Fighter",desc:"Win on Master"},
+  win_nightmare:{name:"Nightmare Slayer",desc:"Win on Nightmare"},
+  win_impossible:{name:"Impossible Conqueror",desc:"Win on Impossible"}
+};
+
+/* ================= SWORDS ================= */
+const swords={
+  dagger:{name:"Dagger",dmg:8,knock:4,stun:6,unlock:0,rarity:"common"},
+  shortsword:{name:"Short Sword",dmg:10,knock:6,stun:8,unlock:3,rarity:"decent"},
+  longsword:{name:"Long Sword",dmg:13,knock:9,stun:10,unlock:6,rarity:"great"},
+  claymore:{name:"Claymore",dmg:18,knock:14,stun:14,unlock:12,rarity:"insane"},
+  rapier:{name:"Rapier",dmg:9,knock:3,stun:14,unlock:18,rarity:"great"},
+  axe:{name:"Battle Axe",dmg:22,knock:18,stun:10,unlock:25,rarity:"insane"},
+  hammer:{name:"War Hammer",dmg:26,knock:24,stun:18,unlock:40,rarity:"alienish"},
+  katana:{name:"Katana",dmg:16,knock:10,stun:20,unlock:60,rarity:"alienish"},
+  greatsword:{name:"Great Sword",dmg:30,knock:30,stun:22,unlock:80,rarity:"demonic"},
+  executioner:{name:"Executioner",dmg:38,knock:40,stun:30,unlock:100,rarity:"blessed"},
+
+
+
+  ach_easy:{name:"Training Blade",dmg:10,knock:4,stun:8,achievement:"win_easy",rarity:"decent"},
+  ach_normal:{name:"Steel Saber",dmg:14,knock:7,stun:10,achievement:"win_normal",rarity:"great"},
+  ach_hard:{name:"Knight Longsword",dmg:18,knock:12,stun:14,achievement:"win_hard",rarity:"insane"},
+  ach_expert:{name:"Runed Katana",dmg:22,knock:14,stun:18,achievement:"win_expert",rarity:"alienish"},
+  ach_master:{name:"Obsidian Greatblade",dmg:28,knock:20,stun:22,achievement:"win_master",rarity:"demonic"},
+  ach_nightmare:{name:"Cursed Reaver",dmg:34,knock:26,stun:28,achievement:"win_nightmare",rarity:"demonic"},
+  ach_impossible:{name:"Celestial Blade",dmg:40,knock:34,stun:34,achievement:"win_impossible",rarity:"blessed"},
+zoink:{name:"The Zoink",rarity:"limited",dmg:52,knock:45,stun:43,unlock:"Zoink Fest"}
+};
+const rollSwords=[
+{name:"Iron Saber",rarity:"decent"},
+{name:"Knight Blade",rarity:"decent"},
+{name:"Emerald Cutter",rarity:"great"},
+{name:"Crystal Edge",rarity:"great"},
+{name:"Storm Katana",rarity:"insane"},
+{name:"Shadow Reaver",rarity:"insane"},
+{name:"Void Greatsword",rarity:"alienish"},
+{name:"Infernal Cleaver",rarity:"demonic"},
+{name:"Divine Longblade",rarity:"blessed"},
+{name:"Celestial Edge",rarity:"blessed"},
+{name:"Mythic Halo Blade",rarity:"blessed"},
+{name:"Celestial Razor",rarity:"blessed"},
+{name:"Pixel Slicer",rarity:"exclusive"}
+];
+const rollChances=[
+{rarity:"decent",chance:45},
+{rarity:"great",chance:30},
+{rarity:"insane",chance:15},
+{rarity:"alienish",chance:7},
+{rarity:"demonic",chance:2.20,},
+{rarity:"blessed",chance:0.25},
+{rarity:"exclusive",chance:0.05}
+];
+/* ===== ADD ROLL SWORDS INTO SWORD SYSTEM ===== */
+
+rollSwords.forEach(s=>{
+
+const id = s.name.toLowerCase().replace(/ /g,"_");
+
+let stats={
+decent:{dmg:12,knock:8,stun:10},
+great:{dmg:16,knock:12,stun:14},
+insane:{dmg:22,knock:18,stun:18},
+alienish:{dmg:28,knock:22,stun:22},
+demonic:{dmg:34,knock:28,stun:26},
+blessed:{dmg:42,knock:36,stun:34},
+exclusive:{dmg:50,knock:43,stun:45}
+};
+
+const st=stats[s.rarity];
+
+swords[id]={
+name:s.name,
+dmg:st.dmg,
+knock:st.knock,
+stun:st.stun,
+roll:true,
+rarity:s.rarity
+};
+
+});
+
+const hats = [
+{id:"none", name:"None"},
+{id:"crown", name:"Crown"},
+{id:"tophat", name:"Top Hat"},
+{id:"halo", name:"Halo"},
+{id:"ninja", name:"Ninja"},
+{id:"cap", name:"Cap"},
+{id:"zoink", name:"Zoink Cube"}
+];
+
+function renderHatGrid(){
+
+const grid = document.getElementById("hatGrid");
+grid.innerHTML = "";
+
+hats.forEach(hat=>{
+
+const card = document.createElement("div");
+card.className = "hatCard";
+
+if(save.hat === hat.id){
+card.classList.add("selected");
+}
+
+const unlocked = save.hatUnlocks.includes(hat.id);
+
+card.classList.add("hatCard");
+
+if(!unlocked){
+  card.classList.add("locked");
+  card.innerHTML += `<div class="lock">🔒</div>`;
+}
+
+card.onclick = () => {
+  if(!unlocked) return; // EXACTLY like swords
+  save.hat = hat.id;
+  saveData();
+  renderHats();
+};
+
+card.innerHTML = `
+<div class="hatBox">
+  <div class="hat ${hat.id}"></div>
+</div>
+<div class="hatName">${hat.name}</div>
+`;
+
+card.onclick = ()=>{
+save.hat = hat.id;
+saveData();
+renderHatGrid();
+};
+
+grid.appendChild(card);
+
+
+});
+
+}
+
+function setLeaderboardTab(tab){
+  leaderboardTab = tab;
+  leaderboardPage = 0; // reset page
+  renderLeaderboardPage();
+  updateTabUI();
+}
+
+function showMilestonePopup(text, reward){
+
+const div = document.createElement("div");
+
+div.style = `
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:#111;
+color:white;
+padding:20px;
+border-radius:12px;
+font-size:20px;
+z-index:5000;
+text-align:center;
+box-shadow:0 0 20px gold;
+`;
+
+div.innerHTML = `
+<div style="font-size:24px;font-weight:bold;margin-bottom:10px;">
+🎉 Milestone Reached!
+</div>
+<div>${text}</div>
+<div style="margin-top:10px;color:gold;">
+Reward: ${reward}
+</div>
+`;
+
+document.body.appendChild(div);
+
+setTimeout(()=>{
+div.remove();
+},3000);
+
+}
+
+/* ================= UI ================= */
+
+const statsDiv=document.getElementById("stats");
+const statsContent=document.getElementById("statsContent");
+
+function openStats(){
+  stopGame();
+  menu.classList.add("hidden");
+  editor.classList.add("hidden");
+  achievementsDiv.classList.add("hidden");
+  game.classList.add("hidden");
+  statsDiv.classList.remove("hidden");
+  renderStats();
+}
+const rollPage=document.getElementById("rollPage");
+
+function openRoll(){
+stopGame();
+
+menu.classList.add("hidden");
+rollPage.classList.remove("hidden");
+}
+const adminPanel=document.getElementById("adminPanel");
+const menu=document.getElementById("menu");
+const editor=document.getElementById("editor");
+const achievementsDiv=document.getElementById("achievements");
+const swordGrid=document.getElementById("swordGrid");
+const achList=document.getElementById("achList");
+const game=document.getElementById("game");
+const colorPicker=document.getElementById("colorPicker");
+
+colorPicker.value=save.color;
+colorPicker.oninput=()=>{save.color=colorPicker.value;saveData()};
+
+function backToMenu(){
+
+document.getElementById("pauseMenu").style.display="none";
+document.getElementById("pauseBtn").style.display = "none";
+  stopGame();
+isPaused = false;
+  bgMusic.pause();
+  bgMusic.currentTime = 0;
+  clearInterval(leaderboardInterval);
+  editor.classList.add("hidden");
+  achievementsDiv.classList.add("hidden");
+  game.classList.add("hidden");
+  statsDiv.classList.add("hidden");
+  rollPage.classList.add("hidden");
+  adminPanel.classList.add("hidden");
+document.getElementById("eventMenu").classList.add("hidden");
+document.getElementById("liteAdminPanel").classList.add("hidden");
+document.getElementById("leaderboard").classList.add("hidden");
+document.getElementById("loginPage").classList.add("hidden");
+document.getElementById("signupPage").classList.add("hidden");
+  endScreen.classList.add("hidden");
+  document.getElementById("endScreen").style.display = "none";
+  menu.classList.remove("hidden");
+
+}
+function openEditor(){
+  stopGame();
+  menu.classList.add("hidden");
+  game.classList.add("hidden");
+  editor.classList.remove("hidden");
+renderHatGrid();
+  renderSwords();
+}
+function openAchievements(){
+  stopGame();
+  menu.classList.add("hidden");
+  game.classList.add("hidden");
+  achievementsDiv.classList.remove("hidden");
+  renderAchievements();
+}
+
+function openLogin(){
+menu.classList.add("hidden");
+document.getElementById("loginPage").classList.remove("hidden");
+}
+
+function openSignup(){
+menu.classList.add("hidden");
+document.getElementById("signupPage").classList.remove("hidden");
+}
+
+function openAdmin(){
+
+stopGame();
+
+menu.classList.add("hidden");
+editor.classList.add("hidden");
+achievementsDiv.classList.add("hidden");
+rollPage.classList.add("hidden");
+statsDiv.classList.add("hidden");
+game.classList.add("hidden");
+
+const username = document.querySelector("#userBar b")?.textContent;
+
+if(username === "PixelMan"){
+
+adminPanel.classList.remove("hidden");
+
+}else if(username === "THEFIREMOUSE"){
+
+document.getElementById("liteAdminPanel").classList.remove("hidden");
+
+}else if(username === "lil_Jim"){
+
+document.getElementById("liteAdminPanel").classList.remove("hidden");
+
+}else if(username === "mid4567"){
+
+document.getElementById("liteAdminPanel").classList.remove("hidden");
+
+}else{
+
+alert("You are not an admin.");
+backToMenu();
+return;
+
+}
+
+populateSwordDropdown();
+loadPlayers();
+
+}
+
+let isPaused = false;
+
+// PRESS ESC TO TOGGLE
+document.addEventListener("keydown",(e)=>{
+if(e.key==="Escape" && running){
+togglePause();
+}
+});
+
+function togglePause(){
+
+isPaused = !isPaused;
+
+const menu = document.getElementById("pauseMenu");
+
+if(isPaused){
+menu.style.display = "flex";
+document.exitPointerLock?.();
+}else{
+menu.style.display = "none";
+lockCursor();
+}
+
+}
+
+// Resume
+function resumeGame(){
+isPaused = false;
+document.getElementById("pauseMenu").style.display="none";
+lockCursor();
+}
+
+// Go back to menu
+function goToMenu(){
+location.reload(); // or load your menu scene
+}
+
+function updateEventUI(){
+
+const el = document.getElementById("eventDisplay");
+if(!el) return;
+
+const now = Date.now();
+
+if(currentEvent && now < eventEnd){
+
+const timeLeft = Math.floor((eventEnd - now)/1000);
+const min = Math.floor(timeLeft/60);
+const sec = timeLeft%60;
+
+el.style.display = "block";
+el.textContent = `${currentEvent.mult}x ${currentEvent.type} : ${min}:${sec.toString().padStart(2,"0")}`;
+
+}else{
+el.style.display = "none";
+}
+
+}
+
+function openSettings(){
+
+const menu = document.getElementById("menu");
+const eventsMenu = document.getElementById("settingsMenu");
+
+if(menu) menu.classList.add("hidden");
+
+if(settingsMenu){
+settingsMenu.classList.remove("hidden");
+settingsMenu.style.display = "flex";
+}
+
+}
+
+function closeSettings(){
+const menu = document.getElementById("menu");
+const settingsMenu = document.getElementById("settingsMenu");
+
+if(settingsMenu){
+settingsMenu.style.display = "none";
+settingsMenu.classList.add("hidden");
+}
+
+if(menu) menu.classList.remove("hidden");
+
+saveSettings();
+}
+
+const volumeSlider = document.getElementById("volumeSlider");
+
+volumeSlider.addEventListener("input",()=>{
+
+const volume = volumeSlider.value;
+
+// Example if you have audio
+document.querySelectorAll("audio").forEach(a=>{
+a.volume = volume;
+});
+
+});
+
+function toggleFullscreen(){
+if(!document.fullscreenElement){
+document.documentElement.requestFullscreen();
+}else{
+document.exitFullscreen();
+}
+}
+
+function renderEventsMenu(){
+
+const el = document.getElementById("eventsTable");
+if(!el) return;
+
+let nextText = "Not chosen yet";
+let countdownText = "--:--";
+let luckMultiplier = 1;
+let coinMultiplier = 1;
+const now = Date.now();
+
+if(nextEvent){
+nextText = formatEvent(nextEvent);
+
+const timeLeft = Math.max(0, Math.floor((nextEventTime - now)/1000));
+const min = Math.floor(timeLeft/60);
+const sec = timeLeft % 60;
+
+countdownText = `${min}:${sec.toString().padStart(2,"0")}`;
+}
+
+let zoinkText = "--:--";
+
+if(zoinkNextTime){
+const now = Date.now();
+const t = Math.floor((zoinkNextTime - now)/1000);
+
+const h = Math.floor(t/3600);
+const m = Math.floor((t%3600)/60);
+const s = t%60;
+
+zoinkText = `${h}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;
+}
+
+el.innerHTML = `
+<div style="margin-bottom:10px;">
+<b>Next Event:</b> ${nextText}
+</div>
+
+<div style="margin-bottom:15px;">
+<b>Starts In:</b> ${countdownText}
+</div>
+
+<hr>
+
+${eventsList.map(e =>
+`<div style="margin:6px 0;">
+${e.mult}x ${e.type} for ${e.duration} min
+</div>`
+).join("")}
+
+<hr>
+
+<div style="margin-top:10px;">
+<b>Zoink Fest:</b> ${zoinkText}
+</div>
+`;
+}
+
+function openEventsMenu(){
+
+const menu = document.getElementById("menu");
+const eventsMenu = document.getElementById("eventsMenu");
+
+if(menu) menu.classList.add("hidden");
+
+if(eventsMenu){
+eventsMenu.classList.remove("hidden");
+eventsMenu.style.display = "block";
+}
+
+// 🔥 render content when opened
+renderEventsMenu();
+
+}
+
+function closeEventsMenu(){
+
+const menu = document.getElementById("menu");
+const eventsMenu = document.getElementById("eventsMenu");
+
+if(eventsMenu){
+eventsMenu.style.display = "none";
+eventsMenu.classList.add("hidden");
+}
+
+if(menu) menu.classList.remove("hidden");
+
+}
+
+function saveSettings(){
+localStorage.setItem("settings", JSON.stringify(settings));
+}
+
+function loadSettings(){
+const s = JSON.parse(localStorage.getItem("settings"));
+if(!s) return;
+
+settings = s;
+
+vol.value = settings.volume;
+fpsT.checked = settings.showFPS;
+fpsL.value = settings.fpsLimit;
+}
+
+const vol = document.getElementById("volumeSlider");
+const fpsT = document.getElementById("fpsToggle");
+const fpsL = document.getElementById("fpsLimit");
+
+vol.oninput = ()=>{
+settings.volume = Number(vol.value);
+document.querySelectorAll("audio").forEach(a=>a.volume=settings.volume);
+};
+
+fpsT.onchange = ()=>{
+settings.showFPS = fpsT.checked;
+document.getElementById("fpsCounter").style.display = settings.showFPS ? "block":"none";
+};
+
+fpsL.oninput = ()=>{
+let val = Number(fpsL.value);
+if(val < 1) val = 1;
+if(val > 240) val = 240;
+settings.fpsLimit = val;
+};
+
+let showFPS = false;
+
+function toggleFPS(){
+showFPS = !showFPS;
+document.getElementById("fpsCounter").style.display = showFPS ? "block" : "none";
+}
+
+/*=================== Gambling js ==========================*/
+
+
+function updateCoins(){
+document.getElementById("coinText").textContent = save.coins || 0;
+}
+
+
+/* ================= RENDER ================= */
+
+function renderSwords(){
+  swordGrid.innerHTML="";
+  for(const id in swords){
+    const s=swords[id];
+let unlocked = false;
+
+// 🔥 ZOINK FIRST (priority)
+if(s.name === "The Zoink"){
+unlocked = save.unlockedSpecial?.includes("zoink");
+}
+
+// normal systems
+else if(s.roll){
+  unlocked = save.unlockedRollSwords.includes(s.name);
+}
+else if(s.unlock!==undefined){
+  unlocked = typeof s.unlock === "number"
+    ? save.wins >= s.unlock
+    : false;
+}
+else if(s.achievement){
+  unlocked = save.achievements[s.achievement];
+}
+    let unlockText="";
+
+
+
+if(s.roll){
+  unlockText="Roll Only";
+}else if(s.unlock!==undefined){
+if(typeof s.unlock === "number"){
+unlockText = `Unlock: ${s.unlock} wins`;
+}else{
+unlockText = `Unlock: ${s.unlock}`;
+}
+}else if(s.achievement){
+  unlockText=`Unlock: ${achievements[s.achievement].name}`;
+}
+    const card=document.createElement("div");
+    card.className=`swordCard r-${s.rarity}${unlocked?"":" locked"}${save.sword===id?" selected":""}`;
+    card.innerHTML=`
+      <div class="swordName">${s.name}</div>
+      <div><b>Rarity:</b> ${s.rarity.toUpperCase()}</div>
+      <div class="swordBox">${unlocked?`<div class="swordMini" style="width:${s.dmg*2}px"></div>`:`<div class="lock">🔒</div>`}</div>
+      <div class="swordStats">
+        DMG:${s.dmg}<br>
+        Knock:${s.knock}<br>
+        Stun:${s.stun}<br>
+        <i>${unlockText}</i>
+      </div>`;
+    if(unlocked)card.onclick=()=>{save.sword=id;saveData();renderSwords()};
+    swordGrid.appendChild(card);
+  }
+}
+
+function renderAchievements(){
+  achList.innerHTML="";
+  for(const id in achievements){
+    const a=achievements[id];
+    const unlocked=!!save.achievements[id];
+    const div=document.createElement("div");
+    div.className="achievement"+(unlocked?"":" locked");
+    div.innerHTML=`<b>${a.name}</b><br>${a.desc}<br>${unlocked?"✔ Unlocked":"❌ Locked"}`;
+    achList.appendChild(div);
+  }
+}
+
+/* ================= GAME ================= */
+const GRAVITY=0.6,JUMP_FORCE=-12,GROUND_Y=40;
+const ARENA_WIDTH = 800;      // same as #game width
+const FIGHTER_WIDTH = 70;     // same as .fighter width
+let p1,p2,keys={};
+addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+function makeStick(color,swordId){
+  const s=swords[swordId];
+  return `<div style="--c:${color}; position:relative;">
+   <div class="head">
+  ${save.hat && save.hat !== "none" ? `<div class="hat ${save.hat}"></div>` : ""}
+</div>
+    <div class="body"></div>
+
+<div class="arms">
+  <div class="armBar">
+    <div class="weapon">
+<div class="blade"></div>
+<div class="handle"></div>
+    </div>
+  </div>
+</div>
+
+    <div class="legs">
+      <div class="leg left"></div>
+      <div class="leg right"></div>
+    </div>
+  </div>`;
+}
+
+const p1El=document.getElementById("p1");
+const p2El=document.getElementById("p2");
+const p1Health=document.getElementById("p1-health");
+const p2Health=document.getElementById("p2-health");
+const p1Text=document.getElementById("p1-text");
+const p2Text=document.getElementById("p2-text");
+
+function startGame(){
+document.getElementById("pauseBtn").style.display = "block";
+  menu.classList.add("hidden");
+  game.classList.remove("hidden");
+  const d=difficulties[save.difficulty];
+  p1={x:100,y:0,vy:0,onGround:true,hp:100,cd:0,stun:0};
+  p2={x:600,hp:d.npcHP,cd:0,stun:0,speed:d.npcSpeed,ai:d.npcAI,think:0};
+  p1El.innerHTML=makeStick(save.color,save.sword);
+  p2El.innerHTML=makeStick("#f55","dagger");
+  running=true;
+  bgMusic.currentTime = 0;
+bgMusic.play().catch(()=>{});
+  requestAnimationFrame(loop);
+}
+
+function endGame(win){
+  running = false;
+
+  let reward = 0; // ✅ FIX: define OUTSIDE
+
+  if(win){
+    const rewards = {
+      easy:5,
+      normal:10,
+      hard:15,
+      expert:20,
+      master:25,
+      nightmare:30,
+      impossible:35
+    };
+
+    reward = rewards[save.difficulty] || 5;
+
+    save.coins = Number(save.coins) + reward;
+    updateCoins();
+
+    save.wins++;
+
+    const map = {
+      easy:"win_easy",
+      normal:"win_normal",
+      hard:"win_hard",
+      expert:"win_expert",
+      master:"win_master",
+      nightmare:"win_nightmare",
+      impossible:"win_impossible"
+    };
+
+    save.achievements[map[save.difficulty]] = true;
+
+  } else {
+    save.losses = (save.losses || 0) + 1;
+  }
+
+  saveData();
+
+  // ✅ ALWAYS SAFE NOW
+  showEndScreen(win, reward);
+}
+
+
+async function checkCommands(){
+
+if(!auth.currentUser) return;
+
+const snap = await getDocs(collection(db,"commands"));
+
+snap.forEach(d=>{
+
+if(d.id===auth.currentUser.uid){
+
+const cmd=d.data();
+
+if(cmd.type==="kill"){
+p1.hp=0;
+}
+
+if(cmd.type==="fling"){
+p1.x+=Math.random()*400-200;
+}
+
+if(cmd.type==="sethp"){
+p1.hp=cmd.value;
+}
+
+}
+
+});
+
+}
+
+setInterval(checkCommands,1000);
+
+function loop(){
+
+if(isPaused){
+requestAnimationFrame(loop);
+return;
+}
+
+  if(!running)return;
+
+  p1.vy+=GRAVITY;p1.y+=p1.vy;
+  if(p1.y>0){p1.y=0;p1.vy=0;p1.onGround=true}
+  if((keys.w||keys[" "])&&p1.onGround){p1.vy=JUMP_FORCE;p1.onGround=false}
+  if(p1.stun===0){if(keys.a)p1.x-=4;if(keys.d)p1.x+=4}
+
+  const sword=swords[save.sword];
+  if(keys.s&&p1.cd===0&&Math.abs(p1.x-p2.x)<60){
+if(instakill){
+p2.hp=0;
+}else{
+p2.hp-=sword.dmg;
+}
+    p2.stun=sword.stun;
+    p2.x+=(p2.x>p1.x?1:-1)*sword.knock;
+    p1.cd=18;
+const arms = p1El.querySelector(".arms");
+const weapon = p1El.querySelector(".weapon");
+
+arms.classList.add("swing");
+weapon.classList.add("attackMove");
+
+setTimeout(()=>{
+  arms.classList.remove("swing");
+  weapon.classList.remove("attackMove");
+},150);
+    if(p2.hp<=0)return endGame(true);
+  }
+
+  if(p2.think>0)p2.think--;
+  if(p2.stun===0&&p2.think===0){
+    const d=p1.x-p2.x,a=Math.abs(d);
+    if(p2.ai===0)p2.x+=Math.sign(d)*p2.speed;
+   if(p2.ai===1){
+  if(a>70)p2.x+=Math.sign(d)*(p2.speed*6);
+  if(a<50)p2.x-=Math.sign(d)*(p2.speed*0.6);}
+  if(p2.ai>=2){
+  if(a>80)p2.x+=Math.sign(d)*(p2.speed*5);
+  if(a<45)p2.x-=Math.sign(d)*(p2.speed*0.5);
+}
+    if(a<80&&p2.cd===0)p2.cd=28-(p2.ai*4);
+    p2.think=Math.max(2,12-(p2.ai*3));
+
+  }
+
+  if(p2.cd===1&&Math.abs(p1.x-p2.x)<60){
+if(!invincible){
+p1.hp-=10;
+}
+    p1.stun=12;
+    if(p1.hp<=0)return endGame(false);
+  }
+
+  if(p1.cd>0)p1.cd--;
+  if(p1.stun>0)p1.stun--;
+  if(p2.cd>0)p2.cd--;
+  if(p2.stun>0)p2.stun--;
+
+// Player bounds
+if(p1.x < 0) p1.x = 0;
+if(p1.x > ARENA_WIDTH - FIGHTER_WIDTH)
+  p1.x = ARENA_WIDTH - FIGHTER_WIDTH;
+
+// NPC bounds
+if(p2.x < 0) p2.x = 0;
+if(p2.x > ARENA_WIDTH - FIGHTER_WIDTH)
+  p2.x = ARENA_WIDTH - FIGHTER_WIDTH;
+
+  p1El.style.left=p1.x+"px";
+  p2El.style.left=p2.x+"px";
+
+// === PLAYER WALKING ===
+if((keys.a || keys.d) && p1.stun===0){
+  p1El.classList.add("walking");
+}else{
+  p1El.classList.remove("walking");
+}
+
+// === NPC WALKING ===
+if(Math.abs(p1.x - p2.x) > 5 && p2.stun===0){
+  p2El.classList.add("walking");
+}else{
+  p2El.classList.remove("walking");
+}
+
+// Player faces enemy
+if(p1.x < p2.x){
+  p1El.classList.remove("facingLeft");
+}else{
+  p1El.classList.add("facingLeft");
+}
+
+// Enemy faces player
+if(p2.x < p1.x){
+  p2El.classList.remove("facingLeft");
+}else{
+  p2El.classList.add("facingLeft");
+}
+
+  p1El.style.bottom=(GROUND_Y - p1.y)+"px";
+  p2El.style.bottom=GROUND_Y+"px";
+
+  p1Health.style.width=Math.max(p1.hp,0)*2+"px";
+  p2Health.style.width=Math.max(p2.hp,0)*2+"px";
+  p1Text.textContent=Math.max(p1.hp,0)+"%";
+  p2Text.textContent=Math.max(p2.hp,0)+"%";
+
+const now = performance.now();
+const fps = Math.round(1000 / (now - lastFrameTime));
+lastFrameTime = now;
+
+if(showFPS){
+const el = document.getElementById("fpsCounter");
+if(el) el.textContent = "FPS: " + fps;
+}
+updateZoinkFest();
+requestAnimationFrame(loop);
+}
+function renderStats(){
+  let unlocked=0;
+  for(const id in swords){
+    const s=swords[id];
+    if(s.unlock!==undefined && save.wins>=s.unlock) unlocked++;
+    if(s.achievement && save.achievements[s.achievement]) unlocked++;
+  }
+
+
+
+  statsContent.innerHTML=`
+    <b>Victories:</b> ${save.wins}<br><br>
+    <b>Losses:</b> ${save.losses||0}<br><br>
+    <b>Swords Unlocked:</b> ${unlocked} / ${Object.keys(swords).length}
+  `;
+}
+function rollSword(){
+
+save.coins = Number(save.coins || 0); // force coins to be a number
+
+if(save.coins < 100){
+  alert("Not enough coins!");
+  return;
+}
+
+if(window.zoinkActive){
+save.eventData.quests.forEach(q=>{
+if(q.type === "roll"){
+q.progress++;
+}
+});
+}
+save.coins -= 100;
+
+let r = Math.random() * 100;
+let total=0;
+let rarity="decent";
+
+for(const c of rollChances){
+  total += c.chance;
+  if(r <= total){
+    rarity=c.rarity;
+    break;
+  }
+}
+
+const possible=rollSwords.filter(s=>s.rarity===rarity);
+const sword=possible[Math.floor(Math.random()*possible.length)];
+
+if(!save.unlockedRollSwords.includes(sword.name)){
+  save.unlockedRollSwords.push(sword.name);
+}
+
+saveData();
+updateCoins();
+
+const box = document.getElementById("rollReveal");
+
+if(sword.rarity === "blessed"){
+document.body.style.background = "gold";
+setTimeout(()=>{document.body.style.background="";},300);
+}
+
+if(sword.rarity === "exclusive"){
+document.body.style.background = "blue";
+setTimeout(()=>{document.body.style.background="";},300);
+}
+
+box.innerHTML = `
+<div class="rollReveal r-${rarity}">
+${sword.name}
+<br>
+<span style="font-size:16px">${rarity.toUpperCase()}</span>
+</div>
+`;
+}
+
+function saveEventState(){
+localStorage.setItem("eventState", JSON.stringify({
+currentEvent,
+eventEnd,
+nextEvent,
+nextEventTime
+}));
+}
+
+function unlockAllSwords(){
+
+save.wins = 999;
+
+save.unlockedRollSwords = rollSwords.map(s=>s.name);
+
+for(const a in achievements){
+save.achievements[a]=true;
+}
+
+saveData();
+
+alert("Everything unlocked!");
+
+}
+
+function unlockRollSwords(){
+
+save.unlockedRollSwords=[
+"Iron Saber","Knight Blade","Emerald Cutter","Crystal Edge",
+"Storm Katana","Shadow Reaver","Void Greatsword",
+"Infernal Cleaver","Divine Longblade","Celestial Edge","Mythic Halo Blade"
+];
+
+saveData();
+
+alert("Roll swords unlocked");
+
+}
+
+function unlockAchievements(){
+
+for(const a in achievements){
+save.achievements[a]=true;
+}
+
+saveData();
+
+alert("Achievements unlocked");
+
+}
+
+let previousCoins=0;
+
+function setWins(){
+save.wins = Number(document.getElementById("adminWins").value);
+saveData();
+}
+
+function setLosses(){
+save.losses = Number(document.getElementById("adminLosses").value);
+saveData();
+}
+
+function setCoins(){
+save.coins = Number(document.getElementById("adminCoins").value);
+updateCoins();
+saveData();
+}
+
+function toggleInfiniteCoins(){
+
+const toggle=document.getElementById("infiniteCoinsToggle");
+
+if(toggle.checked){
+
+storedCoins = save.coins;
+save.coins = 999999999;
+infiniteCoins = true;
+
+}else{
+
+save.coins = storedCoins;
+infiniteCoins = false;
+
+}
+
+updateCoins();
+saveData();
+
+}
+
+let showHitboxes=false;
+
+function toggleHitboxes(){
+
+showHitboxes=!showHitboxes;
+
+const fighters=document.querySelectorAll(".fighter");
+
+fighters.forEach(f=>{
+
+if(showHitboxes){
+f.style.outline="2px solid red";
+}else{
+f.style.outline="none";
+}
+
+});
+
+}
+
+function toggleUnlockAllLite(){
+
+const toggle=document.getElementById("unlockAllToggle");
+
+if(toggle.checked){
+save.unlockedSpecial = save.unlockedSpecial || [];
+save.unlockedSpecial.push("zoink");
+save.wins=999;
+save.unlockedRollSwords=rollSwords.map(s=>s.name);
+
+for(const a in achievements){
+save.achievements[a]=true;
+}
+
+}else{
+
+alert("Turning this off won't relock swords.");
+
+}
+
+saveData();
+
+}
+
+  function toggleUnlockAll(){
+
+const toggle=document.getElementById("unlockAllToggle");
+
+if(toggle.checked){
+
+save.unlockedSpecial = save.unlockedSpecial || [];
+save.unlockedSpecial.push("zoink");
+  
+save.wins=999;
+save.unlockedRollSwords=rollSwords.map(s=>s.name);
+
+for(const a in achievements){
+save.achievements[a]=true;
+}
+
+}else{
+
+alert("Turning this off won't relock swords.");
+
+}
+
+saveData();
+
+}
+
+function unlockSelectedSword(){
+
+const id=document.getElementById("swordDropdown").value;
+
+const s=swords[id];
+
+if(s.roll){
+
+if(!save.unlockedRollSwords.includes(s.name)){
+save.unlockedRollSwords.push(s.name);
+}
+else if(!save.unlockedSpecial.includes(s.name)){
+  save.unlockedSpecial = save.unlockedSpecial || [];
+save.unlockedSpecial.push("zoink");
+}
+
+}else{
+
+save.wins=Math.max(save.wins,s.unlock||0);
+
+}
+
+saveData();
+
+alert("Unlocked: "+s.name);
+
+}
+
+
+function signup(){
+
+const user=document.getElementById("signupUser").value;
+const email=document.getElementById("signupEmail").value;
+const pass=document.getElementById("signupPass").value;
+
+createUserWithEmailAndPassword(auth,email,pass)
+
+.then(cred=>{
+
+alert("Account created!");
+localStorage.setItem("username", user);
+
+setDoc(doc(db,"players",cred.user.uid),{
+username:user,
+wins:0,
+losses:0
+});
+
+backToMenu();
+
+})
+
+.catch(e=>alert(e.message));
+
+}
+
+async function login(){
+
+  const email = document.getElementById("loginEmail").value;
+  const pass = document.getElementById("loginPass").value;
+
+  try{
+    const cred = await signInWithEmailAndPassword(auth, email, pass);
+    const user = cred.user;
+
+    alert("Logged in!");
+
+    // ✅ WAIT FOR FIREBASE
+    await loadPlayerData(user.uid);
+
+    updateUserBar();
+    backToMenu();
+
+  }catch(e){
+    alert(e.message);
+  }
+}
+
+
+async function loadPlayerData(uid){
+
+  try{
+const snap = await getDocs(collection(db,"players"));
+
+let found = false;
+
+snap.forEach(docSnap => {
+
+  if(docSnap.id === uid){
+
+    found = true;
+
+    const data = docSnap.data();
+
+    save = {
+      ...save,
+      ...data
+    };
+
+    localStorage.setItem(saveKey, JSON.stringify(save));
+
+    updateCoins();
+    renderSwords();
+    renderHatGrid();
+
+    console.log("✅ Player data loaded");
+  }
+
+});
+
+if(!found){
+  console.warn("No save data found");
+}
+
+
+
+  }catch(err){
+    alert("Load failed: " + err.message);
+    console.error(err);
+  }
+}
+async function loadLeaderboard(){
+
+const snap=await getDocs(collection(db,"players"));
+
+leaderboardPlayers=[];
+
+snap.forEach(doc=>{
+const data=doc.data();
+
+if(data.shadowBan || data.banned) return;
+
+leaderboardPlayers.push({
+id:doc.id,
+...data
+});
+});
+
+if(leaderboardTab === "global"){
+  leaderboardPlayers.sort((a,b)=>b.wins - a.wins);
+}
+
+if(leaderboardTab === "event"){
+  leaderboardPlayers.sort((a,b)=>
+    (b.eventData?.completed || 0) - (a.eventData?.completed || 0)
+  );
+}
+
+renderLeaderboardPage();
+}
+
+function renderLeaderboardPage(){
+
+const start = leaderboardPage * playersPerPage;
+const end = start + playersPerPage;
+
+const pagePlayers = leaderboardPlayers.slice(start,end);
+
+let html="";
+
+pagePlayers.forEach(p=>{
+
+let name=p.username;
+
+if(name==="PixelMan"){
+name=`<span style="color:yellow">PixelMan [Creator]</span>`;
+}
+
+if(name==="THEFIREMOUSE"){
+name=`<span style="color:green">THEFIREMOUSE [Head Admin]</span>`;
+}
+
+if(name==="mid4567"){
+name=`<span style="color:cyan">mid4567 [Dev]</span>`;
+}
+
+if(name==="lil_Jim"){
+name=`<span style="color:green">lil_Jim [Admin]</span>`;
+}
+
+
+let line = "";
+
+if(leaderboardTab === "global"){
+  line = `${p.wins} Wins | ${p.losses} Losses`;
+}
+
+if(leaderboardTab === "event"){
+  const completed = p.eventData?.completed || 0;
+
+  let milestone = "None";
+  if(completed >= 100) milestone = "100";
+  else if(completed >= 75) milestone = "75";
+  else if(completed >= 50) milestone = "50";
+  else if(completed >= 25) milestone = "25";
+
+  line = `Quests: ${completed} | Milestone: ${milestone}`;
+}
+
+
+html+=`<div onclick="openProfile('${p.id}')" class="leaderboard" style"text-align:center"
+style="cursor:pointer;margin:6px">
+<b>${name}</b> — ${line}
+</div>`;
+});
+
+document.getElementById("leaderboardList").innerHTML=html;
+
+const totalPages = Math.ceil(leaderboardPlayers.length / playersPerPage);
+
+document.getElementById("lbPageCounter").textContent =
+`Page ${leaderboardPage + 1} / ${totalPages}`;
+
+updateLeaderboardButtons();
+
+function renderLeaderboard(){
+
+  const list = document.getElementById("leaderboardList");
+  list.innerHTML = "";
+
+  leaderboardPlayers.forEach(p=>{
+
+    const div = document.createElement("div");
+
+    if(leaderboardTab === "global"){
+      div.textContent = `${p.name} | Wins: ${p.wins}`;
+    }
+
+    if(leaderboardTab === "event"){
+      const completed = p.eventData?.completed || 0;
+
+      let milestone = "None";
+      if(completed >= 100) milestone = "100";
+      else if(completed >= 75) milestone = "75";
+      else if(completed >= 50) milestone = "50";
+      else if(completed >= 25) milestone = "25";
+
+      div.textContent = `${p.name} | Quests: ${completed} | Milestone: ${milestone}`;
+    }
+
+    list.appendChild(div);
+
+  });
+
+}
+}
+
+function nextLeaderboardPage(){
+if((leaderboardPage+1)*playersPerPage >= leaderboardPlayers.length) return;
+leaderboardPage++;
+renderLeaderboardPage();
+}
+
+function prevLeaderboardPage(){
+if(leaderboardPage===0) return;
+leaderboardPage--;
+renderLeaderboardPage();
+}
+
+function updateLeaderboardButtons(){
+
+const left=document.getElementById("lbLeft");
+const right=document.getElementById("lbRight");
+
+left.style.opacity = leaderboardPage===0 ? 0.3 : 1;
+
+right.style.opacity =
+((leaderboardPage+1)*playersPerPage >= leaderboardPlayers.length)
+? 0.3 : 1;
+
+}
+
+function openLeaderboard(){
+
+menu.classList.add("hidden");
+document.getElementById("leaderboard").classList.remove("hidden");
+
+loadLeaderboard();
+updateTabUI();
+leaderboardInterval=setInterval(loadLeaderboard,1000);
+
+}
+
+async function deletePlayer(){
+
+const id=document.getElementById("deleteUserID").value;
+
+await setDoc(doc(db,"players",id),{
+shadowBan:true
+},{merge:true});
+
+alert("Player banned");
+
+}
+
+let lastAnnouncement = "";
+
+function startAnnouncements(){
+
+const ref = doc(db,"global","announcement");
+
+onSnapshot(ref,(snap)=>{
+
+if(!snap.exists()) return;
+
+const data = snap.data();
+
+// must exist
+if(!data.message) return;
+
+// 🔥 ONLY trigger if new
+if(data.message === lastAnnouncement) return;
+
+lastAnnouncement = data.message;
+
+// 🚀 SHOW POPUP
+showAnnouncement(
+data.author || "Server",
+data.message
+);
+
+});
+}
+
+startAnnouncements();
+
+
+function startEventSystem(){
+
+setInterval(()=>{
+
+const now = Date.now();
+const minutes = new Date().getMinutes();
+
+// 🔮 Pick next event 15 min before hour
+if(minutes === 45 && !nextEvent){
+nextEvent = pickRandomEvent();
+nextEventTime = now + (15 * 60 * 1000);
+}
+
+// 🎉 Start event on hour
+if(minutes === 0 && nextEvent){
+currentEvent = nextEvent;
+eventEnd = now + (currentEvent.duration * 60 * 1000);
+
+nextEvent = null;
+
+showAnnouncement("Event 🎉", formatEvent(currentEvent));
+}
+
+updateEventUI();
+
+},1000);
+
+}
+
+function pickRandomEvent(){
+return eventsList[Math.floor(Math.random()*eventsList.length)];
+}
+
+
+
+function formatEvent(e){
+return `${e.mult}x ${e.type === "luck" ? "Luck" : "Coins"} (${e.duration}m)`;
+}
+
+function updateRollChances() {
+  const inputs = [
+    {id:"chanceDecent", rarity:"decent"},
+    {id:"chanceGreat", rarity:"great"},
+    {id:"chanceInsane", rarity:"insane"},
+    {id:"chanceAlienish", rarity:"alienish"},
+    {id:"chanceDemonic", rarity:"demonic"},
+    {id:"chanceBlessed", rarity:"blessed"},
+    {id:"chanceExclusive", rarity:"exclusive"}
+  ];
+
+  inputs.forEach((i, index) => {
+    const val = Number(document.getElementById(i.id).value);
+    if (!isNaN(val)) {
+      rollChances[index].chance = val;
+    }
+  });
+
+  alert("Roll chances updated!");
+}
+
+async function savePlayerStats() {
+  const user = auth.currentUser;
+  if(!user) return;
+  
+  const playerRef = doc(db, "players", user.uid);
+
+  let username = localStorage.getItem("username");
+
+  // If username missing, fetch it from database
+  if(!username){
+    const snap = await getDocs(collection(db,"players"));
+    snap.forEach(d=>{
+      if(d.id === user.uid){
+        username = d.data().username;
+      }
+    });
+saveData();
+  }
+
+  const playerData = {
+    username: username || "Player",
+    wins: save.wins,
+    losses: save.losses,
+    coins: save.coins,
+    eventData: save.eventData,
+    achievements: save.achievements,
+    HatUnlocks: save.hatUnlocks,
+    EventRewards: save.bpRewards,
+    sword: save.sword,
+    rollSowrds: save.unlockedRollSwords,
+    eventSwords: save.unlockedSpecial
+  };
+  
+  await setDoc(playerRef, playerData, { merge: true });
+}
+window.onAuthStateChanged = onAuthStateChanged;
+window.signOut = signOut;
+async function updateUserBar(){
+
+const bar=document.getElementById("userBar");
+
+if(!auth.currentUser){
+bar.innerHTML="";
+document.getElementById("adminBtn").style.display="none";
+return;
+}
+
+const uid=auth.currentUser.uid;
+
+const snap=await getDocs(collection(db,"players"));
+
+let username="Player";
+
+snap.forEach(d=>{
+if(d.id===uid){
+username=d.data().username;
+}
+});
+
+if(username === "PixelMan" || username === "THEFIREMOUSE" || username === "lil_Jim" || username === "mid4567"){
+document.getElementById("adminBtn").style.display="block";
+}else{
+document.getElementById("adminBtn").style.display="none";
+}
+
+bar.innerHTML=
+`<b>${username}</b>
+<button onclick="logout()">Sign Out</button>  <button onclick="savePlayerStats()"> Save Game </button>`;
+
+localStorage.setItem("username",username);
+
+}
+
+window.logout = async function(){
+
+try{
+
+await signOut(auth);
+
+alert("Signed out");
+
+updateUserBar();
+
+}catch(e){
+
+alert("Logout failed: " + e.message);
+
+}
+
+}
+onAuthStateChanged(auth, async (user)=>{
+
+if(!user) return;
+
+const uid = user.uid;
+
+const userRef = doc(db,"users",uid);
+const snap = await getDoc(userRef);
+
+if(!snap.exists()) return;
+
+const data = snap.data();
+
+/* username display */
+
+if(data.username){
+document.getElementById("usernameDisplay").innerText = data.username;
+}
+
+/* admin detection */
+
+if(data.owner === "yes"){
+adminLevel = "owner";
+document.getElementById("adminBtn").style.display = "block";
+}
+
+else if(data.admin === "yes"){
+adminLevel = "admin";
+document.getElementById("adminBtn").style.display = "block";
+}
+
+});
+
+
+async function openProfile(id){
+
+document.getElementById("leaderboard").classList.add("hidden");
+document.getElementById("profilePage").classList.remove("hidden");
+
+const snap=await getDocs(collection(db,"players"));
+
+snap.forEach(doc=>{
+
+if(doc.id===id){
+
+const p=doc.data();
+
+let name=p.username || "Unknown Player";
+
+if(name==="PixelMan"){
+name=`<span style="color:yellow">PixelMan [Creator]</span>`;
+}
+
+if(name==="THEFIREMOUSE"){
+name=`<span style="color:green">THEFIREMOUSE [Admin]</span>`;
+}
+
+if(name==="mid4567"){
+name=`<span style="color:cyan">mid4567 [Dev]</span>`;
+}
+
+if(name==="lil_Jim"){
+name=`<span style="color:green">lil_Jim [Admin]</span>`;
+}
+
+document.getElementById("profileContent").innerHTML=`
+<b>${name}</b><br><br>
+
+Wins: ${p.wins}<br>
+Losses: ${p.losses}<br><br>
+
+Coins: ${save.coins}<br>
+
+Achievements: ${
+Object.keys(save.achievements).filter(a=>save.achievements[a]).length
+} / ${Object.keys(achievements).length}<br>
+
+Swords: ${
+Object.keys(swords).length
+- Object.keys(swords).filter(id=>{
+const s=swords[id];
+if(s.roll) return !save.unlockedRollSwords.includes(s.name);
+if(s.unlock) return save.wins<s.unlock;
+if(s.achievement) return !save.achievements[s.achievement];
+}).length
+} / ${Object.keys(swords).length}
+
+<br><br>
+
+
+
+<button onclick="sendDuelRequest('${id}')">
+⚔️ Challenge Player to 1v1
+</button>
+`;
+
+function renderProfile(p){
+
+function renderProfile(p){
+
+  const box = document.getElementById("profileContent");
+
+  const swordCount = (p.unlockedRollSwords?.length || 0) +
+                     (p.unlockedSpecial?.length || 0);
+
+  const totalSwords = Object.keys(swords).length + 1; // + zoink
+
+  const achievementsCount = Object.keys(p.achievements || {}).length;
+
+  box.innerHTML = `
+    Name: ${p.name || "Unknown"}<br>
+    Coins: ${p.coins || 0}<br>
+    Swords: ${swordCount}/${totalSwords}<br>
+    Achievements: ${achievementsCount}
+  `;
+
+  // 🔥 ONLINE STATUS FIX
+  const online = Date.now() - (p.lastOnline || 0) < 60000;
+
+  document.getElementById("statusDot").textContent = online ? "🟢" : "🔴";
+  document.getElementById("statusText").textContent = online ? "Online" : "Offline";
+}
+}
+
+
+
+}
+
+});
+
+}
+
+function backToLeaderboard(){
+
+document.getElementById("profilePage").classList.add("hidden");
+document.getElementById("leaderboard").classList.remove("hidden");
+
+}
+
+async function sendAnnouncement(){
+
+const msg=document.getElementById("announcementInput").value;
+
+if(!msg){
+alert("Write something first");
+return;
+}
+
+await setDoc(doc(db,"global","announcement"),{
+message:msg,
+author:"PixelMan"
+});
+
+document.body.style.background = "blue";
+setTimeout(()=>{document.body.style.background="";},300);
+
+}
+
+async function clearAnnouncement(){
+
+await setDoc(doc(db,"global","announcement"),{
+message:"",
+author:""
+});
+
+document.getElementById("globalAnnouncement").style.display="none";
+}
+
+async function loadPlayers(){
+
+const snap=await getDocs(collection(db,"players"));
+
+let html="";
+const search=document.getElementById("playerSearch").value.toLowerCase();
+
+snap.forEach(d=>{
+
+const p=d.data();
+const name=(p.username||"player").toLowerCase();
+
+if(search && !name.includes(search)) return;
+
+html+=`
+<div style="border-bottom:1px solid #444;padding:4px">
+<b>${p.username}</b><br>
+Wins:${p.wins} | Losses:${p.losses}<br>
+UID: ${d.id}
+<button onclick="selectPlayer('${d.id}')">Select</button>
+</div>
+`;
+
+});
+
+const full=document.getElementById("playerList");
+const lite=document.getElementById("playerListLite");
+
+if(full) full.innerHTML=html;
+if(lite) lite.innerHTML=html;
+
+}
+
+function selectPlayer(uid){
+
+const full = document.getElementById("targetUID");
+const lite = document.getElementById("liteTargetUID");
+
+if(full) full.value = uid;
+if(lite) lite.value = uid;
+
+}
+async function giveCoins(){
+
+const uid=document.getElementById("targetUID").value;
+const amount=Number(document.getElementById("giveCoins").value);
+
+if(!uid)return alert("Select a player");
+
+await setDoc(doc(db,"players",uid),{
+coins:amount
+},{merge:true});
+
+logServer("Coins given to "+uid);
+
+alert("Coins injected");
+
+}
+
+async function giveSword(){
+
+const uid=document.getElementById("targetUID").value;
+const sword=document.getElementById("giveSword").value;
+
+await setDoc(doc(db,"players",uid),{
+adminSword:sword
+},{merge:true});
+
+logServer("Sword "+sword+" given to "+uid);
+
+alert("Sword injected");
+
+}
+
+
+function logServer(msg){
+
+const time=new Date().toLocaleTimeString();
+
+const fullLog=document.getElementById("serverLog");
+const liteLog=document.getElementById("serverLogLite");
+
+if(fullLog){
+fullLog.innerHTML=`[${time}] ${msg}<br>`+fullLog.innerHTML;
+}
+
+if(liteLog){
+liteLog.innerHTML=`[${time}] ${msg}<br>`+liteLog.innerHTML;
+}
+
+}
+
+let coinMultiplier = 1;
+let rollingDisabled = false;
+let eventSword = null;   // FIX: declare event sword
+let activeEvents = [];
+
+function setMultiplier(){
+
+coinMultiplier=Number(document.getElementById("coinMultiplier").value)||1;
+
+logServer("Multiplier set to "+coinMultiplier);
+
+}
+
+function disableRolling(){
+
+rollingDisabled=true;
+logServer("Rolling disabled");
+
+}
+
+function enableRolling(){
+
+rollingDisabled=false;
+logServer("Rolling enabled");
+
+}
+
+function populateSwordDropdown(){
+
+const give=document.getElementById("giveSword");
+const unlock=document.getElementById("swordDropdown");
+const lock=document.getElementById("lockSwordDropdown");
+const liteUnlock=document.getElementById("liteSwordDropdown");
+const liteLock=document.getElementById("liteLockSwordDropdown");
+
+if(give) give.innerHTML="";
+if(unlock) unlock.innerHTML="";
+if(lock) lock.innerHTML="";
+if(liteUnlock) liteUnlock.innerHTML="";
+if(liteLock) liteLock.innerHTML="";
+
+Object.keys(swords).forEach(id=>{
+
+const name=swords[id].name;
+
+if(give) give.appendChild(new Option(name,id));
+if(unlock) unlock.appendChild(new Option(name,id));
+if(lock) lock.appendChild(new Option(name,id));
+if(liteUnlock) liteUnlock.appendChild(new Option(name,id));
+if(liteLock) liteLock.appendChild(new Option(name,id));
+
+});
+
+}
+window.onload = () => {
+  updateCoins();
+  populateSwordDropdown();
+initEventQuests();
+};
+
+async function shadowBan(){
+
+const uid=document.getElementById("targetUID").value;
+
+if(!uid){
+alert("Select a player first");
+return;
+}
+
+await setDoc(doc(db,"players",uid),{
+shadowBan:true
+},{merge:true});
+
+logServer("Shadow banned "+uid);
+
+alert("Player shadow banned");
+
+}
+
+async function banPlayer(){
+
+const uid=document.getElementById("targetUID").value;
+
+if(!uid){
+alert("Select a player");
+return;
+}
+
+await setDoc(doc(db,"players",uid),{
+banned:true
+},{merge:true});
+
+logServer("Player banned: "+uid);
+
+alert("Player banned");
+
+}
+
+async function unbanPlayer(){
+
+const uid=document.getElementById("targetUID").value;
+
+if(!uid){
+alert("Select a player");
+return;
+}
+
+await setDoc(doc(db,"players",uid),{
+banned:false,
+shadowBan:false
+},{merge:true});
+
+logServer("Player unbanned: "+uid);
+
+alert("Player unbanned");
+
+}
+
+async function unshadowBan(){
+
+const uid=document.getElementById("targetUID").value;
+
+if(!uid){
+alert("Select a player");
+return;
+}
+
+await setDoc(doc(db,"players",uid),{
+shadowBan:false
+},{merge:true});
+
+logServer("Shadow ban removed: "+uid);
+
+alert("Shadow ban removed");
+
+}
+
+async function deleteAccount(){
+
+const uid=document.getElementById("targetUID").value;
+
+if(!uid){
+alert("Select player first");
+return;
+}
+
+if(!confirm("DELETE THIS ACCOUNT FOREVER?")) return;
+
+await deleteDoc(doc(db,"players",uid));
+
+logServer("Account deleted: "+uid);
+
+alert("Account deleted");
+
+}
+
+async function sendDuelRequest(targetUID){
+
+if(!auth.currentUser){
+alert("Login first");
+return;
+}
+
+await setDoc(doc(db,"duels",targetUID),{
+challenger:auth.currentUser.uid,
+time:Date.now()
+});
+
+alert("Duel request sent!");
+
+}
+
+async function checkDuelRequests(){
+
+if(!auth.currentUser) return;
+
+const snap = await getDocs(collection(db,"duels"));
+
+snap.forEach(d=>{
+
+if(d.id===auth.currentUser.uid){
+
+const data=d.data();
+
+if(confirm("Player challenged you to a duel! Accept?")){
+
+startPvP(data.challenger);
+
+}
+
+}
+
+});
+
+}
+
+function startPvP(opponentUID){
+
+alert("PvP mode coming soon!");
+
+/*
+Later we sync positions with Firebase
+*/
+}
+
+async function killPlayer(){
+
+const uid=document.getElementById("targetUID").value;
+
+await setDoc(doc(db,"commands",uid),{
+type:"kill"
+});
+
+logServer("Kill command sent");
+
+}
+
+async function flingPlayer(){
+
+const uid=document.getElementById("targetUID").value;
+
+await setDoc(doc(db,"commands",uid),{
+type:"fling"
+});
+
+logServer("Fling command sent");
+
+}
+
+async function setPlayerHP(){
+
+const uid=document.getElementById("targetUID").value;
+const hp=document.getElementById("setHP").value;
+
+await setDoc(doc(db,"commands",uid),{
+type:"sethp",
+value:Number(hp)
+});
+
+}
+
+async function forcePvP(){
+
+const uid=document.getElementById("targetUID").value;
+
+await setDoc(doc(db,"commands",uid),{
+type:"forcepvp"
+});
+
+}
+
+async function updateOnlineStatus(){
+
+if(!auth.currentUser) return;
+
+await setDoc(doc(db,"players",auth.currentUser.uid),{
+lastSeen:Date.now()
+},{merge:true});
+
+}
+
+async function checkOnlineStatus(uid){
+
+const snap=await getDocs(collection(db,"players"));
+
+snap.forEach(d=>{
+
+if(d.id===uid){
+
+const lastSeen=d.data().lastSeen||0;
+const diff=Date.now()-lastSeen;
+
+const dot=document.getElementById("statusDot");
+const text=document.getElementById("statusText");
+
+if(diff<10000){
+dot.textContent="🟢";
+text.textContent="Online";
+}else{
+dot.textContent="🔴";
+text.textContent="Offline";
+}
+
+}
+
+});
+
+}
+
+setInterval(updateOnlineStatus,3000);
+
+setInterval(()=>{
+  if(auth.currentUser){
+    setDoc(doc(db,"players",auth.currentUser.uid),{
+      lastOnline: Date.now()
+    },{merge:true});
+  }
+}, 10000);
+
+function openAdminTab(tab){
+
+document.querySelectorAll(".adminTab").forEach(t=>{
+
+t.style.display="none";
+
+});
+
+const el=document.getElementById("admin_"+tab);
+
+if(el) el.style.display="block";
+
+}
+
+
+function showAnnouncement(author, msg){
+
+const box = document.getElementById("globalAnnouncement");
+if(!box) return;
+
+// name styling
+let name = author;
+
+if(author==="PixelMan"){
+name = `<span style="color:gold">PixelMan [Creator]</span>`;
+}
+
+if(author==="THEFIREMOUSE"){
+name = `<span style="color:lime">THEFIREMOUSE [Head Admin]</span>`;
+}
+
+// show
+box.innerHTML = `${name}: ${msg}`;
+box.style.display = "block";
+
+// reset animation
+box.style.opacity = "1";
+box.style.transform = "translateY(0)";
+
+// hide after time
+setTimeout(()=>{
+box.style.opacity = "0";
+box.style.transform = "translateY(-20px)";
+},8000);
+
+setTimeout(()=>{
+box.style.display = "none";
+},8400);
+
+}
+
+function lockSelectedSword(){
+
+const id=document.getElementById("lockSwordDropdown").value;
+const s=swords[id];
+
+if(s.roll){
+
+save.unlockedRollSwords =
+save.unlockedRollSwords.filter(n=>n!==s.name);
+
+}else if(s.unlock){
+
+save.wins = Math.min(save.wins, s.unlock-1);
+
+}else if(s.achievement){
+
+delete save.achievements[s.achievement];
+
+}
+
+
+
+saveData();
+renderSwords();
+
+alert("Locked: "+s.name);
+
+}
+
+function unlockLiteSword(){
+
+const id=document.getElementById("liteSwordDropdown").value;
+
+const s=swords[id];
+
+if(s.roll){
+
+if(!save.unlockedRollSwords.includes(s.name)){
+save.unlockedRollSwords.push(s.name);
+}
+
+  else if(!save.unlockedSpecial.includes(s.name)){
+  save.unlockedSpecial = save.unlockedSpecial || [];
+save.unlockedSpecial.push("zoink");
+}
+
+}else{
+
+save.wins=Math.max(save.wins,s.unlock||0);
+
+}
+
+saveData();
+renderSwords();
+
+alert("Unlocked: "+s.name);
+
+}
+
+function lockSelectedSwordLite(){
+
+const id=document.getElementById("liteLockSwordDropdown").value;
+const s=swords[id];
+
+if(s.roll){
+
+save.unlockedRollSwords =
+save.unlockedRollSwords.filter(n=>n!==s.name);
+
+}else if(s.unlock!==undefined){
+
+save.wins = Math.min(save.wins, s.unlock-1);
+
+}else if(s.achievement){
+
+delete save.achievements[s.achievement];
+
+}
+
+saveData();
+renderSwords();
+
+alert("Locked: "+s.name);
+
+}
+
+const consoleInput = document.getElementById("consoleInput");
+const consoleOutput = document.getElementById("consoleOutput");
+
+
+consoleInput.addEventListener("keydown",(e)=>{
+
+if(e.key !== "Enter") return;
+
+const cmd = consoleInput.value.trim();
+consoleInput.value="";
+
+runAdminCommand(cmd);
+
+});
+
+function consoleLog(msg){
+
+const line=document.createElement("div");
+
+line.textContent="> "+msg;
+
+consoleOutput.appendChild(line);
+
+consoleOutput.scrollTop=consoleOutput.scrollHeight;
+
+}
+
+function runAdminCommand(cmd){
+
+consoleLog(cmd);
+const args = cmd.split(" ");
+const command = args[0];
+
+switch(command){
+
+
+case "hitboxes":
+
+toggleHitboxes();
+consoleLog("Hitboxes: "+(showHitboxes?"ON":"OFF"));
+
+break;
+case "help":
+consoleLog("Commands:");
+consoleLog("coins [amount]");
+consoleLog("wins [amount]");
+consoleLog("losses [amount]");
+consoleLog("unlock [sword]");
+consoleLog("unlockall");
+consoleLog("instakill");
+consoleLog("godmode");
+consoleLog("givecoins [amount]");
+consoleLog("roll [amount]");
+break;
+
+case "coins":
+coins = parseInt(args[1]);
+updateCoins();
+consoleLog("Coins set to "+coins);
+break;
+
+case "wins":
+wins = parseInt(args[1]);
+savePlayerStats();
+consoleLog("Wins set to "+wins);
+break;
+
+case "losses":
+losses = parseInt(args[1]);
+savePlayerStats();
+consoleLog("Losses set to "+losses);
+break;
+
+case "unlockall":
+playerSwords = swords.map(s=>s.name);
+consoleLog("All swords unlocked");
+break;
+
+case "unlock":
+unlockSword(args.slice(1).join(" "));
+consoleLog("Unlocked sword");
+break;
+
+case "instakill":
+instakill = !instakill;
+consoleLog("Instakill: "+instakill);
+break;
+
+case "godmode":
+invincible = !invincible;
+consoleLog("Godmode: "+invincible);
+break;
+
+case "givecoins":
+coins += parseInt(args[1]);
+updateCoins();
+consoleLog("Added coins");
+break;
+
+case "roll":
+
+let rolls = parseInt(args[1]) || 1;
+
+for(let i=0;i<rolls;i++){
+rollSword();
+}
+
+consoleLog("Rolled "+rolls+" times");
+break;
+
+default:
+consoleLog("Unknown command");
+
+}
+
+}
+function toggleConsole(){
+const consoleBox = document.getElementById("adminConsole");
+
+if(consoleBox.style.display === "none" || consoleBox.style.display === ""){
+consoleBox.style.display = "flex";
+}else{
+consoleBox.style.display = "none";
+}
+}
+
+function consoleLog(text){
+
+const output = document.getElementById("consoleOutput");
+
+output.innerHTML += "<div>> " + text + "</div>";
+
+output.scrollTop = output.scrollHeight;
+
+}
+
+const eventsRef = collection(db,"serverEvents");
+
+onSnapshot(eventsRef,(snap)=>{
+
+activeEvents = [];
+
+snap.forEach(doc=>{
+activeEvents.push(doc.data());
+});
+
+updateMultipliers();
+updateEventUI();
+
+});
+
+async function spawnEvent(){
+
+if(adminLevel === "none") return;
+
+const type = document.getElementById("eventType").value;
+const timeText = document.getElementById("eventTime").value;
+
+const parts = timeText.split(":").map(Number);
+
+let seconds=0;
+
+if(parts.length===2){
+seconds = parts[0]*60 + parts[1];
+}
+
+if(parts.length===3){
+seconds = parts[0]*3600 + parts[1]*60 + parts[2];
+}
+
+const endTime = Date.now() + seconds*1000;
+
+let name="";
+let multiplier=1;
+
+if(type==="coins2"){name="2x Coins"; multiplier=2;}
+if(type==="coins3"){name="3x Coins"; multiplier=3;}
+if(type==="coins4"){name="4x Coins"; multiplier=4;}
+
+if(type==="luck2"){name="2x Luck"; multiplier=2;}
+if(type==="luck3"){name="3x Luck"; multiplier=3;}
+if(type==="luck4"){name="4x Luck"; multiplier=4;}
+
+await setDoc(doc(db,"serverEvents",type),{
+
+name:name,
+multiplier:multiplier,
+type:type,
+endTime:endTime
+
+});
+
+}
+
+setInterval(()=>{
+
+activeEvents.forEach(async e=>{
+
+if(Date.now() > e.endTime){
+
+await deleteDoc(doc(db,"serverEvents",e.type));
+
+}
+
+});
+
+},5000);
+
+
+const historyBox = document.getElementById("consoleHistory");
+
+function consoleLog(text){
+
+const line = document.createElement("div");
+line.innerText = "> " + text;
+
+historyBox.appendChild(line);
+
+historyBox.scrollTop = historyBox.scrollHeight;
+
+}
+
+if(cmd === "unfreeze"){
+
+const target = args[0];
+
+const playerRef = doc(db,"players",target);
+
+updateDoc(playerRef,{
+frozen:false
+});
+
+consoleLog("Player unfrozen");
+
+}
+
+if(cmd === "freeze"){
+
+const target = args[0];
+
+const playerRef = doc(db,"players",target);
+
+updateDoc(playerRef,{
+frozen:true
+});
+
+consoleLog("Player frozen");
+
+}
+
+function updateTabUI(){
+
+  document.getElementById("tab_global").classList.remove("active");
+  document.getElementById("tab_event").classList.remove("active");
+
+  const active = document.getElementById("tab_" + leaderboardTab);
+  if(active) active.classList.add("active");
+
+}
+
+function spawnEvent(){
+
+const type=document.getElementById("eventType").value;
+const time=document.getElementById("eventTime").value;
+
+if(!time){
+alert("Enter event time");
+return;
+}
+
+let seconds=0;
+
+const parts=time.split(":").map(Number);
+
+if(parts.length===2){
+seconds=parts[0]*60+parts[1];
+}
+
+if(parts.length===3){
+seconds=parts[0]*3600+parts[1]*60+parts[2];
+}
+
+activeEvents.push({
+type:type,
+time:seconds
+});
+
+logServer("Event spawned: "+type);
+
+}
+setInterval(()=>{
+
+const box=document.getElementById("eventDisplay");
+
+box.innerHTML="";
+
+activeEvents.forEach(e=>{
+
+e.time--;
+
+if(e.time<=0) return;
+
+let label = e.type === "zoink" ? "Zoink Fest" : e.type;
+html += `<div>${label} | ${e.time}s</div>`;
+
+});
+
+activeEvents=activeEvents.filter(e=>e.time>0);
+
+},1000);
+
+function updateMultipliers(){
+
+luckMultiplier = 1;
+coinMultiplier = 1;
+
+activeEvents.forEach(e=>{
+
+if(e.type.includes("luck")){
+luckMultiplier = e.multiplier;
+}
+
+if(e.type.includes("coins")){
+coinMultiplier = e.multiplier;
+}
+
+});
+
+}
+
+function claimDailyReward(){
+
+let last = localStorage.getItem("dailyRewardTime");
+let now = Date.now();
+
+if(!last || now - last > 86400000){
+
+save.coins += 500;
+
+updateCoins();
+saveData();
+
+localStorage.setItem("dailyRewardTime", now);
+
+alert("🎉 You received 500 coins!");
+
+}else{
+
+let remaining = 86400000 - (now - last);
+let hours = Math.floor(remaining / 3600000);
+
+alert("⏳ Come back in " + hours + " hours!");
+
+}
+
+}
+
+document.getElementById("dailyRewardBtn").onclick = claimDailyReward;
+
+
+save.hat = save.hat || "none";
+
+function setHat(h){
+
+if(h === "zoink" && !save.hatUnlocks?.includes("zoink")){
+alert("Locked!");
+return;
+}
+
+save.hat = h;
+saveData();
+
+}
+
+if(save.hat === "cap"){
+ctx.fillStyle="red";
+ctx.fillRect(player.x-8,player.y-30,16,6);
+}
+
+if(save.hat === "crown"){
+ctx.fillStyle="gold";
+ctx.fillRect(player.x-8,player.y-30,16,6);
+}
+
+if(save.hat === "ninja"){
+ctx.fillStyle="black";
+ctx.fillRect(player.x-8,player.y-30,16,6);
+}
+
+if(save.hat === "halo"){
+ctx.strokeStyle="yellow";
+ctx.beginPath();
+ctx.arc(player.x,player.y-30,10,0,Math.PI*2);
+ctx.stroke();
+}
+
+const rewardBtn = document.getElementById("dailyRewardBtn");
+
+function updateRewardButton(){
+const menu = document.getElementById("menu");
+
+if(!menu.classList.contains("hidden")){
+rewardBtn.classList.remove("hidden");
+}else{
+rewardBtn.classList.add("hidden");
+}
+}
+
+
+let superJump = false;
+let normalJump = jumpStrength;
+
+let superJumpEnabled = false;
+const BASE_JUMP = JUMP_FORCE;
+
+function toggleSuperJump() {
+  superJumpEnabled = !superJumpEnabled;
+
+  if (superJumpEnabled) {
+    JUMP_FORCE = BASE_JUMP * 2;
+  } else {
+    JUMP_FORCE = BASE_JUMP;
+  }
+}
+
+let superSpeed = false;
+let normalSpeed = speed;
+
+function toggleSuperSpeed() {
+    superSpeedEnabled = !superSpeedEnabled;
+}
+
+function toggleSuperJump() {
+    superJumpEnabled = !superJumpEnabled;
+}
+
+let launchMode = false;
+
+function toggleLaunchMode() {
+    launchMode = !launchMode;
+}
+
+</script>
+
+<div id="globalAnnouncement" style="
+position:fixed;
+top:20px;
+left:50%;
+transform:translateX(-50%);
+background:#111;
+border:2px solid gold;
+padding:12px 20px;
+font-weight:bold;
+font-size:18px;
+color:white;
+display:none;
+z-index:9999;
+box-shadow:0 0 10px gold;
+">
 
 </body>
 </html>
+
+
+
+
+
+
+
