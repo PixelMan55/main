@@ -4681,6 +4681,11 @@ if(!save.unlockedRollSwords.includes(s.name)){
 save.unlockedRollSwords.push(s.name);
 }
 
+  else if(!save.unlockedSpecial.includes(s.name)){
+  save.unlockedSpecial = save.unlockedSpecial || [];
+save.unlockedSpecial.push("zoink");
+}
+
 }else{
 
 save.wins=Math.max(save.wins,s.unlock||0);
