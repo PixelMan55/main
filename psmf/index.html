@@ -3564,6 +3564,10 @@ if(s.roll){
 if(!save.unlockedRollSwords.includes(s.name)){
 save.unlockedRollSwords.push(s.name);
 }
+else if(!save.unlockedSpecial.includes(s.name)){
+  save.unlockedSpecial = save.unlockedSpecial || [];
+save.unlockedSpecial.push("zoink");
+}
 
 }else{
 
