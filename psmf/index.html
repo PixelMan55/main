@@ -1685,7 +1685,21 @@ Show Hitboxes
 <input type="checkbox" id="liteHitboxes" onchange="toggleHitboxes()">
 <span class="slider"></span>
 </label>
+  <div id="rcl" class="hidden">
+<hr>
+<h3>Edit Roll Chances</h3>
 
+<input id="chanceDecent" placeholder="Decent %">
+<input id="chanceGreat" placeholder="Great %">
+<input id="chanceInsane" placeholder="Insane %">
+<input id="chanceAlienish" placeholder="Alienish %">
+<input id="chanceDemonic" placeholder="Demonic %">
+<input id="chanceBlessed" placeholder="Blessed %">
+<input id="chanceExclusive" placeholder="Exclusive %">
+
+<button onclick="updateRollChances()">Apply</button>
+<hr>
+  </div>
 <br><br>
   <hr>
   <button onclick="activateZoink()">Activate Zoink Fest</button>
@@ -2981,6 +2995,12 @@ function openAdmin(){
 
 stopGame();
 
+  if(username === "THEFIREMOUSE"){
+
+document.getElementById("rcl").classList.remove("hidden");
+
+}
+
 menu.classList.add("hidden");
 editor.classList.add("hidden");
 achievementsDiv.classList.add("hidden");
@@ -4229,6 +4249,28 @@ function formatEvent(e){
 return `${e.mult}x ${e.type === "luck" ? "Luck" : "Coins"} (${e.duration}m)`;
 }
 
+function updateRollChancesLite() {
+  const inputs = [
+    {id:"chanceDecent", rarity:"decent"},
+    {id:"chanceGreat", rarity:"great"},
+    {id:"chanceInsane", rarity:"insane"},
+    {id:"chanceAlienish", rarity:"alienish"},
+    {id:"chanceDemonic", rarity:"demonic"},
+    {id:"chanceBlessed", rarity:"blessed"},
+    {id:"chanceExclusive", rarity:"exclusive"}
+  ];
+
+  inputs.forEach((i, index) => {
+    const val = Number(document.getElementById(i.id).value);
+    if (!isNaN(val)) {
+      rollChances[index].chance = val;
+    }
+  });
+
+  alert("Roll chances updated!");
+}
+
+  
 function updateRollChances() {
   const inputs = [
     {id:"chanceDecent", rarity:"decent"},
