@@ -2995,11 +2995,7 @@ function openAdmin(){
 
 stopGame();
 
-  if(username === "THEFIREMOUSE"){
 
-document.getElementById("rcl").classList.remove("hidden");
-
-}
 
 menu.classList.add("hidden");
 editor.classList.add("hidden");
@@ -3036,7 +3032,11 @@ return;
 
 populateSwordDropdown();
 loadPlayers();
+  if(username === "THEFIREMOUSE"){
 
+document.getElementById("rcl").classList.remove("hidden");
+
+}
 }
 
 let isPaused = false;
