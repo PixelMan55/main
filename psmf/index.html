@@ -1038,9 +1038,35 @@ border-radius:10px;
   }
 }
 
-
 body.easterActive {
-  background: radial-gradient(circle, #2a1a2a, #000);
+  background: radial-gradient(circle at center, #2a1a2a, #0f0f14);
+}
+
+.hat.bunnyEars {
+  width: 20px;
+  height: 20px;
+  position: relative;
+}
+
+.hat.bunnyEars::before,
+.hat.bunnyEars::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 14px;
+  background: white;
+  border-radius: 3px;
+  top: -12px;
+}
+
+.hat.bunnyEars::before {
+  left: 2px;
+  transform: rotate(-10deg);
+}
+
+.hat.bunnyEars::after {
+  right: 2px;
+  transform: rotate(10deg);
 }
 </style>
 </head>
@@ -1383,6 +1409,12 @@ Coins:
 <input type="number" id="adminCoins">
 <button onclick="setCoins()">Apply</button>
 
+<br><br>
+
+Carrots:
+<input type="number" id="adminCarrots">
+<button onclick="setCarrots()">Apply</button>
+
 </div>
 <input id="setEventQuestsInput" type="number" placeholder="Set Event Quests">
 <button onclick="setEventQuests()">Set Quests</button>
@@ -1685,21 +1717,7 @@ Show Hitboxes
 <input type="checkbox" id="liteHitboxes" onchange="toggleHitboxes()">
 <span class="slider"></span>
 </label>
-  <div id="rcl" class="hidden">
-<hr>
-<h3>Edit Roll Chances</h3>
 
-<input id="chanceDecent" placeholder="Decent %">
-<input id="chanceGreat" placeholder="Great %">
-<input id="chanceInsane" placeholder="Insane %">
-<input id="chanceAlienish" placeholder="Alienish %">
-<input id="chanceDemonic" placeholder="Demonic %">
-<input id="chanceBlessed" placeholder="Blessed %">
-<input id="chanceExclusive" placeholder="Exclusive %">
-
-<button onclick="updateRollChances()">Apply</button>
-<hr>
-  </div>
 <br><br>
   <hr>
   <button onclick="activateZoink()">Activate Zoink Fest</button>
@@ -2214,13 +2232,15 @@ function showRewards(){
   document.getElementById("bunnyDialogue").innerHTML = `
     <b>Possible Rewards:</b><br><br>
 
-    500 Coins — Common (50%)<br>
-    1500 Coins — Rare (30%)<br>
-    Egg Blade — Limited (15%)<br>
-    Golden Carrot Blade — Limited (5%)
+    500 Coins — Common (30%)<br>
+    1500 Coins — Uncommon (25%)<br>
+    3000 Coins — Rare (15%)<br>
+    Bunny Ears — Event Hat (12%)<br>
+    Egg Blade — Limited Sword (10%)<br>
+    Golden Carrot Blade — Ultra Rare (6%)<br>
+    50 Wins — JACKPOT (2%)
   `;
 }
-
 function showHowTo(){
   document.getElementById("bunnyDialogue").innerHTML = `
     <b>How to Play:</b><br><br>
@@ -2261,7 +2281,7 @@ q.progress += coins;
 }
 
 });
-
+}
 // 🥕 Easter carrots reward
 if (window.easterActive) {
   const rand = Math.random();
@@ -2288,12 +2308,28 @@ if (window.easterActive) {
   el.style.marginTop = "10px";
   el.innerText = `🥕 +${carrotsEarned} Carrots`;
 
+
+
   document.getElementById("endScreen").appendChild(el);
 }
 
 saveData();
+
+
 }
 
+function setCarrots(){
+
+  const val = Number(document.getElementById("adminCarrots").value);
+
+  if(isNaN(val)) return alert("Invalid number");
+
+  save.carrots = val;
+
+  saveData();
+  updateCarrotUI();
+
+  alert("Carrots set to " + val);
 }
 
 function switchEventTab(id, btn) {
@@ -2558,8 +2594,6 @@ p1El.innerHTML = makeStick(save.color, save.sword);
 
 function giveCarrots(){
 
-  const dialogue = document.getElementById("bunnyDialogue");
-
   if((save.carrots || 0) < 10){
     updateBunnyText("You need 10 carrots first!");
     return;
@@ -2570,25 +2604,39 @@ function giveCarrots(){
   const rand = Math.random();
   let reward;
 
-  if(rand < 0.40){
-    reward = { type:"coins", amount:750 };
+ if(rand < 0.30){
+    return { type:"coins", amount:500 };
   }
-  else if(rand < 0.70){
-    reward = { type:"coins", amount:2000 };
+  if(rand < 0.55){
+    return { type:"coins", amount:1500 };
   }
-  else if(rand < 0.90){
-    reward = { type:"hat", name:"Bunny Ears" };
+  if(rand < 0.70){
+    return { type:"coins", amount:3000 };
   }
-  else if(rand < 0.98){
-    reward = { type:"sword", name:"Egg Blade" };
+
+  if(rand < 0.82){
+    return { type:"hat", id:"bunnyEars", name:"Bunny Ears" };
   }
-  else{
-    reward = { type:"wins", amount:5 };
+
+  if(rand < 0.92){
+    return { type:"sword", id:"eggblade" };
   }
+
+  if(rand < 0.98){
+    return { type:"sword", id:"goldcarrot" };
+  }
+
+  return { type:"wins", amount:50 }; // jackpot
+
 
   giveReward(reward);
-}
 
+updateBunnyText("You got " + formatReward(reward) + "!");
+
+  // 🔥 ADD THESE
+  updateCarrotUI();
+  saveData();
+}
 function updateBunnyText(text){
 
   const el = document.getElementById("bunnyDialogue");
@@ -2606,7 +2654,12 @@ function updateBunnyText(text){
   }, 20);
 }
 
-
+function formatReward(r){
+  if(r.type === "coins") return r.amount + " coins 💰";
+  if(r.type === "hat") return r.name + " 🐰";
+  if(r.type === "sword") return r.name + " ⚔️";
+  if(r.type === "wins") return r.amount + " wins 🏆";
+}
 
 function deactivateZoink(){
 
@@ -2747,7 +2800,9 @@ const swords={
   ach_master:{name:"Obsidian Greatblade",dmg:28,knock:20,stun:22,achievement:"win_master",rarity:"demonic"},
   ach_nightmare:{name:"Cursed Reaver",dmg:34,knock:26,stun:28,achievement:"win_nightmare",rarity:"demonic"},
   ach_impossible:{name:"Celestial Blade",dmg:40,knock:34,stun:34,achievement:"win_impossible",rarity:"blessed"},
-zoink:{name:"The Zoink",rarity:"limited",dmg:52,knock:45,stun:43,unlock:"Zoink Fest"}
+zoink:{name:"The Zoink",rarity:"limited",dmg:52,knock:45,stun:43,unlock:"Zoink Fest"},
+eggBlade:{name:"Egg Blade",rarity:"limited",dmg:30,knock:26,stun:31,unlock:"Easter Event"},
+goldCarrot:{name:"Golden Carrot Blade",rarity:"limited",dmg:40,knock:38,stun:41,unlock:"Easter Event"}
 };
 const rollSwords=[
 {name:"Iron Saber",rarity:"decent"},
@@ -2809,7 +2864,8 @@ const hats = [
 {id:"halo", name:"Halo"},
 {id:"ninja", name:"Ninja"},
 {id:"cap", name:"Cap"},
-{id:"zoink", name:"Zoink Cube"}
+{id:"zoink", name:"Zoink Cube"},
+{id:"bunnyEars", name:"Bunny Ears"}
 ];
 
 function renderHatGrid(){
@@ -2995,8 +3051,6 @@ function openAdmin(){
 
 stopGame();
 
-
-
 menu.classList.add("hidden");
 editor.classList.add("hidden");
 achievementsDiv.classList.add("hidden");
@@ -3032,11 +3086,7 @@ return;
 
 populateSwordDropdown();
 loadPlayers();
-  if(username === "THEFIREMOUSE"){
 
-document.getElementById("rcl").classList.remove("hidden");
-
-}
 }
 
 let isPaused = false;
@@ -4249,28 +4299,6 @@ function formatEvent(e){
 return `${e.mult}x ${e.type === "luck" ? "Luck" : "Coins"} (${e.duration}m)`;
 }
 
-function updateRollChancesLite() {
-  const inputs = [
-    {id:"chanceDecent", rarity:"decent"},
-    {id:"chanceGreat", rarity:"great"},
-    {id:"chanceInsane", rarity:"insane"},
-    {id:"chanceAlienish", rarity:"alienish"},
-    {id:"chanceDemonic", rarity:"demonic"},
-    {id:"chanceBlessed", rarity:"blessed"},
-    {id:"chanceExclusive", rarity:"exclusive"}
-  ];
-
-  inputs.forEach((i, index) => {
-    const val = Number(document.getElementById(i.id).value);
-    if (!isNaN(val)) {
-      rollChances[index].chance = val;
-    }
-  });
-
-  alert("Roll chances updated!");
-}
-
-  
 function updateRollChances() {
   const inputs = [
     {id:"chanceDecent", rarity:"decent"},
