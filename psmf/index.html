@@ -58,7 +58,7 @@ if (data.easterStart && data.easterEnd) {
   const now = Date.now();
 
   if (now >= data.easterStart && now < data.easterEnd) {
-    startEasterEvent(data);
+    startLocalEaster(data);
   }
 
   if (now >= data.easterEnd) {
