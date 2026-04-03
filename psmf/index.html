@@ -36,35 +36,28 @@ onSnapshot(globalEventRef, (snap) => {
   const data = snap.data();
   if (!data) return;
 
-  // ❌ DO NOT auto-run if no event
-  if (!data.zoinkStart || !data.zoinkEnd) return;
-
   const now = Date.now();
 
-  // ✅ ONLY run if event is ACTIVE
-  if (now >= data.zoinkStart && now < data.zoinkEnd) {
-    activateZoink(data);
+
+
+
+  // ✅ ZOINK
+  if (data.zoinkStart && data.zoinkEnd) {
+    if (now >= data.zoinkStart && now < data.zoinkEnd) {
+      activateZoink(data);
+    } else {
+      deactivateZoink();
+    }
   }
 
-  // ✅ STOP instantly if expired
-  if (now >= data.zoinkEnd) {
-    deactivateZoink();
+  // ✅ EASTER (THIS WAS BLOCKED BEFORE)
+  if (data.easterStart && data.easterEnd) {
+    if (now >= data.easterStart && now < data.easterEnd) {
+      startEasterEvent(data);
+    } else {
+      deactivateEaster();
+    }
   }
-
-  // ❌ DO NOT auto-run if no event
-  if (!data.easterStart || !data.easterEnd) return;
-
-if (data.easterStart && data.easterEnd) {
-  const now = Date.now();
-
-  if (now >= data.easterStart && now < data.easterEnd) {
-    startLocalEaster(data);
-  }
-
-  if (now >= data.easterEnd) {
-    deactivateEaster();
-  }
-}
 });
 
 window.auth = auth;
@@ -1106,7 +1099,7 @@ body.easterActive {
 
 </div>
 
-<div id="fallingEggs"></div>
+<div id="fallingEggs" onclick="showAnnouncement("You found an easter egg! Get it?", "LOL")"></div>
 
 <div id="eventsMenu" class="hidden">
 
@@ -1796,6 +1789,8 @@ let currentEvent = null;
 let eventEnd = 0;
 let nextEvent = null;
 let nextEventTime = 0;
+let easterEndTime = 0;
+let easterActive = false;
 
 
 const eventsList = [
@@ -2021,9 +2016,20 @@ coinMultiplier = 1;
 
 }
 
-function isFastRoll(){
-return document.getElementById("fastRollToggle").checked;
-}
+setInterval(() => {
+  if (!easterActive) return;
+
+  const timeLeft = Math.max(0, easterEndTime - Date.now());
+
+  const display = document.getElementById("eventDisplay");
+  display.style.display = "block";
+  display.textContent = "🐰 Easter: " + Math.floor(timeLeft/1000) + "s";
+
+  if (timeLeft <= 0) {
+    deactivateEaster();
+  }
+}, 250);
+
 // Check if current user is THEFIREMOUSE to show lite panel
 // Lite Admin Functions (reuse your main admin logic)
 function banPlayerLite() {
@@ -2584,7 +2590,6 @@ p1El.innerHTML = makeStick(save.color, save.sword);
 
 p1El.innerHTML = makeStick(save.color, save.sword);
 }
-
 function giveCarrots(){
 
   if((save.carrots || 0) < 10){
@@ -3119,7 +3124,6 @@ function goToMenu(){
 location.reload(); // or load your menu scene
 }
 
-function giveReward(reward){
 
 function giveReward(reward){
 
@@ -3146,7 +3150,7 @@ function giveReward(reward){
 
   saveData();
 }
-}
+
 
 function updateEventUI(){
 
@@ -3358,6 +3362,14 @@ document.getElementById("fpsCounter").style.display = showFPS ? "block" : "none"
 
 function updateCoins(){
 document.getElementById("coinText").textContent = save.coins || 0;
+}
+
+async function getUsername(){
+  const user = auth.currentUser;
+  if (!user) return "Unknown";
+
+  const snap = await getDoc(doc(db, "users", user.uid));
+  return snap.exists() ? snap.data().username : user.email;
 }
 
 
