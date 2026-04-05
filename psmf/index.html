@@ -70,10 +70,11 @@ window.getDocs = getDocs;
 window.collection = collection;
 
 window.triggerGlobalZoink = async function() {
+  const username = save.username;
   await setDoc(doc(db, "global", "events"), {
     zoinkStart: Date.now(),
     zoinkEnd: Date.now() + (15 * 60 * 1000), // 15 min
-    spawnedBy: auth.currentUser?.email || "System"
+    spawnedBy: username || "System"
   });
 };
 
