@@ -80,10 +80,11 @@ window.triggerGlobalZoink = async function() {
 
 // 🌍 GLOBAL EASTER
 window.triggerGlobalEaster = async function() {
+  const username = save.username;
   await setDoc(doc(db, "global", "events"), {
     easterStart: Date.now(),
     easterEnd: Date.now() + (15 * 60 * 1000),
-    spawnedBy: auth.currentUser?.email || "System"
+    spawnedBy: username || "System"
   });
 };
 
