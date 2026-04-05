@@ -95,6 +95,29 @@ window.startLocalEaster = function(){
   });
 };
 
+
+const announcementRef = doc(db, "global", "announcement");
+
+onSnapshot(announcementRef, (snap) => {
+  const data = snap.data();
+  if(!data) return;
+
+  const bar = document.getElementById("announcementBar");
+
+
+
+  if(data.text){
+showAnnouncement(data.author, data.text);
+
+    setTimeout(()=>{
+      clearAnnouncement()
+    }, 3000);
+
+  } else {
+    bar.innerText = "";
+  }
+});
+
 </script>
 <meta charset="UTF-8">
 <title>Pixel Stickman Fighting</title>
@@ -1099,7 +1122,7 @@ body.easterActive {
 
 </div>
 
-<div id="fallingEggs" onclick="showAnnouncement("You found an easter egg! Get it?", "LOL")"></div>
+<div id="fallingEggs" onclick="showAnnouncement('You found an easter egg! Get it?', 'LOL')"></div>
 
 <div id="eventsMenu" class="hidden">
 
@@ -1407,7 +1430,15 @@ Coins:
 Carrots:
 <input type="number" id="adminCarrots">
 <button onclick="setCarrots()">Apply</button>
+<br><br>
+<h3>Global Announcement</h3>
 
+<input id="announcementInput" placeholder="Write announcement">
+
+<button onclick="sendAnnouncement()">Send</button>
+<button onclick="clearAnnouncement()">Clear</button>
+
+<hr>
 </div>
 <input id="setEventQuestsInput" type="number" placeholder="Set Event Quests">
 <button onclick="setEventQuests()">Set Quests</button>
@@ -1550,16 +1581,8 @@ Lock Specific Sword:
 
 <hr>
 
-<hr>
 
-<h3>Global Announcement</h3>
 
-<input id="announcementInput" placeholder="Write announcement">
-
-<button onclick="sendAnnouncement()">Send</button>
-<button onclick="clearAnnouncement()">Clear</button>
-
-<hr>
 
 <h3>Live Player List</h3>
 
@@ -1666,7 +1689,20 @@ Coin Multiplier
 
 
 <div id="liteAdminPanel" class="hidden">
+
+<div id="liteAnnouncements">
   <h2>LITE ADMIN PANEL</h2>
+
+<br><br>
+<h3>Global Announcement</h3>
+
+<input id="announcementInputLite" placeholder="Write announcement">
+
+<button onclick="sendAnnouncementLite()">Send</button>
+<button onclick="clearAnnouncementLite()">Clear</button>
+
+<hr>
+</div>
 
 <label>Invincible
 <label class="switch">
@@ -2490,6 +2526,22 @@ let zoinkTimeLeft = 0;
 
 // ✅ GLOBAL EVENT STATE (FIRST)
 
+async function isUsernameTaken(username){
+  const snap = await getDocs(collection(db, "players"));
+
+  let taken = false;
+
+  snap.forEach(docSnap => {
+    const data = docSnap.data();
+    if(data.username && data.username.toLowerCase() === username.toLowerCase()){
+      taken = true;
+    }
+  });
+
+  return taken;
+}
+
+
 function updateEventUI(){
 
 const box = document.getElementById("eventDisplay");
@@ -2602,40 +2654,36 @@ function giveCarrots(){
   const rand = Math.random();
   let reward;
 
- if(rand < 0.30){
-    return { type:"coins", amount:500 };
+  if(rand < 0.30){
+    reward = { type:"coins", amount:500 };
   }
-  if(rand < 0.55){
-    return { type:"coins", amount:1500 };
+  else if(rand < 0.55){
+    reward = { type:"coins", amount:1500 };
   }
-  if(rand < 0.70){
-    return { type:"coins", amount:3000 };
+  else if(rand < 0.70){
+    reward = { type:"coins", amount:3000 };
+  }
+  else if(rand < 0.82){
+    reward = { type:"hat", id:"bunnyEars", name:"Bunny Ears" };
+  }
+  else if(rand < 0.92){
+    reward = { type:"sword", id:"eggBlade", name:"Egg Blade" }; // ✅ FIXED ID
+  }
+  else if(rand < 0.98){
+    reward = { type:"sword", id:"goldenCarrot", name:"Golden Carrot Blade" }; // ✅ FIXED ID
+  }
+  else{
+    reward = { type:"wins", amount:50 };
   }
 
-  if(rand < 0.82){
-    return { type:"hat", id:"bunnyEars", name:"Bunny Ears" };
-  }
-
-  if(rand < 0.92){
-    return { type:"sword", id:"eggblade" };
-  }
-
-  if(rand < 0.98){
-    return { type:"sword", id:"goldcarrot" };
-  }
-
-  return { type:"wins", amount:50 }; // jackpot
-
-
+  // ✅ NOW IT ACTUALLY RUNS
   giveReward(reward);
 
-updateBunnyText("You got " + formatReward(reward) + "!");
+  updateBunnyText("You got " + formatReward(reward) + "!");
 
-  // 🔥 ADD THESE
   updateCarrotUI();
   saveData();
-}
-function updateBunnyText(text){
+}function updateBunnyText(text){
 
   const el = document.getElementById("bunnyDialogue");
 
@@ -3065,6 +3113,7 @@ adminPanel.classList.remove("hidden");
 }else if(username === "THEFIREMOUSE"){
 
 document.getElementById("liteAdminPanel").classList.remove("hidden");
+document.getElementById("liteAnnouncements").classList.remove("hidden");
 
 }else if(username === "lil_Jim"){
 
@@ -3384,6 +3433,14 @@ let unlocked = false;
 // 🔥 ZOINK FIRST (priority)
 if(s.name === "The Zoink"){
 unlocked = save.unlockedSpecial?.includes("zoink");
+}
+
+else if(s.name === "Egg Blade"){
+unlocked = save.unlockedSpecial?.includes("eggBlade");
+}
+
+else if(s.name === "Golden Carrot Blade"){
+unlocked = save.unlockedSpecial?.includes("goldenCarrot");
 }
 
 // normal systems
@@ -3986,11 +4043,14 @@ wins:0,
 losses:0
 });
 
+
 backToMenu();
 
 })
 
 .catch(e=>alert(e.message));
+
+
 
 }
 
@@ -4511,7 +4571,7 @@ if(s.achievement) return !save.achievements[s.achievement];
 </button>
 `;
 
-function renderProfile(p){
+
 
 function renderProfile(p){
 
@@ -4541,7 +4601,7 @@ function renderProfile(p){
 
 
 
-}
+
 
 });
 
@@ -4555,32 +4615,34 @@ document.getElementById("leaderboard").classList.remove("hidden");
 }
 
 async function sendAnnouncement(){
+  const text = document.getElementById("announcementInput").value;
+  const username = save.username;
 
-const msg=document.getElementById("announcementInput").value;
 
-if(!msg){
-alert("Write something first");
-return;
+  await setDoc(doc(db,"global","announcement"), {
+    text: text,
+    author: username,
+    time: Date.now()
+  });
 }
 
-await setDoc(doc(db,"global","announcement"),{
-message:msg,
-author:"PixelMan"
-});
+async function sendAnnouncementLite(){
+  const text = document.getElementById("announcementInputLite").value;
+  const username = save.username;
 
-document.body.style.background = "blue";
-setTimeout(()=>{document.body.style.background="";},300);
 
+  await setDoc(doc(db,"global","announcement"), {
+    text: text,
+    author: username,
+    time: Date.now()
+  });
 }
+
 
 async function clearAnnouncement(){
-
-await setDoc(doc(db,"global","announcement"),{
-message:"",
-author:""
-});
-
-document.getElementById("globalAnnouncement").style.display="none";
+  await setDoc(doc(db,"global","announcement"), {
+    text: ""
+  });
 }
 
 async function loadPlayers(){
@@ -5573,7 +5635,6 @@ box-shadow:0 0 10px gold;
 
 </body>
 </html>
-
 
 
 
