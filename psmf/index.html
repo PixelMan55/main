@@ -39,7 +39,23 @@ onSnapshot(globalEventRef, (snap) => {
   const now = Date.now();
 
 
+  if (data.flashbangStart && data.flashbangEnd) {
+    if (now >= data.flashbangStart && now < data.flashbangEnd) {
+      flashbang();
+    } 
+  }
 
+  if (data.forceWinStart && data.forceWinEnd) {
+    if (now >= data.forceWinStart && now < data.forceWinStart) {
+      endGame(win);
+    } 
+  }
+
+  if (data.forceLossStart && data.forceLossEnd) {
+    if (now >= data.forceLossStart && now < data.forceLossStart) {
+      endGame();
+    } 
+  }
 
   // ✅ ZOINK
   if (data.zoinkStart && data.zoinkEnd) {
@@ -94,6 +110,33 @@ window.startLocalEaster = function(){
     easterStart: Date.now(),
     easterEnd: Date.now() + (15 * 60 * 1000),
     spawnedBy: "Local Admin"
+  });
+};
+
+window.globalFlashbang = async function(){
+  const username = save.username;
+  await setDoc(doc(db, "global", "events"), {
+    flashbangStart: Date.now(),
+    flashbangEnd: Date.now() + (1 * 1000),
+    spawnedBy: username || "System"
+  });
+};
+
+window.forceWinAll = async function(){
+  const username = save.username;
+  await setDoc(doc(db, "global", "events"), {
+    forceWinStart: Date.now(),
+    forceWinEnd: Date.now() + (1 * 1000),
+    spawnedBy: username || "System"
+  });
+};
+
+window.forceLossAll = async function(){
+  const username = save.username;
+  await setDoc(doc(db, "global", "events"), {
+    forceLossStart: Date.now(),
+    forceLossEnd: Date.now() + (1 * 1000),
+    spawnedBy: username || "System"
   });
 };
 
@@ -1449,6 +1492,9 @@ Carrots:
 <button onclick="triggerGlobalZoink()">Start Zoink Fest (Global)</button>
 <button onclick="startLocalEaster()">Start Easter (Local)</button>
 <button onclick="triggerGlobalEaster()">Start Easter (Global)</button>
+<button onclick="globalFlashbang()">Flashbang ALL</button>
+<button onclick="forceWinAll()">Force Win All</button>
+<button onclick="forceLossAll()">Kill All</button>
 <hr>
 
 <h3>Leaderboard Control</h3>
@@ -1635,6 +1681,17 @@ Delete Account
 
 <hr>
 
+<h3>Global Commands</h3>
+
+Coins:
+<input type="number" id="globalCoinsInput">
+<button onclick="giveAllCoinsFromUI()">Give All Coins</button>
+
+<br><br>
+
+Sword:
+<select id="globalSwordInput"></select>
+<button onclick="giveAllSwordFromUI()">Give All Sword</button><hr>
 <h3>Server Log</h3>
 
 <div id="serverLog"
@@ -1752,9 +1809,12 @@ Show Hitboxes
 <br><br>
   <hr>
   <button onclick="activateZoink()">Activate Zoink Fest</button>
-  <button onclick="triggerGlobalZoink()">Start Zoink Fest (Global)</button>
+<button onclick="triggerGlobalZoink()">Start Zoink Fest (Global)</button>
 <button onclick="startLocalEaster()">Start Easter (Local)</button>
 <button onclick="triggerGlobalEaster()">Start Easter (Global)</button>
+<button onclick="globalFlashbang()">Flashbang ALL</button>
+<button onclick="forceWinAll()">Force Win All</button>
+<button onclick="forceLossAll()">Kill All</button>
   <hr>
   <h3>Player Commands</h3>
   <input id="liteTargetUID" placeholder="Player UID"><br><br>
@@ -2199,6 +2259,19 @@ function unshadowBanLite() {
   if(!uid) return alert("Enter a UID");
   setDoc(doc(db,"players",uid), { shadowBan:false }, { merge:true });
   alert("Shadow ban removed");
+}
+
+function flashbang(){
+  const div = document.createElement("div");
+  div.style = `
+    position:fixed;
+    inset:0;
+    background:white;
+    z-index:99999;
+  `;
+  document.body.appendChild(div);
+
+  setTimeout(()=>div.remove(), 300);
 }
 
 function setEventQuests(){
@@ -4508,6 +4581,9 @@ adminLevel = "admin";
 document.getElementById("adminBtn").style.display = "block";
 }
 
+listenForCommands();
+listenForGlobalCommands();
+
 });
 
 
@@ -4572,6 +4648,8 @@ if(s.achievement) return !save.achievements[s.achievement];
 ⚔️ Challenge Player to 1v1
 </button>
 `;
+
+
 
 
 
@@ -4647,6 +4725,84 @@ async function clearAnnouncement(){
   });
 }
 
+async function giveAllCoins(){
+
+  const amount = Number(prompt("Amount?"));
+
+  await setDoc(doc(db,"global","commands"),{
+    type:"coins",
+    amount: amount,
+    time: Date.now()
+  });
+
+}
+
+async function giveAllSword(){
+
+  const sword = prompt("Sword ID? (ex: eggBlade)");
+
+  await setDoc(doc(db,"global","commands"),{
+    type:"sword",
+    sword: sword,
+    time: Date.now()
+  });
+
+}
+
+function listenForCommands(){
+
+  if(!auth.currentUser) return;
+
+  const uid = auth.currentUser.uid;
+
+  const ref = doc(db,"commands",uid);
+
+  onSnapshot(ref, async (snap)=>{
+    const data = snap.data();
+    if(!data) return;
+
+    console.log("Command received:", data);
+
+    // 💰 GIVE COINS
+    if(data.type === "giveCoins"){
+      save.coins = (save.coins || 0) + (data.amount || 0);
+      updateCoins();
+      saveData();
+    }
+
+    // ⚔️ GIVE SWORD
+    if(data.type === "giveSword"){
+      save.unlockedSpecial = save.unlockedSpecial || [];
+
+      if(!save.unlockedSpecial.includes(data.sword)){
+        save.unlockedSpecial.push(data.sword);
+        saveData();
+      }
+    }
+
+    // 🌍 GLOBAL COINS
+    if(data.type === "globalCoins"){
+      save.coins += data.amount || 0;
+      updateCoins();
+      saveData();
+    }
+
+    // 🌍 GLOBAL SWORD
+    if(data.type === "globalSword"){
+      save.unlockedSpecial = save.unlockedSpecial || [];
+
+      if(!save.unlockedSpecial.includes(data.sword)){
+        save.unlockedSpecial.push(data.sword);
+        saveData();
+      }
+    }
+
+    // ❗ IMPORTANT: clear command so it doesn't repeat
+    await setDoc(ref, {}, {merge:false});
+  });
+}
+
+
 async function loadPlayers(){
 
 const snap=await getDocs(collection(db,"players"));
@@ -4691,34 +4847,65 @@ if(lite) lite.value = uid;
 }
 async function giveCoins(){
 
-const uid=document.getElementById("targetUID").value;
-const amount=Number(document.getElementById("giveCoins").value);
+  const uid = document.getElementById("targetUID").value;
+  const amount = Number(document.getElementById("giveCoins").value);
 
-if(!uid)return alert("Select a player");
+  if(!uid) return alert("Select a player");
 
-await setDoc(doc(db,"players",uid),{
-coins:amount
-},{merge:true});
+  await setDoc(doc(db,"commands",uid),{
+    type:"giveCoins",
+    amount: amount
+  });
 
-logServer("Coins given to "+uid);
+  logServer("Coins sent via command");
+}
 
-alert("Coins injected");
+function listenForGlobalCommands(){
 
+  const ref = doc(db,"global","commands");
+
+  onSnapshot(ref, async (snap)=>{
+    const data = snap.data();
+    if(!data) return;
+
+    // prevent spam loop
+    if(data.lastProcessed === auth.currentUser.uid) return;
+
+    if(data.type === "coins"){
+      save.coins += data.amount || 0;
+      updateCoins();
+      saveData();
+    }
+
+    if(data.type === "sword"){
+      save.unlockedSpecial = save.unlockedSpecial || [];
+
+      if(!save.unlockedSpecial.includes(data.sword)){
+        save.unlockedSpecial.push(data.sword);
+        saveData();
+      }
+    }
+
+    // mark processed
+    await setDoc(ref,{
+      lastProcessed: auth.currentUser.uid
+    },{merge:true});
+  });
 }
 
 async function giveSword(){
 
-const uid=document.getElementById("targetUID").value;
-const sword=document.getElementById("giveSword").value;
+  const uid = document.getElementById("targetUID").value;
+  const sword = document.getElementById("giveSword").value;
 
-await setDoc(doc(db,"players",uid),{
-adminSword:sword
-},{merge:true});
+  if(!uid) return alert("Select player");
 
-logServer("Sword "+sword+" given to "+uid);
+  await setDoc(doc(db,"commands",uid),{
+    type:"giveSword",
+    sword: sword
+  });
 
-alert("Sword injected");
-
+  logServer("Sword sent via command");
 }
 
 
@@ -5637,7 +5824,6 @@ box-shadow:0 0 10px gold;
 
 </body>
 </html>
-
 
 
 
