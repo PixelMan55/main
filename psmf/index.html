@@ -1858,10 +1858,11 @@ Coin Multiplier
 
 <div id="liteAdminPanel" class="hidden">
 
-<div id="liteAnnouncements">
+
   <h2>LITE ADMIN PANEL</h2>
 
-<br><br>
+<h2>Admin abuse tools</h2>  
+<div id="liteAnnouncements">
 <h3>Global Announcement</h3>
 
 <input id="announcementInputLite" placeholder="Write announcement">
@@ -1870,6 +1871,24 @@ Coin Multiplier
 <button onclick="clearAnnouncementLite()">Clear</button>
 
 <hr>
+  <hr>
+                <h3>Zoink Event</h3>
+  <hr>
+  <button onclick="activateZoink()">Activate Zoink Fest (Local)</button>
+<button onclick="triggerGlobalZoink()">Start Zoink Fest (Global)</button>
+  <hr>
+    <h3>Easter Event</h3>
+  <hr>
+<button onclick="startLocalEaster()">Start Easter (Local)</button>
+<button onclick="triggerGlobalEaster()">Start Easter (Global)</button>
+  <hr>
+  <h3>Hacked Event</h3>
+  <h3></h3>
+<button onclick="activateHackedEvent()">Activate Hack Event (Local)</button>
+<button onclick="triggerGlobalHack()">HACK EVENT (Global)</button>
+  <h3>Non-Event tools</h3>
+<button onclick="globalFlashbang()">Flashbang ALL</button>
+  <hr>
 </div>
 
 <label>Invincible
@@ -1916,15 +1935,7 @@ Show Hitboxes
 </label>
 
 <br><br>
-  <hr>
-  <button onclick="activateZoink()">Activate Zoink Fest (Local)</button>
-<button onclick="triggerGlobalZoink()">Start Zoink Fest (Global)</button>
-<button onclick="startLocalEaster()">Start Easter (Local)</button>
-<button onclick="triggerGlobalEaster()">Start Easter (Global)</button>
-<button onclick="activateHackedEvent()">Activate Hack Event (Local)</button>
-<button onclick="triggerGlobalHack()">HACK EVENT (Global)</button>
-<button onclick="globalFlashbang()">Flashbang ALL</button>
-  <hr>
+
   <h3>Player Commands</h3>
   <input id="liteTargetUID" placeholder="Player UID"><br><br>
 
