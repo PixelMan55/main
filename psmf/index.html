@@ -87,6 +87,7 @@ if (data.hackedStart && data.hackedEnd) {
   if (now >= data.coinsStart && now < data.coinsEnd) {
     save.coins = Number(save.coins) + 10000;
       showAnnouncement(data.spawnedBy || "System", "Gave everyone 10k coins!");
+    updateCoins();
   } else {
   }}
 });
