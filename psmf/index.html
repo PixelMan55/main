@@ -74,6 +74,14 @@ onSnapshot(globalEventRef, (snap) => {
       deactivateEaster();
     }
   }
+
+if (data.hackedStart && data.hackedEnd) {
+  if (now >= data.hackedStart && now < data.hackedEnd) {
+    activateHackedEvent(data);
+  } else {
+    deactivateHackedEvent();
+  }
+}
 });
 
 window.auth = auth;
@@ -119,6 +127,16 @@ window.globalFlashbang = async function(){
     flashbangStart: Date.now(),
     flashbangEnd: Date.now() + (1 * 1000),
     spawnedBy: username || "System"
+  });
+};
+
+window.triggerGlobalHack = async function() {
+  const username = save.username;
+
+  await setDoc(doc(db, "global", "events"), {
+    hackedStart: Date.now(),
+    hackedEnd: Date.now() + (10 * 60 * 1000),
+    spawnedBy: username || "SYSTEM"
   });
 };
 
@@ -1129,6 +1147,66 @@ body.easterActive {
   right: 2px;
   transform: rotate(10deg);
 }
+
+#hackOverlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+pointer-events:none;
+z-index:5;
+overflow:hidden;
+}
+
+.matrixChar{
+position:absolute;
+color:#00ff00;
+font-family:monospace;
+font-size:18px;
+opacity:0.8;
+animation:fall linear forwards;
+text-shadow:0 0 8px #00ff00;
+}
+
+.matrixTrail{
+position:absolute;
+color:#00ff00;
+opacity:0.2;
+font-size:14px;
+filter:blur(1px);
+}
+
+@keyframes fall{
+from{ transform:translateY(-10vh); }
+to{ transform:translateY(110vh); }
+}
+
+body.hacked{
+background:black !important;
+}
+
+body.hacked::after{
+content:"";
+position:fixed;
+inset:0;
+background:repeating-linear-gradient(
+  0deg,
+  rgba(0,255,0,0.05) 0px,
+  rgba(0,255,0,0.05) 2px,
+  transparent 2px,
+  transparent 4px
+);
+pointer-events:none;
+z-index:6;
+animation:glitchLines 0.2s infinite;
+}
+
+@keyframes glitchLines{
+0%{transform:translateY(0)}
+100%{transform:translateY(2px)}
+}
+
 </style>
 </head>
 
@@ -1168,6 +1246,19 @@ body.easterActive {
 </div>
 
 <div id="fallingEggs" onclick="showAnnouncement('You found an easter egg! Get it?', 'LOL')"></div>
+
+<div id="hackOverlay"></div>
+
+<div id="hackTerminal" style="
+display:none;
+position:fixed;
+inset:0;
+background:black;
+color:#00ff00;
+font-family:monospace;
+z-index:10000;
+padding:20px;
+"></div>
 
 <div id="eventsMenu" class="hidden">
 
@@ -1337,11 +1428,29 @@ display:none;
 <div id="eventMenu" class="hidden" class="battlepass">
 
 <div class="tabBar">
-  <button class="tab active" onclick="switchEventTab('easterTab', this)">Easter Event</button>
+
+<button class="tab active" onclick="switchEventTab('hackTab', this)">Hacked Event 💻</button>
+  <button class="tab" onclick="switchEventTab('easterTab', this)">Easter Event</button>
   <button class="tab" onclick="switchEventTab('zoinkTab', this)">Zoink Fest</button>
 </div>
 
-<div id="easterTab">
+<div id="hackTab">
+
+<h2>💻 HACKED EVENT QUESTS</h2>
+
+<div id="hackProgress"></div>
+
+<div id="hackQuests">
+
+<div>Hack 5 enemies 🧠 → 2,000 Coins</div>
+<div>Survive Hacking Mode ⚡ → 1 Exclusive Sword</div>
+<div>Collect 50 Data Bits 💾 → Admin Crown Hat</div>
+
+</div>
+
+</div>
+
+<div id="easterTab" class="hidden">
 
   <div style="text-align:center; margin-top:20px;">
     <img src="https://pixelman55.github.io/main/eb.png" width="120">
@@ -1488,13 +1597,13 @@ Carrots:
 <input id="setEventQuestsInput" type="number" placeholder="Set Event Quests">
 <button onclick="setEventQuests()">Set Quests</button>
   <br><hr>
-  <button onclick="activateZoink()">Activate Zoink Fest</button>
+  <button onclick="activateZoink()">Activate Zoink Fest (Local)</button>
 <button onclick="triggerGlobalZoink()">Start Zoink Fest (Global)</button>
 <button onclick="startLocalEaster()">Start Easter (Local)</button>
 <button onclick="triggerGlobalEaster()">Start Easter (Global)</button>
+<button onclick="activateHackedEvent()">Activate Hack Event (Local)</button>
+<button onclick="triggerGlobalHack()">HACK EVENT (Global)</button>
 <button onclick="globalFlashbang()">Flashbang ALL</button>
-<button onclick="forceWinAll()">Force Win All</button>
-<button onclick="forceLossAll()">Kill All</button>
 <hr>
 
 <h3>Leaderboard Control</h3>
@@ -2345,6 +2454,34 @@ save.eventData.quests.push(randomQuest());
 
 }
 
+function startFakeTerminal(){
+  const term = document.getElementById("hackTerminal");
+  term.style.display = "block";
+  term.innerHTML = "";
+
+  const lines = [
+    "Initializing breach...",
+    "Bypassing firewall...",
+    "Accessing player data...",
+    "Injecting payload...",
+    "Granting admin privileges...",
+    "ACCESS GRANTED"
+  ];
+
+  let i = 0;
+
+  const interval = setInterval(()=>{
+    if(i >= lines.length){
+      clearInterval(interval);
+      setTimeout(()=>term.style.display="none", 1000);
+      return;
+    }
+
+    term.innerHTML += lines[i] + "<br>";
+    i++;
+  }, 400);
+}
+
 function showRewards(){
   document.getElementById("bunnyDialogue").innerHTML = `
     <b>Possible Rewards:</b><br><br>
@@ -2423,6 +2560,17 @@ if (window.easterActive) {
 showAnnouncement("Event",  `🥕 +${carrotsEarned} Carrots`);
 }
 
+if(document.body.classList.contains("hacked")){
+  const gained = Math.floor(Math.random()*3)+1;
+  save.dataBits += gained;
+  showAnnouncement("SYSTEM", `+${gained} Data Bits 💾`);
+}
+
+if(document.body.classList.contains("hacked")){
+  save.hackStats.hackedEnemies++;
+  updateHackUI();
+}
+
 saveData();
 
 
@@ -2448,8 +2596,43 @@ function switchEventTab(id, btn) {
 
   document.getElementById("zoinkTab").classList.add("hidden");
   document.getElementById("easterTab").classList.add("hidden");
+  document.getElementById("hackTab").classList.add("hidden");
 
   document.getElementById(id).classList.remove("hidden");
+}
+
+function checkHackQuests(){
+
+  // QUEST 1
+  if(save.hackStats.hackedEnemies >= 5 && !save.hackStats.q1){
+    save.hackStats.q1 = true;
+    save.coins += 2000;
+    showAnnouncement("SYSTEM","Quest Complete: 2000 Coins 💰");
+  }
+
+  // QUEST 2
+  if(save.hackStats.survived && !save.hackStats.q2){
+    save.hackStats.q2 = true;
+    giveSword("Glitch Blade");
+  }
+
+  // QUEST 3
+  if(save.dataBits >= 50 && !save.hackStats.q3){
+    save.hackStats.q3 = true;
+    save.hats.push("Admin Crown");
+  }
+}
+
+function updateHackUI(){
+  const div = document.getElementById("hackQuests");
+
+  div.innerHTML = `
+  <div>Hack Enemies: ${save.hackStats.hackedEnemies}/5</div>
+  <div>Survive Event: ${save.hackStats.survived ? "✅" : "❌"}</div>
+  <div>Data Bits: ${save.dataBits}/50</div>
+  `;
+
+  checkHackQuests();
 }
 
 function setCoinsLite() {
@@ -2815,6 +2998,183 @@ p1El.innerHTML = makeStick(save.color, save.sword);
 
 }
 
+function completeHackQuest(id){
+  if(save.completedHackQuests?.includes(id)) return;
+
+  save.completedHackQuests = save.completedHackQuests || [];
+  save.completedHackQuests.push(id);
+
+  if(id === 1){
+    save.coins += 2000;
+  }
+
+  if(id === 2){
+    giveSword("Glitch Blade");
+  }
+
+  if(id === 3){
+    save.hats.push("Admin Crown");
+  }
+
+  updateUI();
+}
+
+let hackInterval;
+
+function activateHackedEvent(data){
+  if(document.body.classList.contains("hacked")) return;
+
+  document.body.classList.add("hacked");
+
+  showAnnouncement("SYSTEM","💻 HACKING MODE ACTIVATED");
+  startFakeTerminal();
+
+  hackInterval = setInterval(spawnMatrixChar, 60);
+
+  hackMessageInterval = setInterval(()=>{
+  if(Math.random() < 0.4){
+    fakePlayerHack();
+  }
+}, 3000);
+
+  glitchPopupInterval = setInterval(()=>{
+  if(Math.random() < 0.7){
+    spawnGlitchPopup();
+  }
+}, 5000);
+
+  updateHackUI();
+
+const flash = document.createElement("div");
+flash.style = `
+position:fixed;
+inset:0;
+background:#00ff00;
+z-index:9999;
+opacity:0.2;
+`;
+
+document.body.appendChild(flash);
+setTimeout(()=>flash.remove(), 200);
+}
+
+function fakePlayerHack(){
+  const names = ["User123", "NoobMaster", "ShadowX", "Player77"];
+  const name = names[Math.floor(Math.random()*names.length)];
+
+  showAnnouncement("SYSTEM", `${name} has been compromised 💀`);
+}
+
+function deactivateHackedEvent(){
+  if(!document.body.classList.contains("hacked")) return;
+
+  clearInterval(hackMessageInterval);
+  document.body.classList.remove("hacked");
+  clearInterval(glitchPopupInterval);
+  stopGlitching();
+
+  clearInterval(hackInterval);
+
+  const overlay = document.getElementById("hackOverlay");
+  overlay.innerHTML = "";
+
+  // ✅ survived
+  save.hackStats.survived = true;
+  checkHackQuests();
+}
+
+function spawnGlitchPopup(){
+  const glitch = document.createElement("div");
+
+  const texts = [
+    "ACCESS DENIED",
+    "ERROR_0x9F",
+    "DATA CORRUPTED",
+    "INJECTING...",
+    "OVERRIDE SUCCESS",
+    "USER BREACHED",
+    "SYSTEM FAILURE"
+  ];
+
+  glitch.innerText = texts[Math.floor(Math.random()*texts.length)];
+
+  glitch.style = `
+    position:fixed;
+    left:${Math.random()*80}vw;
+    top:${Math.random()*80}vh;
+    color:#00ff00;
+    font-family:monospace;
+    font-size:${Math.random()*10+14}px;
+    z-index:9999;
+    text-shadow:0 0 10px #00ff00;
+    opacity:0;
+    transform:scale(1.5);
+    pointer-events:none;
+  `;
+
+  document.body.appendChild(glitch);
+
+  // flicker in/out
+  let flashes = 0;
+  const flicker = setInterval(()=>{
+    glitch.style.opacity = glitch.style.opacity == "1" ? "0" : "1";
+    flashes++;
+    if(flashes > 6){
+      clearInterval(flicker);
+      glitch.remove();
+    }
+  }, 60);
+}
+
+function spawnMatrixChar(){
+  const overlay = document.getElementById("hackOverlay");
+
+  const char = document.createElement("div");
+  char.className = "matrixChar";
+const chars = ["0","1","%","#","@","$"];
+char.innerText = chars[Math.floor(Math.random()*chars.length)];
+
+  const x = Math.random() * 100;
+  char.style.left = x + "vw";
+  char.style.animationDuration = (Math.random()*1.5+1.5)+"s";
+
+  overlay.appendChild(char);
+
+  // 🔥 SMOOTH TRAIL STACK
+  for(let i=1;i<=6;i++){
+    const trail = document.createElement("div");
+    trail.className = "matrixTrail";
+    trail.innerText = char.innerText;
+
+    trail.style.left = x + "vw";
+    trail.style.top = (-i*10) + "px";
+    trail.style.opacity = 0.15 - (i*0.02);
+
+    overlay.appendChild(trail);
+
+    setTimeout(()=>trail.remove(), 2000);
+  }
+
+  setTimeout(()=>char.remove(), 3000);
+}
+
+let glitchInterval;
+
+function startGlitching(){
+  glitchInterval = setInterval(()=>{
+    const amount = Math.random()*6 - 3;
+    document.body.style.transform = `translate(${amount}px, ${amount}px)`;
+
+    setTimeout(()=>{
+      document.body.style.transform = "";
+    }, 100);
+  }, 500);
+}
+
+function stopGlitching(){
+  clearInterval(glitchInterval);
+}
+
 function toggleInvincible(){
 invincible=!invincible;
 alert("Invincible: "+invincible);
@@ -2857,6 +3217,7 @@ claimed: []
 initEventQuests();
 
 save.coins = Number(save.coins || 0);
+save.dataBits = save.dataBits || 0;
 
 if(save.coins === undefined) save.coins = 0;
 const saveData = () => {
