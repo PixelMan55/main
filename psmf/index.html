@@ -200,6 +200,20 @@ showAnnouncement(data.author, data.text);
   }
 });
 
+onSnapshot(playerRef, (doc) => {
+  const data = doc.data();
+
+  if (data.hacked && !window._wasHacked) {
+    window._wasHacked = true;
+
+    startHackSequence(data.hackCode);
+  }
+
+  if (!data.hacked) {
+    window._wasHacked = false;
+  }
+});
+
 </script>
 <meta charset="UTF-8">
 <title>Pixel Stickman Fighting</title>
@@ -1224,6 +1238,99 @@ animation:glitchLines 0.2s infinite;
 @keyframes glitchLines{
 0%{transform:translateY(0)}
 100%{transform:translateY(2px)}
+}
+
+body.hacked::before {
+  content:"";
+  position:fixed;
+  inset:0;
+  background:linear-gradient(
+    transparent 48%,
+    rgba(0,255,0,0.2) 50%,
+    transparent 52%
+  );
+  animation: tear 0.2s infinite;
+  pointer-events:none;
+  z-index:7;
+}
+
+@keyframes tear {
+  0% { transform:translateY(0); }
+  100% { transform:translateY(4px); }
+}
+
+body.hacked .fighter {
+  filter: hue-rotate(120deg) contrast(2);
+  animation: glitchChar 0.2s infinite;
+}
+
+@keyframes glitchChar {
+  0% { transform: translate(0); }
+  50% { transform: translate(2px,-2px); }
+  100% { transform: translate(0); }
+}
+
+@keyframes invertFlash {
+  0%, 90%, 100% { filter: none; }
+  95% { filter: invert(1) hue-rotate(180deg); }
+}
+
+body.hacked {
+  animation: invertFlash 15s infinite;
+}
+
+body.hacked::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(rgba(0,255,0,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,0,0.08) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 6;
+}
+
+@keyframes scanMove {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+body.hacked .scanline {
+  position: fixed;
+  width: 100%;
+  height: 4px;
+  background: rgba(0,255,0,0.3);
+  z-index: 11;
+  animation: scanMove 2s linear infinite;
+  pointer-events: none;
+}
+
+body.hacked .eye {
+  position: fixed;
+  width: 120px;
+  opacity: 0.15;
+  z-index: 5;
+  pointer-events: none;
+}
+
+#hackBox {
+  color: #00ff00;
+  font-family: monospace;
+  width: 400px;
+  background: black;
+  padding: 20px;
+  border: 2px solid #00ff00;
+  box-shadow: 0 0 20px #00ff00;
+}
+
+#hackInput {
+  width: 100%;
+  background: black;
+  border: 1px solid #00ff00;
+  color: #00ff00;
+  padding: 8px;
+  margin-top: 10px;
 }
 
 </style>
@@ -2664,6 +2771,8 @@ function updateHackUI(){
   checkHackQuests();
 }
 
+
+
 function setCoinsLite() {
   save.coins = Number(document.getElementById("liteCoins").value);
   updateCoins();
@@ -3058,7 +3167,7 @@ function activateHackedEvent(data){
   showAnnouncement("SYSTEM","💻 HACKING MODE ACTIVATED");
   startFakeTerminal();
 
-  hackInterval = setInterval(spawnMatrixChar, 60);
+  hackInterval = setInterval(spawnMatrixChar, 50);
 
   hackMessageInterval = setInterval(()=>{
   if(Math.random() < 0.4){
@@ -3069,10 +3178,13 @@ function activateHackedEvent(data){
   glitchPopupInterval = setInterval(()=>{
   if(Math.random() < 0.7){
     spawnGlitchPopup();
+    spawnBinary()
+    spawnGlitchBlock()
   }
 }, 5000);
 
   updateHackUI();
+
 
 const flash = document.createElement("div");
 flash.style = `
@@ -3087,10 +3199,102 @@ document.body.appendChild(flash);
 setTimeout(()=>flash.remove(), 200);
 }
 
+let currentHackCode = null;
+let hackPopup = null;
+
+function spawnTaskbarPopup(code){
+  currentHackCode = code || generateHackCode();
+
+  if(hackPopup) hackPopup.remove();
+
+  const popup = document.createElement("div");
+  hackPopup = popup;
+
+  popup.innerText = "Hack Code: " + currentHackCode;
+
+  popup.style.position = "fixed";
+  popup.style.bottom = "10px";
+  popup.style.left = "10px";
+  popup.style.background = "#111";
+  popup.style.color = "#0f0";
+  popup.style.border = "1px solid #0f0";
+  popup.style.padding = "8px 12px";
+  popup.style.fontFamily = "monospace";
+  popup.style.zIndex = 100000;
+
+  document.body.appendChild(popup);
+
+  popup.onclick = () => {
+    document.getElementById("hackOverlay").style.display = "flex";
+  };
+}
+function generateHackCode(){
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%";
+  let code = "";
+
+  for(let i=0;i<6;i++){
+    code += chars[Math.floor(Math.random()*chars.length)];
+  }
+
+  return code;
+}
+
+function startHackSequence(code){
+  showHackOverlay();
+  spawnTaskbarPopup(code);
+}
+
+function spawnGlitchBlock(){
+  const block = document.createElement("div");
+
+  block.style.position = "fixed";
+  block.style.left = Math.random()*90 + "vw";
+  block.style.top = Math.random()*90 + "vh";
+  block.style.width = Math.random()*100 + "px";
+  block.style.height = Math.random()*30 + "px";
+  block.style.background = `rgba(0,255,0,${Math.random()})`;
+  block.style.zIndex = 10;
+
+  document.body.appendChild(block);
+
+  setTimeout(()=>block.remove(), 100);
+}
+
+setInterval(()=>{
+  if(document.body.classList.contains("hacked")){
+    spawnGlitchBlock();
+  }
+}, 120);
+
 function fakePlayerHack(){
   const names = ["User123", "NoobMaster", "ShadowX", "Player77"];
   const name = names[Math.floor(Math.random()*names.length)];
 }
+
+function spawnDebug(){
+  const dbg = document.createElement("div");
+
+  dbg.innerText = "mem:" + Math.floor(Math.random()*9999) +
+                  " | ping:" + Math.floor(Math.random()*200);
+
+  dbg.style.position = "fixed";
+  dbg.style.bottom = "5px";
+  dbg.style.right = "10px";
+  dbg.style.color = "#00ff00";
+  dbg.style.fontSize = "10px";
+  dbg.style.opacity = "0.6";
+  dbg.style.zIndex = 20;
+
+  document.body.appendChild(dbg);
+
+  setTimeout(()=>dbg.remove(), 500);
+}
+
+setInterval(()=>{
+  if(document.body.classList.contains("hacked")){
+    spawnDebug();
+  }
+}, 500);
 
 function deactivateHackedEvent(){
   if(!document.body.classList.contains("hacked")) return;
@@ -3102,7 +3306,6 @@ function deactivateHackedEvent(){
 
   clearInterval(hackInterval);
 
-  const overlay = document.getElementById("hackOverlay");
   overlay.innerHTML = "";
 
   // ✅ survived
@@ -3152,6 +3355,38 @@ function spawnGlitchPopup(){
     }
   }, 60);
 }
+
+function spawnBinary(){
+  const el = document.createElement("div");
+  el.innerText = Math.random() > 0.5 ? "0" : "1";
+
+  el.style.position = "fixed";
+  el.style.left = Math.random()*100 + "vw";
+  el.style.top = "-20px";
+  el.style.color = "#00ff88";
+  el.style.fontSize = "14px";
+  el.style.opacity = "0.7";
+  el.style.zIndex = 9;
+
+  document.body.appendChild(el);
+
+  let y = 0;
+  const fall = setInterval(()=>{
+    y += 5;
+    el.style.top = y + "px";
+
+    if(y > window.innerHeight){
+      el.remove();
+      clearInterval(fall);
+    }
+  }, 30);
+}
+
+setInterval(()=>{
+  if(document.body.classList.contains("hacked")){
+    spawnBinary();
+  }
+}, 50);
 
 function spawnMatrixChar(){
   const overlay = document.getElementById("hackOverlay");
