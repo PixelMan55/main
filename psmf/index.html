@@ -1885,6 +1885,8 @@ Coin Multiplier
   <hr>
 </div>
 
+<h2>Toggles</h2>
+  
 <label>Invincible
 <label class="switch">
 <input type="checkbox" id="liteInvincible" onchange="toggleInvincible()">
@@ -1930,6 +1932,11 @@ Show Hitboxes
 
 <br><br>
 
+<h3>Live Player List</h3>
+
+<div id="playerListLite" style="max-height:200px;overflow:auto"></div>
+
+  <hr>
   <h3>Player Commands</h3>
   <input id="liteTargetUID" placeholder="Player UID"><br><br>
 
@@ -1940,20 +1947,8 @@ Show Hitboxes
   <button onclick="unshadowBan()">Remove Shadow Ban</button>
 
   <hr>
-  <h3>Inputs</h3>
-  Wins: <input type="number" id="liteWins"><button onclick="setWinsLite()">Apply</button><br><br>
-  Losses: <input type="number" id="liteLosses"><button onclick="setLossesLite()">Apply</button><br><br>
-  Coins: <input type="number" id="liteCoins"><button onclick="setCoinsLite()">Apply</button><br><br>
-<input id="setEventQuestsInputLite" type="number" placeholder="Set Event Quests">
-<button onclick="setEventQuestsLite()">Set Quests</button>
-<hr>
-<h3>Live Player List</h3>
 
-<div id="playerListLite" style="max-height:200px;overflow:auto"></div>
-
-<hr>
-
-<h3>Server Log</h3>
+  <h3>Server Log</h3>
 
 <div id="serverLogLite"
 style="
@@ -1964,6 +1959,13 @@ border:1px solid white;
 padding:6px;
 font-size:12px">
 </div>
+<hr>
+  <h3>Inputs</h3>
+  Wins: <input type="number" id="liteWins"><button onclick="setWinsLite()">Apply</button><br><br>
+  Losses: <input type="number" id="liteLosses"><button onclick="setLossesLite()">Apply</button><br><br>
+  Coins: <input type="number" id="liteCoins"><button onclick="setCoinsLite()">Apply</button><br><br>
+<input id="setEventQuestsInputLite" type="number" placeholder="Set Event Quests">
+<button onclick="setEventQuestsLite()">Set Quests</button>
 <hr>
 
 <h3>Sword Controls</h3>
