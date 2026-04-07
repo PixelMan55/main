@@ -3064,8 +3064,6 @@ setTimeout(()=>flash.remove(), 200);
 function fakePlayerHack(){
   const names = ["User123", "NoobMaster", "ShadowX", "Player77"];
   const name = names[Math.floor(Math.random()*names.length)];
-
-  showAnnouncement("SYSTEM", `${name} has been compromised 💀`);
 }
 
 function deactivateHackedEvent(){
@@ -3552,7 +3550,7 @@ adminPanel.classList.remove("hidden");
 }else if(username === "THEFIREMOUSE"){
 
 document.getElementById("liteAdminPanel").classList.remove("hidden");
-document.getElementById("liteAnnouncements").classList.remove("hidden");
+
 
 }else if(username === "lil_Jim"){
 
