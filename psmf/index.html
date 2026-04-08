@@ -45,17 +45,26 @@ onSnapshot(globalEventRef, (snap) => {
     } 
   }
 
-  if (data.forceWinStart && data.forceWinEnd) {
-    if (now >= data.forceWinStart && now < data.forceWinStart) {
-      endGame(win);
-    } 
-  }
+if (data.forceWinStart && data.forceWinEnd) {
+  if (now >= data.forceWinStart && now < data.forceWinEnd) {
+    if (running === true) {
+    endGame(win);}
+  } 
+}
 
-  if (data.forceLossStart && data.forceLossEnd) {
-    if (now >= data.forceLossStart && now < data.forceLossStart) {
-      endGame();
-    } 
-  }
+if (data.forceLossStart && data.forceLossEnd) {
+  if (now >= data.forceLossStart && now < data.forceLossEnd) {
+    if (running === true) {
+    endGame();}
+  } 
+}
+
+
+if (data.adminAnimationStart && data.adminAnimationEnd) {
+  if (now >= data.adminAnimationStart && now < data.adminAnimationEnd) {
+    playAdminAbuse();
+  } 
+}
 
   // ✅ ZOINK
   if (data.zoinkStart && data.zoinkEnd) {
@@ -176,6 +185,16 @@ window.forceLossAll = async function(){
     spawnedBy: username || "System"
   });
 };
+
+window.triggerAdminAbuse = async function(){
+  const username = save.username;
+  await setDoc(doc(db, "global", "events"), {
+    adminAnimationStart: Date.now(),
+    adminAnimationEnd: Date.now() + (1 * 1000),
+    spawnedBy: username || "System"
+  });
+};
+
 
 
 const announcementRef = doc(db, "global", "announcement");
@@ -511,8 +530,6 @@ height:50px;
   width:70px;
   height:170px;
 }
-
-/dr/
 
 #dailyRewardBtn{
 position:fixed;
@@ -1333,6 +1350,385 @@ body.hacked .eye {
   margin-top: 10px;
 }
 
+#auraGrid{
+  display:grid;
+  grid-template-columns:repeat(4,150px);
+  gap:12px;
+  justify-content:center;
+}
+
+#auraShop{
+  display:grid;
+  grid-template-columns:repeat(3,200px);
+  gap:12px;
+  justify-content:center;
+}
+
+#abuseText{
+  font-size:50px;
+  font-weight:bold;
+  color:red;
+  margin-top:40px;
+
+  text-shadow:
+  0 0 10px red,
+  0 0 20px red,
+  0 0 40px darkred;
+
+  opacity:0;
+  transform:scale(0.5);
+
+  animation:abuseTextPop 1s forwards 1s;
+}
+
+@keyframes abuseTextPop{
+  to{
+    opacity:1;
+    transform:scale(1);
+  }
+}
+
+#abuseArms{
+  transition:transform 0.4s ease;
+}
+
+#abuseSword{
+  transition:transform 0.4s ease;
+}
+
+/* 🔥 raise sword animation */
+.raiseSword{
+  transform:translateX(-50%) rotate(-120deg) !important;
+}
+
+.swordUp{
+  transform:rotate(-90deg) translateY(-40px);
+}
+
+#adminAbuseOverlay {
+  display: none;
+}
+
+/* ⚡ FLASH */
+#abuseFlash{
+  position:absolute;
+  inset:0;
+  background:white;
+  opacity:0;
+  pointer-events:none;
+}
+
+/* 🔴 PULSE BG */
+#adminAbuseOverlay.active{
+  animation: abusePulse 0.4s infinite alternate;
+}
+
+@keyframes abusePulse{
+  from{ background:black; }
+  to{ background:#200000; }
+}
+
+/* 🗡️ SWORD */
+#abuseSword{
+  width:6px;
+  height:80px;
+  background:white;
+  margin:auto;
+  box-shadow:0 0 20px white;
+  transform-origin:bottom center;
+}
+
+/* 💪 ARMS */
+#abuseArms{
+  transform:translateX(-50%) rotate(0deg);
+  transition:transform 0.4s ease;
+}
+
+/* 🔥 WINDUP */
+.raiseSword{
+  transform:translateX(-50%) rotate(-140deg) scale(1.2);
+}
+
+/* 💥 SLAM */
+.swordSlam{
+  left:-100px;              /* 💥 THIS is the slam */
+  transform:rotate(90deg);
+}
+
+/* 💥 TEXT */
+#abuseText{
+  font-size:60px;
+  font-weight:bold;
+  color:red;
+  opacity:0;
+  transform:scale(0.5);
+  text-shadow:0 0 20px red, 0 0 40px darkred;
+}
+
+/* TEXT POP */
+.showText{
+  animation: abuseTextPop 0.6s forwards;
+}
+
+@keyframes megaShake{
+  0%{transform:translate(0,0)}
+  20%{transform:translate(10px,-10px)}
+  40%{transform:translate(-10px,10px)}
+  60%{transform:translate(12px,5px)}
+  80%{transform:translate(-8px,-6px)}
+  100%{transform:translate(0,0)}
+}
+
+.megaShake{
+  animation: megaShake 0.15s infinite;
+}
+
+@keyframes abuseTextPop{
+  to{
+    opacity:1;
+    transform:scale(1.2);
+  }
+}
+
+/* SCREEN SHAKE */
+.shake{
+  animation: shake 0.2s infinite;
+}
+
+@keyframes shake{
+  0%{transform:translate(0,0)}
+  25%{transform:translate(5px,-5px)}
+  50%{transform:translate(-5px,5px)}
+  75%{transform:translate(5px,5px)}
+  100%{transform:translate(0,0)}
+}
+
+/* 👤 FULL STICKMAN */
+#abuseStickman{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  transform:scale(1.6);
+}
+
+/* HEAD */
+.abuseHead{
+  width:26px;
+  height:26px;
+  background:#00ffcc;
+  border-radius:50%;
+  box-shadow:0 0 15px #00ffcc;
+}
+
+/* BODY */
+.abuseBody{
+  width:12px;
+  height:46px;
+  background:#00ffcc;
+  border-radius:20px;
+  margin-top:4px;
+  box-shadow:0 0 15px #00ffcc;
+}
+
+/* ARMS BAR */
+.abuseArmBar{
+  width:50px;
+  height:10px;
+  background:#00ffcc;
+  border-radius:20px;
+  box-shadow:0 0 10px #00ffcc;
+}
+
+/* POSITION FIX */
+#abuseArms{
+  position:absolute;
+  top:50px;
+  left:50%;
+  transform:translateX(-50%);
+}
+
+/* SWORD IMPROVE */
+#abuseSword{
+  position:absolute;
+
+  right:-8px;
+}
+
+.pixelOrbit{
+  position:absolute;
+  width:4px;
+  height:4px;
+  background:#00ffcc;
+  border-radius:1px;
+  pointer-events:none;
+}
+
+@keyframes orbitSpin{
+  from{ transform:rotate(0deg) translateX(40px) rotate(0deg); }
+  to{ transform:rotate(360deg) translateX(40px) rotate(-360deg); }
+}
+
+#abuseStickman{
+  animation: glowPulse 0.6s infinite alternate;
+}
+
+@keyframes glowPulse{
+  from{
+    filter: drop-shadow(0 0 10px cyan);
+  }
+  to{
+    filter: drop-shadow(0 0 30px red);
+  }
+}
+
+.slash{
+  position:absolute;
+  width:120px;
+  height:4px;
+  background:white;
+
+  box-shadow:0 0 10px red, 0 0 20px red;
+
+  transform:rotate(var(--angle));
+  opacity:1;
+
+  animation:slashFade 0.25s linear forwards;
+}
+
+@keyframes slashFade{
+  to{
+    opacity:0;
+    transform:scaleX(1.8) rotate(var(--angle));
+  }
+}
+
+.adminAura{
+  animation:auraPulse 0.4s infinite alternate;
+}
+
+@keyframes auraPulse{
+  from{
+    filter:drop-shadow(0 0 5px red);
+  }
+  to{
+    filter:drop-shadow(0 0 20px red);
+  }
+}
+
+#beam{
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+
+  width:20px;
+  height:0;
+
+  background:linear-gradient(to bottom, red, white);
+  box-shadow:0 0 30px red, 0 0 60px red;
+
+  opacity:0;
+  pointer-events:none;
+}
+
+.beamActive{
+  animation:beamDrop 0.25s linear forwards;
+}
+
+@keyframes beamDrop{
+  from{
+    top:-200px;
+    height:0;
+    opacity:1;
+  }
+  to{
+    top:0;
+    height:100%;
+    opacity:1;
+  }
+}
+
+/* charge effect */
+.charge{
+  animation:chargeGlow 0.3s infinite alternate;
+}
+
+@keyframes chargeGlow{
+  from{
+    filter:drop-shadow(0 0 5px red);
+  }
+  to{
+    filter:drop-shadow(0 0 25px red);
+  }
+}
+
+/* ⚡ ENERGY CHARGE VIBES */
+#adminAbuseOverlay{
+  transition: background 0.2s;
+}
+
+/* 💥 STRONGER SHAKE */
+@keyframes megaShake{
+  0%{transform:translate(0,0)}
+  20%{transform:translate(15px,-10px)}
+  40%{transform:translate(-15px,10px)}
+  60%{transform:translate(12px,8px)}
+  80%{transform:translate(-10px,-6px)}
+  100%{transform:translate(0,0)}
+}
+
+/* 🔴 TEXT BOOST */
+#abuseText.showText{
+  animation: abuseTextPop 0.6s forwards;
+}
+
+/* 💀 GLOW PULSE */
+@keyframes abusePulse{
+  from{ background:black; }
+  to{ background:#3a0000; }
+}
+
+/* 🌌 REALITY GLITCH */
+.glitchWorld *{
+  animation: glitchFlicker 0.08s infinite;
+}
+
+@keyframes glitchFlicker{
+  0%{ transform:translate(0,0); }
+  25%{ transform:translate(3px,-2px); }
+  50%{ transform:translate(-3px,2px); }
+  75%{ transform:translate(2px,1px); }
+  100%{ transform:translate(0,0); }
+}
+
+/* 💥 SCREEN CRACK EFFECT */
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  opacity:0;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(255,0,0,0.15) 12px
+    );
+  z-index:9998;
+}
+
+.megaShake + body::after,
+body.megaShake::after{
+  opacity:1;
+}
+
+/* 🔴 DARK PULSE */
+@keyframes abusePulse{
+  from{ background:black; }
+  to{ background:#400000; }
+}
+
 </style>
 </head>
 
@@ -1368,6 +1764,7 @@ body.hacked .eye {
 <button onclick="openLogin()">Login</button>
 <button onclick="openSignup()">Sign Up</button>
 <button onclick="openSettings()">⚙️ Settings</button>
+<button onclick="openShop()">Shop 🛒</button>
 
 </div>
 
@@ -1395,6 +1792,13 @@ padding:20px;
 
 </div>
 
+<div id="shop" class="hidden">
+  <h2>Shop 🛒</h2>
+  <div id="auraShop"></div>
+
+  <button onclick="closeShop()">Back</button>
+</div>
+
 <div id="editor" class="hidden">
   <h2>Edit Character</h2>
   <input type="color" id="colorPicker"><br><br>
@@ -1404,6 +1808,9 @@ padding:20px;
 
 <h2>Select Sword</h2>
   <div id="swordGrid"></div>
+<h2>Auras ✨</h2>
+<div id="auraGrid"></div>
+
   <button onclick="backToMenu()">Back</button>
 </div>
 
@@ -1551,6 +1958,7 @@ z-index:2000;
 display:none;
 "></div>
 
+
 <div id="eventMenu" class="hidden" class="battlepass">
 
 <div class="tabBar">
@@ -1575,6 +1983,7 @@ display:none;
 </div>
 
 </div>
+
 
 <div id="easterTab" class="hidden">
 
@@ -1731,6 +2140,7 @@ Carrots:
 <button onclick="triggerGlobalHack()">HACK EVENT (Global)</button>
   <button onclick="globalFlashbang()">Flashbang ALL</button>
   <button onclick="globalCoins()">Give 10k coins (Global)</button>
+  <button onclick="triggerAdminAbuse()">⚠️ Admin Abuse</button>
 
 <hr>
 
@@ -2219,6 +2629,86 @@ function updateCarrotUI(){
   el.innerText = `Carrots🥕: ${save.carrots || 0}`;
 }
 
+function spawnOrbitPixels(){
+  const container = document.getElementById("abuseStickman");
+
+  // 🧹 CLEAN OLD ONES (THIS WAS YOUR MAIN BUG)
+  container.querySelectorAll(".pixelOrbit").forEach(p=>p.remove());
+
+  const pixels = [];
+
+  for(let i=0;i<10;i++){
+    const p = document.createElement("div");
+    p.className = "pixelOrbit";
+
+    container.appendChild(p);
+
+    pixels.push({
+      el: p,
+      angle: Math.random()*Math.PI*2,
+      radius: 30 + Math.random()*20,
+      speed: 0.05 + Math.random()*0.05
+    });
+  }
+
+  let running = true;
+
+  function animate(){
+    if(!running) return;
+
+    pixels.forEach(p=>{
+      p.angle += p.speed;
+
+      const x = Math.cos(p.angle)*p.radius;
+      const y = Math.sin(p.angle)*p.radius;
+
+      p.el.style.left = `calc(50% + ${x}px)`;
+      p.el.style.top  = `calc(50% + ${y}px)`;
+    });
+
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+
+  // 🧹 AUTO CLEAN AFTER ANIMATION
+  setTimeout(()=>{
+    running = false;
+    pixels.forEach(p=>p.el.remove());
+  }, 3000);
+}
+
+function slamSword(){
+  const sword = document.getElementById("abuseSword");
+
+  let pos = -140;     // starting height
+  let velocity = 0;   // speed
+  let gravity = 2.5;  // acceleration
+
+  function animate(){
+    velocity += gravity;  // accelerate down
+    pos += velocity;
+
+    if(pos >= 40){        // impact point
+      pos = 40;
+      sword.style.top = pos + "px";
+
+      // 💥 IMPACT EFFECT
+      document.body.classList.add("megaShake");
+      setTimeout(()=>{
+        document.body.classList.remove("megaShake");
+      },150);
+
+      return; // stop animation
+    }
+
+    sword.style.top = pos + "px";
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+}
+
 function updateEventTiming(){
 
 const now = new Date();
@@ -2386,6 +2876,55 @@ function unbanPlayerLite() {
   alert("Player unbanned");
 }
 
+function adminExecution(target){
+  const slashContainer = document.getElementById("slashContainer");
+
+  // 🔴 aura on
+  target.classList.add("adminAura");
+
+  let hits = 0;
+
+  const interval = setInterval(()=>{
+    hits++;
+
+    // random slash
+    const slash = document.createElement("div");
+    slash.className = "slash";
+
+    const angle = Math.random()*180;
+    slash.style.setProperty("--angle", angle + "deg");
+
+    slash.style.left = (target.offsetLeft + Math.random()*50 - 25) + "px";
+    slash.style.top = (target.offsetTop + Math.random()*50 - 25) + "px";
+
+    slashContainer.appendChild(slash);
+
+    setTimeout(()=> slash.remove(), 250);
+
+    // screen shake
+    document.body.classList.add("megaShake");
+    setTimeout(()=> document.body.classList.remove("megaShake"), 100);
+
+    if(hits > 8){
+      clearInterval(interval);
+
+      // 💥 FINAL HIT
+      finalExplosion(target);
+    }
+
+  }, 80);
+}
+
+function finalExplosion(target){
+  target.style.opacity = "0";
+
+  document.body.style.background = "white";
+
+  setTimeout(()=>{
+    document.body.style.background = "";
+  },100);
+}
+
 function openEventQuests(){
 
 menu.classList.add("hidden");
@@ -2516,6 +3055,93 @@ function flashbang(){
   setTimeout(()=>div.remove(), 300);
 }
 
+window.playAdminAbuse = function(){
+
+  if(window._abusePlaying) return;
+  window._abusePlaying = true;
+
+  const overlay = document.getElementById("adminAbuseOverlay");
+  const arms = document.getElementById("abuseArms");
+  const sword = document.getElementById("abuseSword");
+  const flash = document.getElementById("abuseFlash");
+  const text = document.getElementById("abuseText");
+
+  overlay.style.display = "flex";
+
+  // 🧊 FREEZE GAME FEEL
+  document.body.style.transition = "0.2s";
+  document.body.style.filter = "grayscale(1) brightness(0.6)";
+  document.body.style.transform = "scale(1.02)";
+
+  // ⚡ PHASE 1 — REALITY GLITCH
+  document.body.classList.add("glitchWorld");
+
+  setTimeout(()=>{
+
+    // 🔴 PHASE 2 — BLOOD CHARGE
+    overlay.style.background = "radial-gradient(circle, red, black)";
+    overlay.style.animation = "abusePulse 0.1s infinite";
+
+    setTimeout(()=>{
+
+      // 🗡️ PHASE 3 — SWORD RAISE
+      arms.classList.add("raiseSword");
+
+      overlay.style.filter = "brightness(3) contrast(3)";
+
+      setTimeout(()=>{
+
+        // ⏱️ TIME FREEZE MOMENT
+        document.body.style.transition = "0s";
+        document.body.style.filter = "brightness(5)";
+
+        setTimeout(()=>{
+
+          // 💀 FINAL SLAM
+          sword.classList.add("swordSlam");
+
+          flash.style.opacity = "1";
+          document.body.classList.add("megaShake");
+          text.classList.add("showText");
+
+          // 🌌 REALITY BREAK FLASHES
+          let flashes = 0;
+          const chaos = setInterval(()=>{
+            document.body.style.filter =
+              flashes % 2 === 0
+              ? "invert(1) hue-rotate(180deg)"
+              : "brightness(5) contrast(5)";
+
+            flashes++;
+            if(flashes > 6){
+              clearInterval(chaos);
+            }
+          }, 60);
+
+          setTimeout(end, 1800);
+
+        }, 200);
+
+      }, 600);
+
+    }, 400);
+
+  }, 200);
+
+
+  function end(){
+    overlay.style.display = "none";
+
+    document.body.classList.remove("megaShake","glitchWorld");
+
+    document.body.style.filter = "";
+    document.body.style.transform = "";
+
+    flash.style.opacity = "0";
+
+    window._abusePlaying = false;
+  }
+};
 function setEventQuests(){
  
 save.eventData.completed = Number(document.getElementById("setEventQuestsInput").value);
@@ -2587,6 +3213,22 @@ save.eventData.quests.push(randomQuest());
 
 }
 
+function applyAura(fighter, auraId){
+  const aura = AURAS.find(a => a.id === auraId);
+  if(!aura || aura.id === "none") return;
+
+  const glow = document.createElement("div");
+
+  glow.style.position = "absolute";
+  glow.style.inset = "-10px";
+  glow.style.borderRadius = "50%";
+  glow.style.pointerEvents = "none";
+
+  glow.style.boxShadow = `0 0 25px ${aura.color}, 0 0 50px ${aura.color}`;
+
+  fighter.appendChild(glow);
+}
+
 function startFakeTerminal(){
   const term = document.getElementById("hackTerminal");
   term.style.display = "block";
@@ -2639,6 +3281,34 @@ function showHowTo(){
     🎁 Give 10 carrots to get rewards<br>
     🐣 Limited items only available during event!
   `;
+}
+
+function adminBeam(target){
+  const beam = document.getElementById("beam");
+
+  // 🔴 charge up
+  target.classList.add("charge");
+
+  setTimeout(()=>{
+    target.classList.remove("charge");
+
+    // ☄️ beam strike
+    beam.style.left = target.offsetLeft + "px";
+    beam.classList.add("beamActive");
+
+    // 💥 impact
+    document.body.classList.add("megaShake");
+
+    setTimeout(()=>{
+      document.body.classList.remove("megaShake");
+
+      // ☠️ delete player
+      target.style.opacity = "0";
+
+      beam.classList.remove("beamActive");
+    },250);
+
+  },400);
 }
 
 function showEndScreen(win, coins){
@@ -2771,6 +3441,108 @@ function updateHackUI(){
   checkHackQuests();
 }
 
+function openShop(){
+  document.getElementById("menu").classList.add("hidden");
+  document.getElementById("shop").classList.remove("hidden");
+
+  renderAuraShop(); // 🔥 THIS WAS MISSING
+}
+
+function closeShop(){
+  document.getElementById("shop").classList.add("hidden");
+  document.getElementById("menu").classList.remove("hidden");
+}
+
+save.auras = save.auras || ["none"];
+save.selectedAura = save.selectedAura || "none";
+
+function renderAuras(){
+  const grid = document.getElementById("auraGrid");
+  grid.innerHTML = "";
+
+  AURAS.forEach(a => {
+    const owned = save.auras.includes(a.id);
+
+    const div = document.createElement("div");
+    div.className = "swordCard " + (!owned ? "locked" : "");
+
+    div.innerHTML = `
+      <div class="swordName">${a.name}</div>
+      <div style="
+        width:40px;height:40px;margin:auto;
+        border-radius:50%;
+        background:${a.color};
+        box-shadow:0 0 20px ${a.color};
+      "></div>
+      ${!owned ? `<div class="lock">🔒</div>` : ""}
+    `;
+
+    if(owned){
+      div.onclick = () => {
+        save.selectedAura = a.id;
+        renderAuras();
+      };
+    }
+
+    if(save.selectedAura === a.id){
+      div.classList.add("selected");
+    }
+
+    grid.appendChild(div);
+  });
+}
+
+function renderAuraShop(){
+  const shop = document.getElementById("auraShop");
+  shop.innerHTML = "";
+
+  AURAS.forEach(a => {
+    if(a.id === "none") return;
+
+    const owned = save.auras.includes(a.id);
+
+    const div = document.createElement("div");
+    div.className = "swordCard";
+
+    div.innerHTML = `
+      <div>${a.name}</div>
+      <div>💰 ${a.price}</div>
+      <button ${owned ? "disabled" : ""}>
+        ${owned ? "Owned" : "Buy"}
+      </button>
+    `;
+
+    div.querySelector("button").onclick = () => {
+      if(save.coins >= a.price){
+        save.coins -= a.price;
+        save.auras.push(a.id);
+        updateCoins();
+        renderAuraShop();
+        renderAuras();
+      } else {
+        alert("Not enough coins!");
+      }
+    };
+
+    shop.appendChild(div);
+  });
+}
+
+function applyAura(fighter, auraId){
+  const aura = AURAS.find(a => a.id === auraId);
+  if(!aura || aura.id === "none") return;
+
+  const glow = document.createElement("div");
+
+  glow.style.position = "absolute";
+  glow.style.inset = "-10px";
+  glow.style.borderRadius = "50%";
+  glow.style.pointerEvents = "none";
+
+  glow.style.boxShadow = `0 0 25px ${aura.color}, 0 0 50px ${aura.color}`;
+
+  fighter.appendChild(glow);
+}
 
 
 function setCoinsLite() {
@@ -3612,6 +4384,15 @@ const hats = [
 {id:"bunnyEars", name:"Bunny Ears"}
 ];
 
+const AURAS = [
+  { id: "none", name: "None", color: "transparent", price: 0 },
+
+  { id: "fire", name: "Fire Aura", color: "orange", price: 500 },
+  { id: "ice", name: "Ice Aura", color: "cyan", price: 700 },
+  { id: "shadow", name: "Shadow Aura", color: "purple", price: 1000 },
+  { id: "gold", name: "Golden Aura", color: "gold", price: 2000 }
+];
+
 function renderHatGrid(){
 
 const grid = document.getElementById("hatGrid");
@@ -3772,6 +4553,7 @@ function openEditor(){
   editor.classList.remove("hidden");
 renderHatGrid();
   renderSwords();
+renderAuras();
 }
 function openAchievements(){
   stopGame();
@@ -6346,6 +7128,8 @@ document.getElementById("dailyRewardBtn").onclick = claimDailyReward;
 
 
 save.hat = save.hat || "none";
+save.auras = save.auras || ["none"]; // owned auras
+save.selectedAura = save.selectedAura || "none";
 
 function setHat(h){
 
@@ -6445,6 +7229,45 @@ z-index:9999;
 box-shadow:0 0 10px gold;
 ">
 
+</div>
+
+<div id="adminAbuseOverlay" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100vw;
+height:100vh;
+background:black;
+z-index:999999999;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+overflow:hidden;
+">
+
+<div id="abuseFlash"></div>
+
+<div id="abuseStickman">
+
+  <div class="abuseHead"></div>
+  <div class="abuseBody"></div>
+
+  <div id="abuseArms">
+    <div class="abuseArmBar"></div>
+
+    <div id="abuseSword">
+      <div class="handle"></div>
+      <div class="blade"></div>
+    </div>
+  </div>
+
+</div>
+
+<div id="abuseText">ADMIN ABUSE</div>
+</div>
+<div id="slashContainer"></div>
+<div id="beam"></div>
 </body>
 </html>
 
