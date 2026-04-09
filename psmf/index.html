@@ -5064,7 +5064,7 @@ function endGame(win){
 
     reward = rewards[save.difficulty] || 5;
 
-    save.coins = Number(save.coins) + 10000;
+    save.coins = Number(save.coins) + reward;
     updateCoins();
 
     save.wins++;
