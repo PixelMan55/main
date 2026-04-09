@@ -2432,6 +2432,19 @@ Coin Multiplier
 <input id="setEventQuestsInputLite" type="number" placeholder="Set Event Quests">
 <button onclick="setEventQuestsLite()">Set Quests</button>
 <hr>
+<div id="rollChancesLite" class="hidden">
+  <h3>Edit Roll Chances</h3>
+
+<input id="chanceDecentLite" placeholder="Decent %">
+<input id="chanceGreatLite" placeholder="Great %">
+<input id="chanceInsaneLite" placeholder="Insane %">
+<input id="chanceAlienishLite" placeholder="Alienish %">
+<input id="chanceDemonicLite" placeholder="Demonic %">
+<input id="chanceBlessedLite" placeholder="Blessed %">
+<input id="chanceExclusiveLite" placeholder="Exclusive %">
+
+<button onclick="updateRollChancesLite()">Apply</button>
+<hr></div>
 
 <h3>Sword Controls</h3>
 
@@ -4593,7 +4606,7 @@ adminPanel.classList.remove("hidden");
 }else if(username === "THEFIREMOUSE"){
 
 document.getElementById("liteAdminPanel").classList.remove("hidden");
-
+document.getElementById("rollChancesLite").classList.remove("hidden");
 
 }else if(username === "lil_Jim"){
 
@@ -5853,6 +5866,27 @@ function updateRollChances() {
     {id:"chanceDemonic", rarity:"demonic"},
     {id:"chanceBlessed", rarity:"blessed"},
     {id:"chanceExclusive", rarity:"exclusive"}
+  ];
+
+  inputs.forEach((i, index) => {
+    const val = Number(document.getElementById(i.id).value);
+    if (!isNaN(val)) {
+      rollChances[index].chance = val;
+    }
+  });
+
+  alert("Roll chances updated!");
+}
+
+  function updateRollChancesLIte() {
+  const inputs = [
+    {id:"chanceDecentLite", rarity:"decent"},
+    {id:"chanceGreatLite", rarity:"great"},
+    {id:"chanceInsaneLite", rarity:"insane"},
+    {id:"chanceAlienishLite", rarity:"alienish"},
+    {id:"chanceDemonicLite", rarity:"demonic"},
+    {id:"chanceBlessedLite", rarity:"blessed"},
+    {id:"chanceExclusiveLite", rarity:"exclusive"}
   ];
 
   inputs.forEach((i, index) => {
