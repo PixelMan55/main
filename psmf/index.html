@@ -1731,6 +1731,11 @@ body.megaShake::after{
   to{ background:#400000; }
 }
 
+#bunnyDialogue {
+    white-space: pre-wrap; /* This forces the browser to respect every single space and line break */
+}
+
+
 </style>
 </head>
 
@@ -3851,10 +3856,10 @@ function giveCarrots(){
     reward = { type:"hat", id:"bunnyEars", name:"Bunny Ears" };
   }
   else if(rand < 0.92){
-    reward = { type:"sword", id:"eggBlade", name:"Egg Blade" }; // ✅ FIXED ID
+    reward = { type:"sword", id:"eggBlade", name:"Egg Blade" };
   }
   else if(rand < 0.98){
-    reward = { type:"sword", id:"goldenCarrot", name:"Golden Carrot Blade" }; // ✅ FIXED ID
+    reward = { type:"sword", id:"goldenCarrot", name:"Golden Carrot Blade" };
   }
   else{
     reward = { type:"wins", amount:50 };
@@ -3867,22 +3872,33 @@ function giveCarrots(){
 
   updateCarrotUI();
   saveData();
-}function updateBunnyText(text){
+}// 1. Declare this variable OUTSIDE the function to keep track of the current timer
+let bunnyIntervalId = null;
 
-  const el = document.getElementById("bunnyDialogue");
-
-  let i = 0;
-  el.innerText = "";
-
-  const interval = setInterval(()=>{
-    el.innerText += text[i];
-    i++;
-
-    if(i >= text.length){
-      clearInterval(interval);
+function updateBunnyText(text) {
+    const el = document.getElementById("bunnyDialogue");
+    
+    // 2. Stop any previous typing effect immediately
+    if (bunnyIntervalId) {
+        clearInterval(bunnyIntervalId);
     }
-  }, 20);
+    
+    let i = 0;
+    el.innerText = ""; // Clear the old text
+
+    // 3. Start the new animation and save its ID
+    bunnyIntervalId = setInterval(() => {
+        if (i < text.length) {
+            el.innerText += text[i];
+            i++;
+        } else {
+            // 4. Cleanup when finished
+            clearInterval(bunnyIntervalId);
+            bunnyIntervalId = null;
+        }
+    }, 20); 
 }
+
 
 function formatReward(r){
   if(r.type === "coins") return r.amount + " coins 💰";
@@ -4402,7 +4418,6 @@ const hats = [
 
 const AURAS = [
   { id: "none", name: "None", color: "transparent", price: 0 },
-
   { id: "fire", name: "Fire Aura", color: "orange", price: 500 },
   { id: "ice", name: "Ice Aura", color: "cyan", price: 700 },
   { id: "shadow", name: "Shadow Aura", color: "purple", price: 1000 },
@@ -4684,7 +4699,8 @@ function giveReward(reward){
   }
 
   else if(reward.type === "sword"){
-    unlockSword(reward.name);
+save.unlockedSpecial = save.unlockedSpecial || [];
+save.unlockedSpecial.push("reward.id");
     updateBunnyText(`You got ${reward.name}!`);
   }
 
