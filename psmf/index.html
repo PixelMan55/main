@@ -4699,8 +4699,7 @@ function giveReward(reward){
   }
 
   else if(reward.type === "sword"){
-save.unlockedSpecial = save.unlockedSpecial || [];
-save.unlockedSpecial.push("reward.id");
+save.unlockedSpecial.push(reward.id);
     updateBunnyText(`You got ${reward.name}!`);
   }
 
