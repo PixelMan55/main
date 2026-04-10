@@ -5923,7 +5923,6 @@ saveData();
   }
 
   const playerData = {
-    uid: user.uid,
     username: username || "Player",
     wins: save.wins,
     losses: save.losses,
@@ -6424,10 +6423,6 @@ if(liteLock) liteLock.appendChild(new Option(name,id));
 
 }
 window.onload = () => {
-      await loadPlayerData(user.uid);
-
-    updateUserBar();
-    backToMenu();
   updateCoins();
   populateSwordDropdown();
 initEventQuests();
