@@ -2555,7 +2555,7 @@ text-align:right;
 
 <div id="zoinkGlow"></div>
 <script>
-
+save.unlockedSpecial = save.unlockedSpecial || [];
 let currentEvent = null;
 let eventEnd = 0;
 let nextEvent = null;
@@ -3013,7 +3013,6 @@ showMilestonePopup("75 Quests Completed", "7,500 Coins"); // ✅
 }
 
 if(c >= 100 && !save.bpRewards["100"]){
-save.unlockedSpecial = save.unlockedSpecial || [];
 save.unlockedSpecial.push("zoink");
 save.bpRewards["100"] = true;
 
