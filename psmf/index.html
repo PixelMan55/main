@@ -2555,7 +2555,6 @@ text-align:right;
 
 <div id="zoinkGlow"></div>
 <script>
-save.unlockedSpecial = save.unlockedSpecial || [];
 let currentEvent = null;
 let eventEnd = 0;
 let nextEvent = null;
@@ -3401,6 +3400,7 @@ saveData();
 
 
 }
+
 
 function setCarrots(){
 
@@ -7266,6 +7266,8 @@ function toggleLaunchMode() {
     launchMode = !launchMode;
 }
 
+save.unlockedSpecial = save.unlockedSpecial || [];
+  
 </script>
 
 <div id="globalAnnouncement" style="
