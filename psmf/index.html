@@ -3830,8 +3830,6 @@ p1El.innerHTML = makeStick(save.color, save.sword);
 
 p1El.innerHTML = makeStick(save.color, save.sword);
 }
-
-  save.unlockedSpecial = save.unlockedSpecial || [];
 function giveCarrots(){
 
   if((save.carrots || 0) < 10){
@@ -4926,6 +4924,8 @@ document.getElementById("fpsCounter").style.display = showFPS ? "block" : "none"
 function updateCoins(){
 document.getElementById("coinText").textContent = save.coins || 0;
 }
+
+  save.unlockedSpecial = save.unlockedSpecial || [];
 
 async function getUsername(){
   const user = auth.currentUser;
