@@ -3790,7 +3790,7 @@ function activateZoink(spawnedBy = "System"){
   zoinkRunning = true;
 
   // 🔥 POPUP MESSAGE
-  showAnnouncement("Sapwned Zoink Event", "15 min");
+  showAnnouncement(data.spawnedBy, "Spawned Zoink Event");
 
 
 
@@ -3830,6 +3830,8 @@ p1El.innerHTML = makeStick(save.color, save.sword);
 
 p1El.innerHTML = makeStick(save.color, save.sword);
 }
+
+  save.unlockedSpecial = save.unlockedSpecial || [];
 function giveCarrots(){
 
   if((save.carrots || 0) < 10){
@@ -4840,6 +4842,8 @@ ${e.mult}x ${e.type} for ${e.duration} min
 </div>
 `;
 }
+
+
 
 function openEventsMenu(){
 
@@ -7265,8 +7269,6 @@ let launchMode = false;
 function toggleLaunchMode() {
     launchMode = !launchMode;
 }
-
-save.unlockedSpecial = save.unlockedSpecial || [];
   
 </script>
 
