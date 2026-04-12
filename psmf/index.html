@@ -2098,9 +2098,11 @@ font-weight:bold;
 
 </div>
   <div id="eventPanel" class="hidden">
+    <h1>Event Admin Panel</h1><hr>
   <button onclick="activateZoink()">Activate Zoink Fest (Local)</button>
    <button onclick="startLocalEaster()">Start Easter (Local)</button>
-    <button onclick="activateHackedEvent()">Activate Hack Event (Local)</button>
+    <button onclick="activateHackedEvent()">Activate Hack Event (Local)</button><hr>
+    <button onclick="backToMenu()">Back</button>
   </div>
   
   <div id="adminPanel" class="hidden">
@@ -4575,6 +4577,7 @@ isPaused = false;
   adminPanel.classList.add("hidden");
 document.getElementById("eventMenu").classList.add("hidden");
 document.getElementById("liteAdminPanel").classList.add("hidden");
+  document.getElementById("eventPanel").classList.add("hidden");
 document.getElementById("leaderboard").classList.add("hidden");
 document.getElementById("loginPage").classList.add("hidden");
 document.getElementById("signupPage").classList.add("hidden");
