@@ -2096,7 +2096,14 @@ font-weight:bold;
 
 <button onclick="backToMenu()">Back</button>
 
-</div><div id="adminPanel" class="hidden">
+</div>
+  <div id="eventPanel" class="hidden">
+  <button onclick="activateZoink()">Activate Zoink Fest (Local)</button>
+   <button onclick="startLocalEaster()">Start Easter (Local)</button>
+    <button onclick="activateHackedEvent()">Activate Hack Event (Local)</button>
+  </div>
+  
+  <div id="adminPanel" class="hidden">
 
 <h2>ADMIN PANEL</h2>
 
@@ -4633,7 +4640,13 @@ document.getElementById("liteAdminPanel").classList.remove("hidden");
 
 document.getElementById("liteAdminPanel").classList.remove("hidden");
 
-}else{
+}else if(username === "mid4567"){
+
+document.getElementById("eventPanel").classList.remove("hidden");
+
+}
+
+else{
 
 alert("You are not an admin.");
 backToMenu();
@@ -5979,7 +5992,7 @@ username=d.data().username;
 }
 });
 
-if(username === "PixelMan" || username === "THEFIREMOUSE" || username === "lil_Jim" || username === "mid4567"){
+if(username === "PixelMan" || username === "THEFIREMOUSE" || username === "lil_Jim" || username === "mid4567" || username === "I_Am_Sam"){
 document.getElementById("adminBtn").style.display="block";
 }else{
 document.getElementById("adminBtn").style.display="none";
