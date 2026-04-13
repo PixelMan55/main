@@ -571,16 +571,19 @@ button[onclick="triggerAdminAbuse()"] {
 .r-common { border-color: #bbb; }
 .r-decent { border-color: #4caf50; box-shadow: 0 0 5px #4caf50; }
 .r-great { border-color: #2196f3; box-shadow: 0 0 8px #2196f3; }
-.r-insane { border-color: #9c27b0; box-shadow: 0 0 10px #9c27b0; animation: rarityPulseInsane 1s infinite alternate; }
-.r-alienish { border-color: #00ffcc; box-shadow: 0 0 12px #00ffcc; }
+.r-insane { border-color: #9c27b0; box-shadow: 0 0 10px #9c27b0;}
+.r-alienish { border-color: #00ffcc; box-shadow: 0 0 12px #00ffcc; animation: rarityPulseAlienish 0.5s infinite alternate;}
 .r-demonic { border-color: #ff1744; box-shadow: 0 0 15px #ff1744; animation: rarityPulseDemonic 0.5s infinite alternate; }
-.r-blessed { border-color: gold; box-shadow: 0 0 18px gold; text-shadow: 0 0 5px gold; }
-.r-exclusive { border-color: blue; box-shadow: 0 0 20px blue; }
-.r-limited { border-color: orange; box-shadow: 0 0 20px orange; }
+.r-blessed { border-color: gold; box-shadow: 0 0 18px gold; text-shadow: 0 0 5px gold; animation: rarityPulseBlessed 0.5s infinite alternate;}
+.r-exclusive { border-color: blue; box-shadow: 0 0 20px blue; animation: rarityPulseExclusive 0.5s infinite alternate;}
+.r-limited { border-color: orange; box-shadow: 0 0 20px orange; animation: rarityPulseLimited 0.5s infinite alternate;}
 
-@keyframes rarityPulseInsane { from { box-shadow: 0 0 5px #9c27b0; } to { box-shadow: 0 0 15px #9c27b0, 0 0 20px #fff; } }
+@keyframes rarityPulseAlienish { from { box-shadow: green; } to { box-shadow: lime; } }
 @keyframes rarityPulseDemonic { from { box-shadow: 0 0 5px #ff1744; } to { box-shadow: 0 0 25px #ff1744; } }
-
+@keyframes rarityPulseBlessed{ from { box-shadow: gold; } to { box-shadow: yellow; } }
+  @keyframes rarityPulseExclusive{ from { box-shadow: blue; } to { box-shadow: green; } }
+    @keyframes rarityPulseLimited{ from { box-shadow: orange; } to { box-shadow: yellow; } }
+  
 /* Achievements */
 .achievement {
     width: 320px; margin: 10px auto;
