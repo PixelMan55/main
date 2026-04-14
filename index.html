@@ -581,9 +581,9 @@ button[onclick="triggerAdminAbuse()"] {
 
 @keyframes rarityPulseAlienish { from { box-shadow: green; } to { box-shadow: lime; } }
 @keyframes rarityPulseDemonic { from { box-shadow: 0 0 5px #ff1744; } to { box-shadow: 0 0 25px #ff1744; } }
-@keyframes rarityPulseBlessed{ from { box-shadow: gold; } to { box-shadow: yellow; } }
-  @keyframes rarityPulseExclusive{ from { box-shadow: blue; } to { box-shadow: green; } }
-    @keyframes rarityPulseLimited{ from { box-shadow: orange; } to { box-shadow: yellow; } }
+@keyframes rarityPulseBlessed{ from { box-shadow: 0 0 5px gold; } to { box-shadow: 0 0 30px gold; } }
+  @keyframes rarityPulseExclusive{ from { box-shadow: 0 0 5px blue; } to { box-shadow: 0 0 35px blue; } }
+    @keyframes rarityPulseLimited{ from { box-shadow: 0 0 5px orange; } to { box-shadow: 0 0 35px orange; } }
   
 /* Achievements */
 .achievement {
@@ -693,6 +693,11 @@ button[onclick="triggerAdminAbuse()"] {
 </style>
   
 <style>
+
+  @keyframes pulseGlow {
+    from { box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
+    to { box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); }
+}
 body{margin:0;background:#222;color:white;font-family:Arial;text-align:center}
 button,select{padding:10px;font-size:16px;margin:6px}
 .hidden{display:none}
@@ -2220,7 +2225,6 @@ body.megaShake::after{
 <button onclick="openLeaderboard()">Leaderboard 🏆</button>
 <button id="dailyRewardBtn" onclick="claimDailyReward()">🎁 Daily Reward</button><button onclick="openEventsMenu()">Events 🥳</button>
 <button onclick="openEventQuests()">Event Quests 👑</button>
-<button onclick="openChat()">Chat💬</button>
 <br><br>
 <button onclick="openLogin()">Login</button>
 <button onclick="openSignup()">Sign Up</button>
@@ -2286,14 +2290,6 @@ padding:20px;
   <div id="statsContent"></div>
   <button onclick="backToMenu()">Back</button>
 </div>
-    <div id="chat-container" class="hidden">
-        <div id="messages"></div>
-        <form id="chat-form">
-            <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off" required>
-            <button type="submit">Send</button>
-        </form>
-      <button onclick="backToMenu">Back</button>
-    </div>
 
 <div id="fpsCounter" style="
 position:fixed;
@@ -5046,7 +5042,6 @@ document.getElementById("signupPage").classList.add("hidden");
   endScreen.classList.add("hidden");
   document.getElementById("endScreen").style.display = "none";
   menu.classList.remove("hidden");
-chat-container.classList.add("hidden");
 }
 function openEditor(){
   stopGame();
@@ -7742,31 +7737,37 @@ let launchMode = false;
 function toggleLaunchMode() {
     launchMode = !launchMode;
 }
-
-function openChat(){
-  menu.classList.add("hidden");
-chat-container.classList.remove("hidden");
- }
   
 </script>
 
 <div id="globalAnnouncement" style="
-position:fixed;
-top:20px;
-left:50%;
-transform:translateX(-50%);
-background:#111;
-border:2px solid gold;
-padding:12px 20px;
-font-weight:bold;
-font-size:18px;
-color:white;
-display:none;
-z-index:9999;
-box-shadow:0 0 10px gold;
-">
-
+    position: fixed; 
+    top: 20px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    background: rgba(17, 17, 17, 0.85); /* Semi-transparent */
+    backdrop-filter: blur(8px); /* Frosted glass effect */
+    border: 2px solid transparent;
+    background-image: linear-gradient(rgba(17, 17, 17, 1), rgba(17, 17, 17, 1)), 
+                      linear-gradient(45deg, #ffd700, #ff8c00); /* Gradient border */
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    padding: 14px 28px; 
+    font-weight: 600; 
+    font-size: 18px; 
+    color: white; 
+    display: none; 
+    z-index: 9999; 
+    border-radius: 12px; /* Rounded corners */
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); /* Softer glow */
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    animation: pulseGlow 2s infinite alternate;
+"> 
 </div>
+
+
 
 <div id="adminAbuseOverlay" style="
 display:none;
