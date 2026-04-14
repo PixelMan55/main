@@ -2238,7 +2238,6 @@ body.megaShake::after{
 #bunnyDialogue {
     white-space: pre-wrap; /* This forces the browser to respect every single space and line break */
 }
-body { background: #1a1a1a; font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
 
 #chat-container { width: 100%; max-width: 400px; background: #222; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; height: 500px; border: 1px solid #444; }
 
@@ -2283,6 +2282,7 @@ button { padding: 10px 20px; border: none; background: #007bff; color: white; cu
 <button onclick="openLeaderboard()">Leaderboard 🏆</button>
 <button id="dailyRewardBtn" onclick="claimDailyReward()">🎁 Daily Reward</button><button onclick="openEventsMenu()">Events 🥳</button>
 <button onclick="openEventQuests()">Event Quests 👑</button>
+<button onclick="openChat()">Chat💬</button>
 <br><br>
 <button onclick="openLogin()">Login</button>
 <button onclick="openSignup()">Sign Up</button>
@@ -2354,6 +2354,7 @@ padding:20px;
             <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off" required>
             <button type="submit">Send</button>
         </form>
+      <button onclick="backToMenu">Back</button>
     </div>
 
 <div id="fpsCounter" style="
@@ -5107,7 +5108,7 @@ document.getElementById("signupPage").classList.add("hidden");
   endScreen.classList.add("hidden");
   document.getElementById("endScreen").style.display = "none";
   menu.classList.remove("hidden");
-
+chatContainer.classList.add("hidden");
 }
 function openEditor(){
   stopGame();
@@ -7803,6 +7804,11 @@ let launchMode = false;
 function toggleLaunchMode() {
     launchMode = !launchMode;
 }
+
+function openChat(){
+  menu.classList.add("hidden");
+chatContainer.classList.remove("hidden");
+             }
   
 </script>
 
