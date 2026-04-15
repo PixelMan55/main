@@ -7684,6 +7684,24 @@ if(save.hat === "cap"){
 ctx.fillStyle="red";
 ctx.fillRect(player.x-8,player.y-30,16,6);
 }
+if (save.hat === "adminCrown") {
+    ctx.fillStyle = "gold";
+    ctx.beginPath();
+    // Starting at bottom-left of the hat area
+    ctx.moveTo(player.x - 10, player.y - 30); 
+    ctx.lineTo(player.x + 10, player.y - 30); // Bottom edge
+    ctx.lineTo(player.x + 10, player.y - 40); // Right edge
+    ctx.lineTo(player.x + 5, player.y - 35);  // Peak 1
+    ctx.lineTo(player.x, player.y - 40);      // Center Peak
+    ctx.lineTo(player.x - 5, player.y - 35);  // Peak 2
+    ctx.lineTo(player.x - 10, player.y - 40); // Left edge
+    ctx.closePath();
+    ctx.fill();
+    
+    // Optional: Add a little "ruby" in the center
+    ctx.fillStyle = "red";
+    ctx.fillRect(player.x - 1, player.y - 34, 2, 2);
+}
 
 if(save.hat === "crown"){
 ctx.fillStyle="gold";
