@@ -5949,13 +5949,15 @@ f.style.outline="none";
 
 }
 
-function toggleUnlockAllLite(){
+  function toggleUnlockAllLite(){
 
-const toggle=document.getElementById("unlockAllToggle");
+const toggle=document.getElementById("unlockAllToggleLite");
 
 if(toggle.checked){
+
 save.unlockedSpecial = save.unlockedSpecial || [];
 save.unlockedSpecial.push("zoink");
+  
 save.wins=999;
 save.unlockedRollSwords=rollSwords.map(s=>s.name);
 
