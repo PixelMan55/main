@@ -1285,6 +1285,16 @@ height:6px;
 background:black;
 border-radius:2px;
 }
+/* CSS for Menu/UI Preview */
+.hat.adminCrown {
+  width: 20px;
+  height: 10px;
+  background: gold;
+  /* Simple crown shape using a clip-path */
+  clip-path: polygon(0% 100%, 100% 100%, 100% 0%, 80% 50%, 50% 0%, 20% 50%, 0% 0%);
+  border-radius: 1px;
+}
+
 
 /* 🧢 CAP */
 .hat.cap{
@@ -3961,7 +3971,8 @@ const swords={
   ach_impossible:{name:"Celestial Blade",dmg:40,knock:34,stun:34,achievement:"win_impossible",rarity:"blessed"},
 zoink:{name:"The Zoink",rarity:"limited",dmg:52,knock:45,stun:43,unlock:"Zoink Fest"},
 eggBlade:{name:"Egg Blade",rarity:"limited",dmg:30,knock:26,stun:31,unlock:"Easter Event"},
-goldCarrot:{name:"Golden Carrot Blade",rarity:"limited",dmg:40,knock:38,stun:41,unlock:"Easter Event"}
+goldCarrot:{name:"Golden Carrot Blade",rarity:"limited",dmg:40,knock:38,stun:41,unlock:"Easter Event"},
+DataHacker:{name:"Data Hacker",rarity:"limited",dmg:50,knock:51,stun:48,unlock:"Hacked Event"}
 };
 const rollSwords=[
 {name:"Iron Saber",rarity:"decent"},
@@ -4025,6 +4036,7 @@ const hats = [
 {id:"cap", name:"Cap"},
 {id:"zoink", name:"Zoink Cube"},
 {id:"bunnyEars", name:"Bunny Ears"}
+{id:"adminCrown", name:"Admin Crown"}
 ];
 
 const AURAS = [
@@ -4582,6 +4594,9 @@ unlocked = save.unlockedSpecial?.includes("eggBlade");
 
 else if(s.name === "Golden Carrot Blade"){
 unlocked = save.unlockedSpecial?.includes("goldenCarrot");
+}
+else if(s.name === "Data Hacker"){
+unlocked = save.unlockedSpecial?.includes("dataHacker");
 }
 
 // normal systems
@@ -6843,6 +6858,27 @@ if(save.hat === "ninja"){
 ctx.fillStyle="black";
 ctx.fillRect(player.x-8,player.y-30,16,6);
 }
+
+// Canvas Drawing Logic
+if (save.hat === "adminCrown") {
+    ctx.fillStyle = "gold";
+    ctx.beginPath();
+    // Starting at bottom-left of the hat area
+    ctx.moveTo(player.x - 10, player.y - 30); 
+    ctx.lineTo(player.x + 10, player.y - 30); // Bottom edge
+    ctx.lineTo(player.x + 10, player.y - 40); // Right edge
+    ctx.lineTo(player.x + 5, player.y - 35);  // Peak 1
+    ctx.lineTo(player.x, player.y - 40);      // Center Peak
+    ctx.lineTo(player.x - 5, player.y - 35);  // Peak 2
+    ctx.lineTo(player.x - 10, player.y - 40); // Left edge
+    ctx.closePath();
+    ctx.fill();
+    
+    // Optional: Add a little "ruby" in the center
+    ctx.fillStyle = "red";
+    ctx.fillRect(player.x - 1, player.y - 34, 2, 2);
+}
+
 
 if(save.hat === "halo"){
 ctx.strokeStyle="yellow";
