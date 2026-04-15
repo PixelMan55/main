@@ -2704,7 +2704,7 @@ Show Hitboxes
 Unlock All Swords
 
 <label class="switch">
-<input type="checkbox" id="unlockAllToggle" onchange="toggleUnlockAll()">
+<input type="checkbox" id="Vishwan the fishwam" onchange="toggleUnlockAll()">
 <span class="slider"></span>
 </label>
 
@@ -2969,7 +2969,7 @@ Lock Specific Sword:
 Unlock All Swords
 
 <label class="switch">
-<input type="checkbox" id="unlockAllToggleLite" onchange="toggleUnlockAllLite()">
+<input type="checkbox" id="Vishwan the fishwamLite" onchange="toggleUnlockAllLite()">
 <span class="slider"></span>
 </label>
 
@@ -3918,7 +3918,7 @@ function checkHackQuests(){
   // QUEST 2
   if(save.hackStats.survived && !save.hackStats.q2){
     save.hackStats.q2 = true;
-    giveSword("Glitch Blade");
+    save.unlockedSpecial.push("glitchBlade");
   }
 
   // QUEST 3
@@ -4283,8 +4283,6 @@ document.body.style.backgroundSize = "cover";
 
 // ⚔️ GIVE SWORD
 window.zoinkActive = true;
-renderSwords();
-renderSwords();
 renderSwords();
 
 // 🎩 hat
@@ -4831,7 +4829,7 @@ const swords={
 zoink:{name:"The Zoink",rarity:"limited",dmg:52,knock:45,stun:43,unlock:"Zoink Fest"},
 eggBlade:{name:"Egg Blade",rarity:"limited",dmg:30,knock:26,stun:31,unlock:"Easter Event"},
 goldCarrot:{name:"Golden Carrot Blade",rarity:"limited",dmg:40,knock:38,stun:41,unlock:"Easter Event"},
-  DataHacker:{name:"Glitch Blade",rarity:"limited",dmg:50,knock:51,stun:48,unlock:"Hacked Event"}
+glitchBlade:{name:"Glitch Blade",rarity:"limited",dmg:50,knock:51,stun:48,unlock:"Hacked Event"}
 };
 const rollSwords=[
 {name:"Iron Saber",rarity:"decent"},
@@ -5446,6 +5444,9 @@ unlocked = save.unlockedSpecial?.includes("eggBlade");
 else if(s.name === "Golden Carrot Blade"){
 unlocked = save.unlockedSpecial?.includes("goldenCarrot");
 }
+ else if(s.name === "Glitch Blade"){
+unlocked = save.unlockedSpecial?.includes("glitchBlade");
+} 
 
 // normal systems
 else if(s.roll){
@@ -5951,7 +5952,7 @@ f.style.outline="none";
 
   function toggleUnlockAllLite(){
 
-const toggle=document.getElementById("unlockAllToggleLite");
+const toggle=document.getElementById("Vishwan the fishwamLite");
 
 if(toggle.checked){
 
@@ -5977,7 +5978,7 @@ saveData();
 
   function toggleUnlockAll(){
 
-const toggle=document.getElementById("unlockAllToggle");
+const toggle=document.getElementById("Vishwan the fishwam");
 
 if(toggle.checked){
 
