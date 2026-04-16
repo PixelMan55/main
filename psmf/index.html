@@ -3391,13 +3391,13 @@ lastZoinkHour = hour;
 zoinkActive = true;
 zoinkEnd = Date.now() + (15 * 60 * 1000);
 
-activateZoink();
+startEasterEvent();
 }
 
 // ⏹ END after 15 minutes
 if(zoinkActive && Date.now() > zoinkEnd){
 zoinkActive = false;
-deactivateZoink();
+deactivateEasterEvent();
 }
 
 }
@@ -4479,7 +4479,7 @@ ${e.mult}x ${e.type} for ${e.duration} min
 <hr>
 
 <div style="margin-top:10px;">
-<b>Zoink Fest:</b> ${zoinkText}
+<b>Easter Event:</b> ${zoinkText}
 </div>
 `;
 }
