@@ -5321,6 +5321,29 @@ const s = t%60;
 zoinkText = `${h}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}`;
 }
 
+function getCountdownToNextHour() {
+    const now = new Date();
+    
+    // 1. Find the start of the NEXT hour
+    const nextHour = new Date();
+    nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+
+    // 2. Calculate the difference in milliseconds
+    const diff = nextHour - now;
+
+    // 3. Convert milliseconds to Minutes and Seconds
+    // (Hours will always be 0 since the next hour is less than 60 mins away)
+    const mins = Math.floor((diff / 1000 / 60) % 60);
+    const secs = Math.floor((diff / 1000) % 60);
+
+    // 4. Format your string
+    return `00:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+}
+
+// Example usage:
+zoinkText = getCountdownToNextHour();
+console.log(zoinkText); // Outputs something like "00:14:50"
+
 el.innerHTML = `
 <div style="margin-bottom:10px;">
 <b>Next Event:</b> ${nextText}
@@ -5346,6 +5369,10 @@ ${e.mult}x ${e.type} for ${e.duration} min
 `;
 }
 
+setInterval(() => {
+    zoinkText = getCountdownToNextHour();
+    // Update your UI element here
+}, 1000);
 
 
 function openEventsMenu(){
