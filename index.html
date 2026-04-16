@@ -2234,19 +2234,13 @@ body.megaShake::after{
 <button onclick="openLeaderboard()">Leaderboard 🏆</button>
 <button id="dailyRewardBtn" onclick="claimDailyReward()">🎁 Daily Reward</button><button onclick="openEventsMenu()">Events 🥳</button>
 <button onclick="openEventQuests()">Event Quests 👑</button>
-<button onclick"openMore()">More Games</button>
+<button onclick="openMore()">More Games</button>
 <br><br>
 <button onclick="openLogin()">Login</button>
 <button onclick="openSignup()">Sign Up</button>
 <button onclick="openSettings()">⚙️ Settings</button>
 <button onclick="openShop()">Shop 🛒</button>
 
-</div>
-<div id="morePage" class="hidden">
-  <h1>More games</h1>
-  <hr>
-  <button onclick="window.location='https://pixelman55.github.io/main/pixel_platforms.html'">Pixel Platforms</button>
-  <button onclick="backToMenu()">Back</button>
 </div>
 <div id="fallingEggs" onclick="showAnnouncement('You found an easter egg! Get it?', 'LOL')"></div>
 
@@ -3038,6 +3032,13 @@ text-align:right;
 <div id="eventGlow"></div>
 
 <div id="zoinkGlow"></div>
+
+<div id="morePage" class="hidden">
+  <h1>More games</h1>
+  <hr>
+  <button onclick="window.location='https://pixelman55.github.io/main/pixel_platforms.html'">Pixel Platforms</button>
+  <button onclick="backToMenu()">Back</button>
+</div>
 <script>
 let currentEvent = null;
 let eventEnd = 0;
@@ -5024,7 +5025,6 @@ function openMore(){
   stopGame();
   menu.classList.add("hidden");
   morePage.classList.remove("hidden");
-  renderStats();
 }
 const rollPage=document.getElementById("rollPage");
 
