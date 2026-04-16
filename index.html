@@ -694,6 +694,46 @@ button[onclick="triggerAdminAbuse()"] {
   
 <style>
 
+/* Enhanced Admin Panel */
+#adminPanel {
+    background: rgba(20, 0, 0, 0.8);
+    backdrop-filter: blur(15px); /* Frosty glass */
+    border: 2px solid #ff0000;
+    position: relative;
+    overflow: hidden;
+    clip-path: polygon(0% 15%, 15% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%); /* Beveled corners */
+    transition: transform 0.3s ease;
+}
+
+#adminPanel::before {
+    content: "WARNING: RESTRICTED ACCESS";
+    position: absolute;
+    top: 5px;
+    left: 20px;
+    font-size: 10px;
+    color: #ff0000;
+    opacity: 0.6;
+    letter-spacing: 5px;
+}
+
+/* Add a moving "radar" sweep across the panel */
+#adminPanel::after {
+    content: "";
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 300%;
+    height: 300%;
+    background: linear-gradient(rgba(255,0,0,0.1) 0%, transparent 10%);
+    animation: sweep 4s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes sweep {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(100%); }
+}
+
   @keyframes pulseGlow {
     from { box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
     to { box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); }
@@ -2204,6 +2244,63 @@ body.megaShake::after{
     white-space: pre-wrap; /* This forces the browser to respect every single space and line break */
 }
 
+.roll-container {
+    perspective: 1000px;
+    margin: 20px 0;
+}
+
+.roll-text {
+    font-size: 80px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 20px #00ff9c;
+    display: inline-block;
+}
+
+/* Apply this class via JavaScript when rolling */
+.rolling {
+    animation: rollBlur 0.1s infinite alternate, shake 0.2s infinite;
+    filter: blur(4px);
+    color: #ff00ff;
+}
+
+/* The "Winning" slam animation */
+.roll-winner {
+    animation: slam 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: gold !important;
+    text-shadow: 0 0 50px gold !important;
+}
+
+@keyframes rollBlur {
+    from { transform: translateY(-10px); }
+    to { transform: translateY(10px); }
+}
+
+@keyframes slam {
+    0% { transform: scale(5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes shake {
+    0% { transform: translate(1px, 1px); }
+    50% { transform: translate(-2px, 0px); }
+    100% { transform: translate(1px, -1px); }
+}
+#menu button {
+    border-left: 10px solid #00ff9c;
+    background: linear-gradient(90deg, rgba(0,255,156,0.1), transparent);
+    text-align: left;
+    padding-left: 30px;
+    clip-path: polygon(0 0, 95% 0, 100% 50%, 95% 100%, 0 100%);
+}
+
+#menu button:hover {
+    border-left: 15px solid #ff00ff;
+    padding-left: 45px;
+    background: linear-gradient(90deg, rgba(255,0,255,0.2), transparent);
+}
+
+
 </style>
 </head>
 
@@ -2354,6 +2451,9 @@ align-items:center;
 ">
 
 
+<div class="roll-container">
+    <div id="rollValue" class="roll-text">000</div>
+</div>
 
 
 
@@ -3108,6 +3208,25 @@ saveplayerstats()
 }
 
 startEventSystem();
+
+function rollAnimation(finalValue) {
+    const el = document.getElementById('rollValue');
+    el.classList.add('rolling');
+    
+    let duration = 2000; // 2 seconds of chaos
+    let interval = setInterval(() => {
+        el.innerText = Math.floor(Math.random() * 999);
+    }, 50);
+
+    setTimeout(() => {
+        clearInterval(interval);
+        el.classList.remove('rolling');
+        el.innerText = finalValue;
+        el.classList.add('roll-winner');
+        // Remove winner class after 1s to allow re-rolling
+        setTimeout(() => el.classList.remove('roll-winner'), 1000);
+    }, duration);
+}
 
 function spawnEgg(){
   const egg = document.createElement("div");
