@@ -2226,8 +2226,7 @@ body.megaShake::after{
   <button onclick="openRoll()">Roll 🎲</button>
   <button onclick="openAchievements()">Achievements ✅</button>
   <button onclick="openStats()">Stats 👌</button>
-  <button onclick="window.location='https://forms.gle/d8683hHXeeWaPd5z8'">Poll 🗳️
-</button>
+  <button onclick="window.location='https://forms.gle/d8683hHXeeWaPd5z8'">Poll 🗳️</button>
     <button onclick="window.location='https://pixelman55.github.io/main/log'">Update Log 📝</button>
 <br><br>
 
@@ -2235,6 +2234,7 @@ body.megaShake::after{
 <button onclick="openLeaderboard()">Leaderboard 🏆</button>
 <button id="dailyRewardBtn" onclick="claimDailyReward()">🎁 Daily Reward</button><button onclick="openEventsMenu()">Events 🥳</button>
 <button onclick="openEventQuests()">Event Quests 👑</button>
+<button onclick"openMore()">More Games</button>
 <br><br>
 <button onclick="openLogin()">Login</button>
 <button onclick="openSignup()">Sign Up</button>
@@ -2242,7 +2242,12 @@ body.megaShake::after{
 <button onclick="openShop()">Shop 🛒</button>
 
 </div>
-
+<div id="morePage" class="hidden">
+  <h1>More games</h1>
+  <hr>
+  <button onclick="window.location='https://pixelman55.github.io/main/pixel_platforms.html'">Pixel Platforms</button>
+  <button onclick="backToMenu()">Back</button>
+</div>
 <div id="fallingEggs" onclick="showAnnouncement('You found an easter egg! Get it?', 'LOL')"></div>
 
 <div id="hackOverlay"></div>
@@ -3061,6 +3066,7 @@ fpsLimit:60
 };
 
 let adminLevel = "none";
+
 
 function startEventSystem(){
 
@@ -5014,6 +5020,12 @@ function openStats(){
   statsDiv.classList.remove("hidden");
   renderStats();
 }
+function openMore(){
+  stopGame();
+  menu.classList.add("hidden");
+  morePage.classList.remove("hidden");
+  renderStats();
+}
 const rollPage=document.getElementById("rollPage");
 
 function openRoll(){
@@ -5049,6 +5061,7 @@ isPaused = false;
   statsDiv.classList.add("hidden");
   rollPage.classList.add("hidden");
   adminPanel.classList.add("hidden");
+  morePage.classList.add("hidden");
 document.getElementById("eventMenu").classList.add("hidden");
 document.getElementById("liteAdminPanel").classList.add("hidden");
   document.getElementById("eventPanel").classList.add("hidden");
