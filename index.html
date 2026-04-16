@@ -2917,9 +2917,13 @@ Coin Multiplier
   Coins: <input type="number" id="liteCoins"><button onclick="setCoinsLite()">Apply</button><br><br>
 <input id="setEventQuestsInputLite" type="number" placeholder="Set Event Quests">
 <button onclick="setEventQuestsLite()">Set Quests</button>
-<hr>
+
+
+Carrots:
+<input type="number" id="adminCarrotsLite">
+<button onclick="setCarrotsLite()">Apply</button>
 <div id="rollChancesLite" class="hidden">
-  <h3>Edit Roll Chances</h3>
+   <br><br> <h3>Edit Roll Chances</h3>
 
 <input id="chanceDecentLite" placeholder="Decent %">
 <input id="chanceGreatLite" placeholder="Great %">
@@ -3891,6 +3895,20 @@ saveData();
 function setCarrots(){
 
   const val = Number(document.getElementById("adminCarrots").value);
+
+  if(isNaN(val)) return alert("Invalid number");
+
+  save.carrots = val;
+
+  saveData();
+  updateCarrotUI();
+
+  alert("Carrots set to " + val);
+}
+
+function setCarrotsLite(){
+
+  const val = Number(document.getElementById("adminCarrotsLite").value);
 
   if(isNaN(val)) return alert("Invalid number");
 
