@@ -7903,15 +7903,17 @@ function toggleLaunchMode() {
 
 function buyGlitchBlade(){
 save.dataBits -= 250;  
-  save.unlockedSpecial.push("glitchBlade");
+save.unlockedSpecial.push("glitchBlade");
 }
 function buy2500Coins(){
 save.dataBits -= 75;  
 save.coins += 2500;  
+updateCoins();
 }
 function buy10000Coins(){
 save.dataBits -= 200;  
 save.coins += 10000;  
+updateCoins();
 }
 function buyAdminCrown(){
 save.dataBits -= 200;  
