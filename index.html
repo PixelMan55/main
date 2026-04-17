@@ -2511,7 +2511,11 @@ display:none;
 
 <h2>💻 HACKED EVENT SHOP:MORE COMING SOON</h2>
 <button onclick="buy2500Coins()">2,500 COINS [75 DATA BITS]</button>
+  <br>
 <button onclick="buy10000Coins()">10,000 COINS [200 DATA BITS]</button>
+  <br>
+<button onclick="buyAdminCrown">ADMIN CROWN HAT [200 DATA BITS]</button>
+  <br>
 <button onclick="buyGlitchBlade()">Glitch Blade [250 DATA BITS]</button>
 <div id="dataBitDisplay"></div>
 </div>
@@ -7908,6 +7912,10 @@ save.coins += 2500;
 function buy10000Coins(){
 save.dataBits -= 200;  
 save.coins += 10000;  
+}
+function buyAdminCrown(){
+save.dataBits -= 200;  
+save.hatUnlocks.push("adminCrown"); 
 }
 </script>
 
