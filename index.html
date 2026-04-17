@@ -4760,38 +4760,6 @@ function spawnGlitchPopup(){
   }, 60);
 }
 
-function spawnBinary(){
-  const el = document.createElement("div");
-  el.innerText = Math.random() > 0.5 ? "0" : "1";
-
-  el.style.position = "fixed";
-  el.style.left = Math.random()*100 + "vw";
-  el.style.top = "-20px";
-  el.style.color = "#00ff88";
-  el.style.fontSize = "14px";
-  el.style.opacity = "0.7";
-  el.style.zIndex = 9;
-
-  document.body.appendChild(el);
-
-  let y = 0;
-  const fall = setInterval(()=>{
-    y += 5;
-    el.style.top = y + "px";
-
-    if(y > window.innerHeight){
-      el.remove();
-      clearInterval(fall);
-    }
-  }, 30);
-}
-
-setInterval(()=>{
-  if(document.body.classList.contains("hacked")){
-    spawnBinary();
-  }
-}, 50);
-
 function spawnMatrixChar(){
   const overlay = document.getElementById("hackOverlay");
 
