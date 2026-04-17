@@ -2509,8 +2509,8 @@ display:none;
 
 <div id="hackTab">
 
-<h2>💻 HACKED EVENT SHOP COMING SOON</h2>
-<h4>Collect data bits to save up for the event!</h4>
+<h2>💻 HACKED EVENT SHOP:MORE COMING SOON</h2>
+<button onclick="buyGlitchBlade()">Glitch Blade [250 DATA BITS]</button>
 <div id="dataBitDisplay"></div>
 </div>
 
@@ -7894,7 +7894,11 @@ let launchMode = false;
 function toggleLaunchMode() {
     launchMode = !launchMode;
 }
-  
+
+function buyGlitchBlade(){
+save.dataBits -= 250;  
+  save.unlockedSpecial.push("glitchBlade");
+}
 </script>
 
 <div id="globalAnnouncement" style="
