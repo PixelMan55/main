@@ -48,7 +48,7 @@ onSnapshot(globalEventRef, (snap) => {
 if (data.forceWinStart && data.forceWinEnd) {
   if (now >= data.forceWinStart && now < data.forceWinEnd) {
     if (running === true) {
-    endGame(win);}
+    endGame(true);}
   } 
 }
 
@@ -1824,14 +1824,6 @@ body.hacked .scanline {
   pointer-events: none;
 }
 
-body.hacked .eye {
-  position: fixed;
-  width: 120px;
-  opacity: 0.15;
-  z-index: 5;
-  pointer-events: none;
-}
-
 #hackBox {
   color: #00ff00;
   font-family: monospace;
@@ -2517,18 +2509,9 @@ display:none;
 
 <div id="hackTab">
 
-<h2>💻 HACKED EVENT QUESTS</h2>
-
-<div id="hackProgress"></div>
-
-<div id="hackQuests">
-
-<div>Hack 5 enemies 🧠 → 2,000 Coins</div>
-<div>Survive Hacking Mode ⚡ → 1 Exclusive Sword</div>
-<div>Collect 50 Data Bits 💾 → Admin Crown Hat</div>
-
-</div>
-
+<h2>💻 HACKED EVENT SHOP COMING SOON</h2>
+<h4>Collect data bits to save up for the event!</h4>
+<div id="dataBitDisplay"></div>
 </div>
 
 
@@ -3223,6 +3206,7 @@ setInterval(()=>{
 
 setInterval(()=>{
   updateCarrotUI()
+  updateDataBitUI()
 }, 300);
 
 function updateCarrotUI(){
@@ -3230,6 +3214,13 @@ function updateCarrotUI(){
   if (!el) return;
 
   el.innerText = `Carrots🥕: ${save.carrots || 0}`;
+}
+
+function updateDataBitUI(){
+  const el = document.getElementById("dataBitDisplay");
+  if (!el) return;
+
+  el.innerText = `Data Bits 🌐: ${save.dataBits || 0}`;
 }
 
 function spawnOrbitPixels(){
@@ -3995,7 +3986,7 @@ function setCarrots(){
 
   saveData();
   updateCarrotUI();
-
+  updateDataBitUI()
   alert("Carrots set to " + val);
 }
 
@@ -4465,7 +4456,7 @@ function giveCarrots(){
   giveReward(reward);
 
   updateBunnyText("You got " + formatReward(reward) + "!");
-
+  updateDataBitUI()
   updateCarrotUI();
   saveData();
 }// 1. Declare this variable OUTSIDE the function to keep track of the current timer
@@ -6550,6 +6541,7 @@ async function savePlayerStats() {
       if(d.id === user.uid){
         username = d.data().username;
        updateCarrotUI();
+        updateDataBitUI()
       }
     });
 saveData();
