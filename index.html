@@ -6062,7 +6062,8 @@ return;
   p1.vy+=GRAVITY;p1.y+=p1.vy;
   if(p1.y>0){p1.y=0;p1.vy=0;p1.onGround=true}
   if((keys.w||keys[" "])&&p1.onGround){p1.vy=JUMP_FORCE;p1.onGround=false}
-  if(p1.stun===0){if(keys.a)p1.x-=4;if(keys.d)p1.x+=4}
+    if((keys.upArrow||keys["upArrow"])&&p1.onGround){p1.vy=JUMP_FORCE;p1.onGround=false}
+  if(p1.stun===0){if(keys.a)p1.x-=4;if(keys.d)p1.x+=4; if(keys.leftArrow)p1.x-=4;if(keys.rightArrow)p1.x+=4}
 
   const sword=swords[save.sword];
   if(keys.s&&p1.cd===0&&Math.abs(p1.x-p2.x)<60){
@@ -6130,7 +6131,7 @@ if(p2.x > ARENA_WIDTH - FIGHTER_WIDTH)
   p2El.style.left=p2.x+"px";
 
 // === PLAYER WALKING ===
-if((keys.a || keys.d) && p1.stun===0){
+if((keys.a || keys.d || keys.leftArrow || keys.rightArrow) && p1.stun===0){
   p1El.classList.add("walking");
 }else{
   p1El.classList.remove("walking");
