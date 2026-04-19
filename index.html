@@ -94,7 +94,7 @@ window.closeChat = function () {
 };
 
 window.cleanChatIfNeeded = async function(messages, snapshot) {
-  if (messages.length <= 15) return;
+  if (messages.length <= 25) return;
 
   const extra = messages.length - 100;
 
