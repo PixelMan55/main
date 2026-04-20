@@ -2649,6 +2649,44 @@ body.megaShake::after{
   );
 }
 
+.void-gravity .floaty {
+    animation: floaty 2s ease-in-out infinite alternate;
+}
+
+@keyframes floaty {
+    from { transform: translateY(0px); }
+    to { transform: translateY(-10px); }
+}
+
+/* VOID OVERLAY */
+#voidOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.void-particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: purple;
+    border-radius: 50%;
+    animation: voidDrift linear infinite;
+}
+
+@keyframes voidDrift {
+    from {
+        transform: translateY(100vh) scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(-10vh) scale(0.2);
+        opacity: 0;
+    }
+}
+
 </style>
 </head>
 
@@ -2896,10 +2934,16 @@ display:none;
 <div id="eventMenu" class="hidden" class="battlepass">
 
 <div class="tabBar">
-
-<button class="tab active" onclick="switchEventTab('hackTab', this)">Hacked Event 💻</button>
+  <button class="tab" onclick="switchEventTab('voidTab', this)">Void Event</button>
+<button class="tab" onclick="switchEventTab('hackTab', this)">Hacked Event 💻</button>
   <button class="tab" onclick="switchEventTab('easterTab', this)">Easter Event</button>
   <button class="tab" onclick="switchEventTab('zoinkTab', this)">Zoink Fest</button>
+</div>
+
+<div id="voidTab" class="hidden">
+    <h2>🌌 Void Event</h2>
+
+<h1>Coming Soon</h1>
 </div>
 
 <div id="hackTab">
@@ -3509,6 +3553,7 @@ let nextEventTime = 0;
 let easterEndTime = 0;
 let easterActive = false;
 let freezeEventActive = false;
+let voidEventActive = false;
 
 const eventsList = [
 {type:"luck", mult:2, duration:15},
@@ -3605,6 +3650,7 @@ setInterval(()=>{
 }, 300);
 
 setInterval(()=>{
+  updatebhbUI()
   updateCarrotUI()
   updateDataBitUI()
 }, 300);
@@ -3614,6 +3660,13 @@ function updateCarrotUI(){
   if (!el) return;
 
   el.innerText = `Carrots🥕: ${save.carrots || 0}`;
+}
+
+function updatebhbUI(){
+  const el = document.getElementById("bhbDisplay");
+  if (!el) return;
+
+  el.innerText = `Black hole bits🌌: ${save.blackHoleBits || 0}`;
 }
 
 function updateDataBitUI(){
@@ -4411,6 +4464,7 @@ function switchEventTab(id, btn) {
   document.getElementById("zoinkTab").classList.add("hidden");
   document.getElementById("easterTab").classList.add("hidden");
   document.getElementById("hackTab").classList.add("hidden");
+  document.getElementById("voidTab").classList.add("hidden");
 
   document.getElementById(id).classList.remove("hidden");
 }
@@ -4770,6 +4824,147 @@ deactivateEasterEvent();
 
 }
 
+function startVoidEvent() {
+    voidEventActive = true;
+    window.voidActive = true;
+    document.body.classList.add("void-gravity");
+
+    createVoidOverlay();
+    generateVoidQuests();
+
+    renderVoidQuests();   // 🔥 REQUIRED
+    renderVoidShop();     // 🔥 REQUIRED
+
+    document.getElementById("voidEventTab").style.display = "block";
+
+    updateVoidCurrencyUI();
+}
+
+function generateVoidQuests(){
+  voidQuests = [
+    { id:1, type:"kill", goal:5, progress:0, reward:10 },
+    { id:2, type:"survive", goal:30, progress:0, reward:15 },
+    { id:3, type:"hit", goal:10, progress:0, reward:20 }
+  ];
+}
+
+function endVoidEvent() {
+    voidEventActive = false;
+    document.body.classList.remove("void-gravity");
+
+    const overlay = document.getElementById("voidOverlay");
+    if (overlay) overlay.remove();
+
+    document.getElementById("voidEventTab").style.display = "none";
+}
+
+function createVoidOverlay() {
+    const overlay = document.createElement("div");
+    overlay.id = "voidOverlay";
+
+    for (let i = 0; i < 80; i++) {
+        const p = document.createElement("div");
+        p.className = "void-particle";
+
+        p.style.left = Math.random() * 100 + "%";
+        p.style.animationDuration = (2 + Math.random() * 4) + "s";
+
+        overlay.appendChild(p);
+    }
+
+    document.body.appendChild(overlay);
+}
+
+function generateVoidQuests() {
+    voidQuests = [
+        { id: 1, text: "Defeat 5 enemies", goal: 5, progress: 0, reward: 10 },
+        { id: 2, text: "Survive 30 seconds", goal: 30, progress: 0, reward: 15 },
+        { id: 3, text: "Collect 20 coins", goal: 20, progress: 0, reward: 20 }
+    ];
+
+    renderVoidQuests();
+}
+
+function renderVoidQuests() {
+    const container = document.getElementById("voidQuestList");
+    container.innerHTML = "";
+
+    voidQuests.forEach(q => {
+        const div = document.createElement("div");
+        div.className = "quest";
+
+        div.innerHTML = `
+            <b>${q.text}</b><br>
+            ${q.progress}/${q.goal}<br>
+            Reward: ${q.reward} BHB
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+function updateVoidQuest(type, amount=1){
+  if(!voidEventActive) return;
+
+  voidQuests.forEach(q=>{
+    if(q.type === type && !q.completed){
+      q.progress += amount;
+
+      if(q.progress >= q.goal){
+        q.completed = true;
+        blackHoleBits += q.reward;
+
+        showRewardPopup(`+${q.reward} BHB`);
+      }
+    }
+  });
+
+  renderVoidQuests();
+  updateVoidCurrencyUI();
+}
+
+const voidShopItems = [
+    { name: "Void Sword", cost: 50, type: "sword" },
+    { name: "Black Hole Hat", cost: 30, type: "hat" },
+    { name: "100 Coins", cost: 10, type: "coins" }
+];
+
+function renderVoidShop() {
+    const shop = document.getElementById("voidShop");
+    shop.innerHTML = "";
+
+    voidShopItems.forEach(item => {
+        const btn = document.createElement("button");
+
+        btn.innerText = `${item.name} - ${item.cost} BHB`;
+
+        btn.onclick = () => {
+            if (blackHoleBits >= item.cost) {
+                blackHoleBits -= item.cost;
+                updateVoidCurrencyUI();
+                giveVoidItem(item);
+            } else {
+                alert("Not enough Black Hole Bits!");
+            }
+        };
+
+        shop.appendChild(btn);
+    });
+}
+
+function giveVoidItem(item) {
+    if (item.type === "coins") {
+        coins += 100;
+    }
+
+    if (item.type === "sword") {
+        unlockSword(item.name);
+    }
+
+    if (item.type === "hat") {
+        unlockHat(item.name);
+    }
+}
 
 let zoinkRunning = false;
 let zoinkTimerInterval;
@@ -4781,10 +4976,6 @@ function activateZoink(spawnedBy = "System"){
 
   // 🔥 POPUP MESSAGE
   showAnnouncement("Admin", "Spawned Zoink Event");
-
-
-
-
 
 // background
 document.body.style.backgroundImage = "url('https://pixelman55.github.io/main/gdbg.png')";
@@ -5238,7 +5429,8 @@ initEventQuests();
 
 save.coins = Number(save.coins || 0);
 save.dataBits = save.dataBits || 0;
-save.iceShards = save.iceShards || 0;
+save.blackHoleBits = save.blackHoleBits || 0;
+
 
 if(save.coins === undefined) save.coins = 0;
 const saveData = () => {
@@ -5928,6 +6120,7 @@ document.getElementById("coinText").textContent = save.coins || 0;
 }
 
   save.unlockedSpecial = save.unlockedSpecial || [];
+    save.voidQuests = save.voidQuests || [];
 
 async function getUsername(){
   const user = auth.currentUser;
@@ -6159,7 +6352,34 @@ return;
 
   if(!running)return;
 
-  p1.vy+=GRAVITY;p1.y+=p1.vy;
+// 🌌 VOID EVENT PHYSICS
+let currentGravity = GRAVITY;
+
+if(voidEventActive){
+  currentGravity = GRAVITY * 0.5;
+
+  // only slow falling (prevents jump feeling weird)
+  if(p1.vy > 0){
+    p1.vy *= 0.92;
+  }
+}
+
+if(voidEventActive){
+
+  if(p1.vy > 0){
+    p1.vy *= 0.9; // softer fall
+  }
+
+  // tiny air drift boost (feels cool)
+  if(!p1.onGround){
+    if(keys.a) p1.x -= 1;
+    if(keys.d) p1.x += 1;
+  }
+}
+
+// apply gravity
+p1.vy += currentGravity;
+p1.y += p1.vy;
   if(p1.y>0){p1.y=0;p1.vy=0;p1.onGround=true}
   if((keys.w||keys[" "])&&p1.onGround){p1.vy=JUMP_FORCE;p1.onGround=false}
     if((keys.keyup||keys["keyup"])&&p1.onGround){p1.vy=JUMP_FORCE;p1.onGround=false}
