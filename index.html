@@ -3115,6 +3115,11 @@ Carrots:
 <input type="number" id="adminCarrots">
 <button onclick="setCarrots()">Apply</button>
 <br><br>
+
+Data Bits:
+<input type="number" id="adminDataBits">
+<button onclick="setDataBits()">Apply</button>
+<br><br>
 <h3>Global Announcement</h3>
 
 <input id="announcementInput" placeholder="Write announcement">
@@ -3425,6 +3430,10 @@ Coin Multiplier
   Wins: <input type="number" id="liteWins"><button onclick="setWinsLite()">Apply</button><br><br>
   Losses: <input type="number" id="liteLosses"><button onclick="setLossesLite()">Apply</button><br><br>
   Coins: <input type="number" id="liteCoins"><button onclick="setCoinsLite()">Apply</button><br><br>
+  Data Bits:
+<input type="number" id="adminDataBitsLite">
+<button onclick="setDataBitsLite()">Apply</button>
+<br><br>
 <input id="setEventQuestsInputLite" type="number" placeholder="Set Event Quests">
 <button onclick="setEventQuestsLite()">Set Quests</button>
 
@@ -4436,7 +4445,30 @@ saveData();
 
 
 }
+function setDataBits(){
 
+  const val = Number(document.getElementById("adminDataBits").value);
+
+  if(isNaN(val)) return alert("Invalid number");
+
+  save.dataBits = val;
+
+  saveData();
+  updateDataBitUI()
+  alert("Data Bits set to " + val);
+}
+function setDataBitsLite(){
+
+  const val = Number(document.getElementById("adminDataBitsLite").value);
+
+  if(isNaN(val)) return alert("Invalid number");
+
+  save.dataBits = val;
+
+  saveData();
+  updateDataBitUI()
+  alert("Data Bits set to " + val);
+}
 
 function setCarrots(){
 
