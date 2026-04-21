@@ -74,13 +74,22 @@ function formatName(user) {
     return `<span style="color:gray;">Guest</span>`;
   }
 
-  if (user === "PixelMan") {
-    return `<span style="color:yellow;">PixelMan [Creator]</span>`;
-  }
+if(user==="PixelMan"){
+name=`<span style="color:yellow">PixelMan [Creator]</span>`;
+}
 
-  if (user === "THEFIREMOUSE") {
-    return `<span style="color:#ff3c3c;">THEFIREMOUSE [Admin]</span>`;
-  }
+if(user==="THEFIREMOUSE"){
+name=`<span style="color:ff3c3c;>THEFIREMOUSE [Head Admin]</span>`;
+}
+
+if(user==="mid4567"){
+name=`<span style="color:cyan">mid4567 [Dev]</span>`;
+}
+
+if(user==="lil_Jim"){
+name=`<span style="color:ff3c3c;">lil_Jim [Admin]</span>`;
+}
+
 
   // default player
   return `<span style="color:#00ff9c;">${user}</span>`;
