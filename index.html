@@ -824,8 +824,12 @@ button[onclick="triggerAdminAbuse()"] {
     white-space: pre-wrap;
     text-align: left;
     font-family: 'Comic Sans MS', cursive; /* A bit "insane" for a hacker game */
+    animation:bunnyPulse;
 }
-
+@keyframes bunnyPulse {
+    from { border: 2px solid gold; }
+    to { border: 10px solid yellow}
+}
 /* Existing Hacked/Abuse styles remain below, integrated with overall aesthetic */
 
 /* ... (Rest of your existing stickman, walking, weapon, hat, switch, and Admin Abuse/Hack animation CSS remains unchanged here, as they were already stylized) ... */
