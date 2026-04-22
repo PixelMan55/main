@@ -3838,12 +3838,12 @@ document.body.classList.add("easterActive");
     if(div){
       const m = Math.floor(timeLeft/60);
       const s = timeLeft%60;
-      div.innerText = `Easter Event: ${m}:${s.toString().padStart(2,'0')}`;
+      div.innerText = `Hacked Event: ${m}:${s.toString().padStart(2,'0')}`;
       div.classList.remove("hidden");
     }
 
     if(timeLeft <= 0){
-      deactivateEaster();
+      deactivateHackedEvent();
     }
 
   },1000);
@@ -4853,7 +4853,7 @@ lastZoinkHour = hour;
 zoinkActive = true;
 zoinkEnd = Date.now() + (15 * 60 * 1000);
 
-startEasterEvent();
+activateHackedEvent();
 }
 
 // ⏹ END after 15 minutes
