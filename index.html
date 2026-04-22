@@ -7359,9 +7359,9 @@ Losses: ${p.losses}<br><br>
 
 Coins: ${p.coins}<br>
 
-Event Stuff: <table><tr><td>Zoink Fest Quests</td><td>${p.eventData?.completed}</td></tr>
-            <tr><td>Carrots</td><td>${p.carrots}</td></tr>
-            <tr><td>Data Bits</td><td>${p.dataBits}</td></tr>
+Event Stuff: <table><tr><td>Zoink Fest Quests</td><td>${p.eventData?.completed} || 0</td></tr>
+            <tr><td>Carrots</td><td>${p.carrots} || 0</td></tr>
+            <tr><td>Data Bits</td><td>${p.dataBits} || 0</td></tr>
 </table>
 
 Achievements: ${
