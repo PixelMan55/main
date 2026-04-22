@@ -7360,11 +7360,10 @@ Losses: ${p.losses}<br><br>
 Coins: ${p.coins}<br>
 
 
-Event Stuff: 
-Zoink Fest Quests: ${p.eventData?.completed || 0}
-Carrots: ${p.carrots || 0}
-Data Bits: ${p.dataBits || 0}
-</table>
+Event Stuff: <br>
+Zoink Fest Quests: ${p.eventData?.completed || 0}<br>
+Carrots: ${p.carrots || 0}<br>
+Data Bits: ${p.dataBits || 0}<br>
 
 Achievements: ${
 Object.keys(save.achievements).filter(a=>save.achievements[a]).length
@@ -7374,9 +7373,9 @@ Swords: ${
 Object.keys(swords).length
 - Object.keys(swords).filter(id=>{
 const s=swords[id];
-if(s.roll) return !save.unlockedRollSwords.includes(s.name);
-if(s.unlock) return save.wins<s.unlock;
-if(s.achievement) return !save.achievements[s.achievement];
+if(p.roll) return !save.unlockedRollSwords.includes(s.name);
+if(p.unlock) return save.wins<s.unlock;
+if(p.achievement) return !save.achievements[s.achievement];
 }).length
 } / ${Object.keys(swords).length}
 
