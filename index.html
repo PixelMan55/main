@@ -6758,8 +6758,7 @@ const toggle=document.getElementById("Vishwan the fishwam");
 
 if(toggle.checked){
 
-save.unlockedSpecial = save.unlockedSpecial || [];
-save.unlockedSpecial.push("zoink");
+save.unlockedSpecial=Special.map(s=>s.name);
   
 save.wins=999;
 save.unlockedRollSwords=rollSwords.map(s=>s.name);
