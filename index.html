@@ -7359,6 +7359,11 @@ Losses: ${p.losses}<br><br>
 
 Coins: ${p.coins}<br>
 
+Event Stuff: <table><tr><td>Zoink Fest Quests</td><td>${p.eventData?.completed}</td></tr>
+            <table><tr><td>Carrots</td><td>${p.carrots}</td></tr>
+            <table><tr><td>Data Bits</td><td>${p.dataBits}</td></tr>
+</table>
+
 Achievements: ${
 Object.keys(save.achievements).filter(a=>save.achievements[a]).length
 } / ${Object.keys(achievements).length}<br>
