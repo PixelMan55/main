@@ -7223,7 +7223,8 @@ saveData();
     EventRewards: save.bpRewards,
     rollSwords: save.unlockedRollSwords,
     eventSwords: save.unlockedSpecial,
-    carrots: save.carrots
+    carrots: save.carrots,
+    dataBits: save.dataBits
   };
   
   await setDoc(playerRef, playerData, { merge: true });
