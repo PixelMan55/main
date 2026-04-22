@@ -7358,16 +7358,16 @@ document.getElementById("profileContent").innerHTML=`
 Wins: ${p.wins}<br>
 Losses: ${p.losses}<br><br>
 
-Coins: ${p.coins}<br>
+Coins: ${p.coins}<br><br>
 
 
 Event Stuff: <br>
 Zoink Fest Quests: ${p.eventData?.completed || 0}<br>
 Carrots: ${p.carrots || 0}<br>
-Data Bits: ${p.dataBits || 0}<br>
+Data Bits: ${p.dataBits || 0}<br><br>
 
 Achievements: ${
-Object.keys(save.achievements).filter(a=>save.achievements[a]).length
+Object.keys(p.achievements).filter(a=>p.achievements[a]).length
 } / ${Object.keys(achievements).length}<br>
 
 Swords: ${
