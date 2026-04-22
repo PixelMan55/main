@@ -192,8 +192,11 @@ if (data.hackedStart && data.hackedEnd) {
 
   if (data.coinsStart && data.coinsEnd) {
   if (now >= data.coinsStart && now < data.coinsEnd) {
-    save.coins = Number(save.coins) + 10000;
-      showAnnouncement(data.spawnedBy || "System", "Gave everyone 10k coins!");
+        const amount = Number(data.amount) || 10000;
+
+    save.coins = Number(save.coins) + amount;
+
+    showAnnouncement(data.spawnedBy || "System", `Gave everyone ${amount} coins!`);
     updateCoins();
   } else {
   }}
@@ -247,11 +250,34 @@ window.globalFlashbang = async function(){
   });
 };
 
-  window.globalCoins = async function(){
+window.giveGlobalCoins = async function(){
+  const input = document.getElementById("globalCoinInput");
+  const amount = Number(input.value);
+
+  if(!amount || amount <= 0) return alert("Invalid amount");
+
   const username = save.username;
+
   await setDoc(doc(db, "global", "events"), {
     coinsStart: Date.now(),
-    coinsEnd: Date.now() + (1 * 1000),
+    coinsEnd: Date.now() + 1000,
+    amount: amount,
+    spawnedBy: username || "System"
+  });
+};
+
+window.giveGlobalCoinsLite = async function(){
+  const input = document.getElementById("globalCoinInputLite");
+  const amount = Number(input.value);
+
+  if(!amount || amount <= 0) return alert("Invalid amount");
+
+  const username = save.username;
+
+  await setDoc(doc(db, "global", "events"), {
+    coinsStart: Date.now(),
+    coinsEnd: Date.now() + 1000,
+    amount: amount,
     spawnedBy: username || "System"
   });
 };
@@ -843,6 +869,45 @@ button[onclick="triggerAdminAbuse()"] {
   animation: fadeIn 0.3s ease;
 }
 
+.profileCard {
+  width: 500px;
+  margin: 30px auto;
+  padding: 20px;
+  background: linear-gradient(145deg, #0a0a0a, #111);
+  border: 2px solid #00ff9c;
+  border-radius: 14px;
+  box-shadow: 0 0 25px rgba(0,255,156,0.3);
+  text-align: left;
+  animation: fadeIn 0.3s ease;
+}
+
+.profileHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #00ff9c;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.profileName {
+  font-size: 22px;
+  font-weight: bold;
+  color: #00ff9c;
+  text-shadow: 0 0 8px #00ff9c;
+}
+
+.profileStat {
+  margin: 6px 0;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.profileHighlight {
+  color: gold;
+  font-weight: bold;
+}
+
 /* 🧱 CHAT BOX */
 #chatBox {
   width: 650px;
@@ -1287,12 +1352,14 @@ height:50px;
   background:var(--c);
   border-radius:50%;
   box-shadow:0 0 4px rgba(0,0,0,0.4);
+  image-rendering: pixelated;
 }
 
 .fighter{
   position:absolute;
   width:70px;
   height:170px;
+  image-rendering: pixelated;
 }
 
 #dailyRewardBtn{
@@ -1363,6 +1430,7 @@ transform:scale(1.05);
   justify-content:center;
   align-items:center;
   transition:transform .12s;
+  image-rendering: pixelated;
 }
 
 .armBar{
@@ -1488,10 +1556,25 @@ height:32px;
 }
 
 .legs{
+  image-rendering: pixelated;
   position:relative;
   width:36px;
   height:36px;   /* increased from 30px */
   margin-top:2px;
+}
+
+@keyframes idleBob {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-3px); }
+}
+
+.fighter {
+  animation: idleBob 0.6s infinite alternate;
+}
+
+.hitFlash {
+  filter: brightness(2) contrast(2);
+  transform: scale(1.1);
 }
 
 .legs::before,
@@ -1506,6 +1589,8 @@ height:32px;
   box-shadow:0 0 3px rgba(0,0,0,0.3);
   transform-origin:top center;
 }
+
+
 
 #adminBtn{
 position:absolute;
@@ -2487,6 +2572,15 @@ body.hacked .scanline {
   100%{ transform:translate(0,0); }
 }
 
+#statusDot {
+  display:inline-block;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  margin-right:6px;
+  box-shadow:0 0 8px currentColor;
+}
+
 /* 💥 SCREEN CRACK EFFECT */
 body::after{
   content:"";
@@ -3142,8 +3236,9 @@ Data Bits:
 <button onclick="activateHackedEvent()">Activate Hack Event (Local)</button>
 <button onclick="triggerGlobalHack()">HACK EVENT (Global)</button>
   <button onclick="globalFlashbang()">Flashbang ALL</button>
-  <button onclick="globalCoins()">Give 10k coins (Global)</button>
-  <button onclick="triggerAdminAbuse()">⚠️ Admin Abuse</button>
+  <button onclick="triggerAdminAbuse()">⚠️ Admin Abuse</button><br>
+<input id="globalCoinInput" type="number" placeholder="Give coins (global)">
+<button onclick="giveGlobalCoins()">Give</button>
 
 <hr>
 
@@ -3423,8 +3518,9 @@ Coin Multiplier
 <button onclick="triggerGlobalHack()">HACK EVENT (Global)</button>
   <h3>Non-Event tools</h3>
 <button onclick="globalFlashbang()">Flashbang ALL</button>
-    <button onclick="globalCoins()">Give 10k coins (Global)</button>
-    <button onclick="triggerAdminAbuse()">⚠️ Admin Abuse</button>
+    <button onclick="triggerAdminAbuse()">⚠️ Admin Abuse</button><br>
+<input id="globalCoinInputLite" type="number" placeholder="Give coins (global)">
+<button onclick="giveGlobalCoinsLite()">Give</button>
   <hr>
 </div>
 
@@ -4448,6 +4544,27 @@ saveData();
 
 
 }
+
+function createSlash(x, y){
+  const slash = document.createElement("div");
+  slash.className = "slash";
+  slash.style.left = x + "px";
+  slash.style.top = y + "px";
+  slash.style.setProperty("--angle", Math.random()*360 + "deg");
+
+  document.body.appendChild(slash);
+
+  setTimeout(()=>slash.remove(), 200);
+}
+
+function hitEffect(target){
+  target.classList.add("hitFlash");
+
+  setTimeout(()=>{
+    target.classList.remove("hitFlash");
+  }, 100);
+}
+
 function setDataBits(){
 
   const val = Number(document.getElementById("adminDataBits").value);
@@ -7332,61 +7449,96 @@ snap.forEach(doc=>{
 
 if(doc.id===id){
 
-const p=doc.data();
+const p = doc.data();
 
-let name=p.username || "Unknown Player";
+let name = p.username || "Unknown Player";
 
 if(name==="PixelMan"){
-name=`<span style="color:yellow">PixelMan [Creator]</span>`;
+  name=`<span style="color:yellow">PixelMan [Creator]</span>`;
 }
-
 if(name==="THEFIREMOUSE"){
-name=`<span style="color:green">THEFIREMOUSE [Admin]</span>`;
+  name=`<span style="color:green">THEFIREMOUSE [Admin]</span>`;
 }
-
 if(name==="mid4567"){
-name=`<span style="color:cyan">mid4567 [Dev]</span>`;
+  name=`<span style="color:cyan">mid4567 [Dev]</span>`;
 }
-
 if(name==="lil_Jim"){
-name=`<span style="color:green">lil_Jim [Admin]</span>`;
+  name=`<span style="color:green">lil_Jim [Admin]</span>`;
 }
 
-document.getElementById("profileContent").innerHTML=`
-<b>${name}</b><br><br>
+// ✅ CALCULATIONS MUST BE OUTSIDE innerHTML
+const totalSwords = Object.keys(swords).length;
+const unlockedRoll = p.unlockedRollSwords?.length || 0;
 
-Wins: ${p.wins}<br>
-Losses: ${p.losses}<br><br>
+const unlockedByWins = Object.values(swords).filter(s => 
+  s.unlock && (p.wins || 0) >= s.unlock
+).length;
 
-Coins: ${p.coins}<br><br>
+const unlockedByAchievement = Object.values(swords).filter(s => 
+  s.achievement && p.achievements?.[s.achievement]
+).length;
 
+const unlockedTotal = unlockedRoll + unlockedByWins + unlockedByAchievement;
 
-Event Stuff: <br>
-Zoink Fest Quests: ${p.eventData?.completed || 0}<br>
+// ✅ limited swords
+const limitedSwords = Object.values(swords).filter(s => s.rarity === "limited");
+
+const ownedLimited = limitedSwords.filter(s => 
+  (p.unlockedSpecial || []).includes(s.id || s.name)
+).length;
+
+const totalLimited = limitedSwords.length;
+
+// ✅ achievements
+const earnedAchievements = Object.keys(p.achievements || {})
+  .filter(a => p.achievements[a]).length;
+
+const totalAchievements = Object.keys(achievements).length;
+
+// ✅ NOW render HTML
+document.getElementById("profileContent").innerHTML = `
+<div style="background:#111;border:2px solid #00ff9c;border-radius:12px;padding:15px;width:400px;margin:auto;box-shadow:0 0 20px rgba(0,255,156,0.3);">
+
+<div style="font-size:20px;font-weight:bold;color:#00ff9c;margin-bottom:10px;">
+${name}
+</div>
+
+<div><b>Wins:</b> ${p.wins || 0}</div>
+<div><b>Losses:</b> ${p.losses || 0}</div>
+
+<br>
+
+<div><b>Coins:</b> ${p.coins || 0}</div>
+
+<br>
+
+<div>
+<b>⚔️ Swords:</b> ${unlockedTotal}/${totalSwords}<br>
+<b>🌟 Limited:</b> ${ownedLimited}/${totalLimited}
+</div>
+
+<br>
+
+<div>
+<b>🎉 Event Stuff:</b><br>
+Zoink: ${p.eventData?.completed || 0}<br>
 Carrots: ${p.carrots || 0}<br>
-Data Bits: ${p.dataBits || 0}<br><br>
+Data Bits: ${p.dataBits || 0}
+</div>
 
-Achievements: ${
-Object.keys(p.achievements).filter(a=>p.achievements[a]).length
-} / ${Object.keys(achievements).length}<br>
+<br>
 
-Swords: ${
-Object.keys(swords).length
-- Object.keys(swords).filter(id=>{
-const s=swords[id];
-if(p.roll) return !save.unlockedRollSwords.includes(s.name);
-if(p.unlock) return save.wins<s.unlock;
-if(p.achievement) return !save.achievements[s.achievement];
-}).length
-} / ${Object.keys(swords).length}
+<div>
+<b>🏆 Achievements:</b> ${earnedAchievements}/${totalAchievements}
+</div>
 
-<br><br>
+<br>
 
-
-
-<button onclick="sendDuelRequest('${id}')">
-⚔️ Challenge Player to 1v1
+<button onclick="sendDuelRequest('${id}')" style="width:100%;padding:10px;background:#00ff9c;border:none;border-radius:8px;font-weight:bold;cursor:pointer;">
+⚔️ Challenge Player
 </button>
+
+</div>
 `;
 
 
@@ -7397,8 +7549,14 @@ function renderProfile(p){
 
   const box = document.getElementById("profileContent");
 
-  const swordCount = (p.unlockedRollSwords?.length || 0) +
-                     (p.unlockedSpecial?.length || 0);
+const ownedSet = new Set([
+  ...(p.unlockedRollSwords || []),
+  ...(p.unlockedSpecial || [])
+]);
+
+const swordCount = Object.values(swords).filter(s =>
+  ownedSet.has(s.id || s.name)
+).length;
 
   const totalSwords = Object.keys(swords).length + 1; // + zoink
 
@@ -7412,7 +7570,7 @@ function renderProfile(p){
   `;
 
   // 🔥 ONLINE STATUS FIX
-  const online = Date.now() - (p.lastOnline || 0) < 60000;
+const online = Date.now() - (p.lastOnline || 0) < 30000;
 
   document.getElementById("statusDot").textContent = online ? "🟢" : "🔴";
   document.getElementById("statusText").textContent = online ? "Online" : "Offline";
@@ -7426,6 +7584,23 @@ function renderProfile(p){
 });
 
 }
+
+const dot = document.getElementById("statusDot");
+
+if (online) {
+  dot.style.background = "#00ff9c";
+} else {
+  dot.style.background = "#ff3c3c";
+}
+
+setInterval(() => {
+  if (!auth.currentUser) return;
+
+  setDoc(doc(db, "players", auth.currentUser.uid), {
+    lastOnline: Date.now()
+  }, { merge: true });
+
+}, 15000); // every 15 sec
 
 function backToLeaderboard(){
 
