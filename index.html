@@ -136,35 +136,34 @@ onSnapshot(globalEventRef, (snap) => {
 
   const now = Date.now();
 
-
   if (data.flashbangStart && data.flashbangEnd) {
     if (now >= data.flashbangStart && now < data.flashbangEnd) {
       flashbang();
     } 
   }
 
-if (data.forceWinStart && data.forceWinEnd) {
-  if (now >= data.forceWinStart && now < data.forceWinEnd) {
-    if (running === true) {
-    endGame(true);}
-  } 
-}
+  if (data.forceWinStart && data.forceWinEnd) {
+    if (now >= data.forceWinStart && now < data.forceWinEnd) {
+      if (running === true) {
+        endGame(true);
+      }
+    } 
+  }
 
-if (data.forceLossStart && data.forceLossEnd) {
-  if (now >= data.forceLossStart && now < data.forceLossEnd) {
-    if (running === true) {
-    endGame();}
-  } 
-}
+  if (data.forceLossStart && data.forceLossEnd) {
+    if (now >= data.forceLossStart && now < data.forceLossEnd) {
+      if (running === true) {
+        endGame();
+      }
+    } 
+  }
 
+  if (data.adminAnimationStart && data.adminAnimationEnd) {
+    if (now >= data.adminAnimationStart && now < data.adminAnimationEnd) {
+      playAdminAbuse();
+    } 
+  }
 
-if (data.adminAnimationStart && data.adminAnimationEnd) {
-  if (now >= data.adminAnimationStart && now < data.adminAnimationEnd) {
-    playAdminAbuse();
-  } 
-}
-
-  // ✅ ZOINK
   if (data.zoinkStart && data.zoinkEnd) {
     if (now >= data.zoinkStart && now < data.zoinkEnd) {
       activateZoink(data);
@@ -173,7 +172,6 @@ if (data.adminAnimationStart && data.adminAnimationEnd) {
     }
   }
 
-  // ✅ EASTER (THIS WAS BLOCKED BEFORE)
   if (data.easterStart && data.easterEnd) {
     if (now >= data.easterStart && now < data.easterEnd) {
       startEasterEvent(data);
@@ -182,39 +180,38 @@ if (data.adminAnimationStart && data.adminAnimationEnd) {
     }
   }
 
-if (data.hackedStart && data.hackedEnd) {
-  if (now >= data.hackedStart && now < data.hackedEnd) {
-    activateHackedEvent(data);
-  } else {
-    deactivateHackedEvent();
+  if (data.hackedStart && data.hackedEnd) {
+    if (now >= data.hackedStart && now < data.hackedEnd) {
+      activateHackedEvent(data);
+    } else {
+      deactivateHackedEvent();
+    }
   }
-}
 
+  // --- GLOBAL COINS ---
   if (data.coinsStart && data.coinsEnd) {
-  if (now >= data.coinsStart && now < data.coinsEnd) {
-        const amount = Number(data.amount) || 10000;
+    if (now >= data.coinsStart && now < data.coinsEnd) {
+      const amount = Number(data.amount) || 10000;
+      save.coins = Number(save.coins) + amount;
+      showAnnouncement(data.spawnedBy || "System", `Gave everyone ${amount} coins!`);
+      updateCoins();
+    }
+  }
 
-    save.coins = Number(save.coins) + amount;
-
-    showAnnouncement(data.spawnedBy || "System", `Gave everyone ${amount} coins!`);
-    updateCoins();
-  } else {
-  }}
-});
-
+  // --- SPECIFIC COINS (Fixed logic inside the listener) ---
   if (data.coinsSpecificStart && data.coinsSpecificEnd) {
-  if (now >= data.coinsSpecificStart && now < data.coinsSpecificEnd) {
-        const amount = Number(data.amount) || 10000;
-        const giftTo = (data.giftTo) || all;
-    if(save.username === data.giftTo){
-    save.coins = Number(save.coins) + amount;
+    if (now >= data.coinsSpecificStart && now < data.coinsSpecificEnd) {
+      const amount = Number(data.amount) || 10000;
+      const giftTo = String(data.giftTo) || "all"; 
 
-    showAnnouncement(data.spawnedBy || "System", `Gave everyone ${amount} coins!`);
-    updateCoins();
-      
-  }} else {
-  }}
-});
+      if (save.username === data.giftTo) { // Fixed syntax here
+        save.coins = Number(save.coins) + amount;
+        showAnnouncement(data.spawnedBy || "System", `Gave ${save.username} ${amount} coins!`);
+        updateCoins();
+      }
+    }
+  }
+}); // This is the ONLY end of the onSnapshot function
 
 window.auth = auth;
 window.db = db;
@@ -281,11 +278,15 @@ window.giveGlobalCoins = async function(){
 };
 
 window.giveGlobalCoinsSpecific = async function(){
-  const input = document.getElementById("playerCoinInputSpecific");
+  const input = document.getElementById("globalCoinInputSpecific");
+const input2 = document.getElementById("playerInputSpecific");
+
+  
   const amount = Number(input.value);
-  const input2 = document.getElementById("globalCoinInput");
-  const giftTo = Number(input2.value);
+  const giftTo = input2.value; // Remove Number() here
+
   if(!amount || amount <= 0) return alert("Invalid amount");
+  if(!giftTo) return alert("Enter a username");
 
   const username = save.username;
 
@@ -294,9 +295,10 @@ window.giveGlobalCoinsSpecific = async function(){
     coinsSpecificEnd: Date.now() + 1000,
     amount: amount,
     spawnedBy: username || "System",
-    giftTo: giftTo
-  });
+    giftTo: giftTo // This will now correctly be a string like "JohnDoe"
+  }, { merge: true }); // Use merge: true so you don't delete other active events!
 };
+
 
 window.giveGlobalCoinsLite = async function(){
   const input = document.getElementById("globalCoinInputLite");
@@ -480,7 +482,7 @@ button:active {
 }
 
 /* Input fields */
-input[type="number"], input[type="text"], input[type="color"] {
+input{
     background: #000;
     border: 1px solid #ff00ff;
     color: #ff00ff;
@@ -488,7 +490,6 @@ input[type="number"], input[type="text"], input[type="color"] {
     font-family: monospace;
     box-shadow: 0 0 5px #ff00ff;
 }
-
 .hidden { display: none !important; }
 
 /* --- MAIN MENU STYLING --- */
@@ -3272,7 +3273,7 @@ Data Bits:
 <input id="globalCoinInput" type="number" placeholder="Give coins (global)">
 <button onclick="giveGlobalCoins()">Give</button><br>
   <input id="globalCoinInputSpecific" type="number" placeholder="Give coins (to player)">
-      <input id="playerInputSpecific" type="number" placeholder="Player">
+      <input id="playerInputSpecific" placeholder="Player">
 <button onclick="giveGlobalCoinsSpecific()">Give</button>
 
 <hr>
