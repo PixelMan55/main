@@ -202,6 +202,20 @@ if (data.hackedStart && data.hackedEnd) {
   }}
 });
 
+  if (data.coinsSpecificStart && data.coinsSpecificEnd) {
+  if (now >= data.coinsSpecificStart && now < data.coinsSpecificEnd) {
+        const amount = Number(data.amount) || 10000;
+        const giftTo = (data.giftTo) || all;
+    if(save.username === data.giftTo){
+    save.coins = Number(save.coins) + amount;
+
+    showAnnouncement(data.spawnedBy || "System", `Gave everyone ${amount} coins!`);
+    updateCoins();
+      
+  }} else {
+  }}
+});
+
 window.auth = auth;
 window.db = db;
 window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
@@ -263,6 +277,24 @@ window.giveGlobalCoins = async function(){
     coinsEnd: Date.now() + 1000,
     amount: amount,
     spawnedBy: username || "System"
+  });
+};
+
+window.giveGlobalCoinsSpecific = async function(){
+  const input = document.getElementById("playerCoinInputSpecific");
+  const amount = Number(input.value);
+  const input2 = document.getElementById("globalCoinInput");
+  const giftTo = Number(input2.value);
+  if(!amount || amount <= 0) return alert("Invalid amount");
+
+  const username = save.username;
+
+  await setDoc(doc(db, "global", "events"), {
+    coinsSpecificStart: Date.now(),
+    coinsSpecificEnd: Date.now() + 1000,
+    amount: amount,
+    spawnedBy: username || "System",
+    giftTo: giftTo
   });
 };
 
@@ -3238,7 +3270,10 @@ Data Bits:
   <button onclick="globalFlashbang()">Flashbang ALL</button>
   <button onclick="triggerAdminAbuse()">⚠️ Admin Abuse</button><br>
 <input id="globalCoinInput" type="number" placeholder="Give coins (global)">
-<button onclick="giveGlobalCoins()">Give</button>
+<button onclick="giveGlobalCoins()">Give</button><br>
+  <input id="globalCoinInputSpecific" type="number" placeholder="Give coins (to player)">
+      <input id="playerInputSpecific" type="number" placeholder="Player">
+<button onclick="giveGlobalCoinsSpecific()">Give</button>
 
 <hr>
 
@@ -7652,6 +7687,18 @@ async function giveAllCoins(){
 
 }
 
+
+async function giveGlobalCoinsSpecific(){
+
+  const amount = Number(prompt("Amount?"));
+
+  await setDoc(doc(db,"global","commands"),{
+    type:"coins",
+    amount: amount,
+    time: Date.now()
+  });
+
+}
 async function giveAllSword(){
 
   const sword = prompt("Sword ID? (ex: eggBlade)");
