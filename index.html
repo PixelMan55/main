@@ -128,7 +128,7 @@ window.sendDuelRequest = async function(targetUsername){
 
   await setDoc(duelRef, {
     from: save.username,
-to: targetUid,
+    to: targetUsername, // ✅ FIXED
     status: "pending",
     created: Date.now()
   });
@@ -150,7 +150,7 @@ window.startDuelListener = function(){
 
       if(!save.username) return;
 
-      if(data.to === save.username && data.status === "pending"){
+if(data.to === save.username && data.status === "pending" && !document.getElementById("duelPopup")){
 
         if(document.getElementById("duelPopup")) return;
 
@@ -276,7 +276,7 @@ onSnapshot(globalEventRef, (snap) => {
     if (now >= data.voidStart && now < data.voidEnd) {
       startVoidEvent(data);
     } else {
-      deactivateVoidEvent();
+      endVoidEvent();
     }
   }
 
@@ -943,14 +943,41 @@ button[onclick="triggerAdminAbuse()"] {
     padding: 20px;
 }
 
-.tabBar { display: flex; gap: 6px; margin-bottom: 10px; }
-.tab {
-    flex: 1; padding: 8px;
-    background: #111; color: cyan;
-    border: 1px solid cyan;
-    cursor: pointer; opacity: 0.6;
+.tabBar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
 }
-.tab.active { opacity: 1; background: cyan; color: #000; font-weight: bold; box-shadow: 0 0 10px cyan; }
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  background: linear-gradient(145deg, #0a0a0a, #111);
+  color: #00ff9c;
+  border: 1px solid #00ff9c;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: 0.25s;
+  text-align: center;
+  font-weight: bold;
+}
+
+.tab:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 0 10px #00ff9c;
+}
+
+.tab.active {
+  opacity: 1;
+  background: linear-gradient(145deg, #00ff9c, #00c97a);
+  color: #000;
+  border-bottom: 2px solid transparent;
+  box-shadow:
+    0 0 15px #00ff9c,
+    inset 0 -2px 10px rgba(0,0,0,0.4);
+}
 
 #bpProgress { height: 20px; background: #222; border: 1px solid #fff; overflow: hidden; }
 #bpProgress::after {
@@ -983,17 +1010,6 @@ button[onclick="triggerAdminAbuse()"] {
 @keyframes modalSlideIn {
     from { transform: translateY(-50px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
-}
-
-/* Roll Reveal Animation */
-.rollReveal {
-    font-size: 30px;
-    animation: glowReveal 1s ease forwards;
-}
-@keyframes glowReveal {
-    0% { transform: scale(0.6); opacity: 0; filter: blur(10px); text-shadow: 0 0 0 #fff; }
-    50% { text-shadow: 0 0 20px #ff00ff, 0 0 40px #00ff9c; }
-    100% { transform: scale(1); opacity: 1; filter: blur(0); text-shadow: 0 0 10px #fff; }
 }
 
 /* Easter Bunny Dialogue specific - forcing pre-wrap in HTML is good, adding style here too */
@@ -1226,25 +1242,42 @@ body{margin:0;background:#222;color:white;font-family:Arial;text-align:center}
 button,select{padding:10px;font-size:16px;margin:6px}
 .hidden{display:none}
 
-.rollReveal{
-font-size:30px;
-animation: glowReveal 1s ease;
+.rollReveal {
+  font-size: 34px;
+  font-weight: bold;
+  text-align: center;
+  animation: rollSpin 1.2s cubic-bezier(.2,.8,.2,1) forwards;
 }
 
-@keyframes glowReveal{
+@keyframes rollSpin {
+  0% {
+    transform: scale(0.4) rotate(-20deg);
+    opacity: 0;
+    filter: blur(12px);
+    letter-spacing: 10px;
+  }
 
-0%{
-transform:scale(0.6);
-opacity:0;
-filter:blur(10px);
-}
+  40% {
+    transform: scale(1.2) rotate(5deg);
+    filter: blur(4px);
+    letter-spacing: 4px;
+  }
 
-100%{
-transform:scale(1);
-opacity:1;
+  70% {
+    transform: scale(0.95) rotate(-2deg);
+    filter: blur(1px);
+  }
 
-}
-
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+    filter: blur(0);
+    letter-spacing: 1px;
+    text-shadow:
+      0 0 10px #fff,
+      0 0 20px #00ff9c,
+      0 0 40px #ff00ff;
+  }
 }
 
 
@@ -1514,6 +1547,45 @@ height:50px;
   width:70px;
   height:170px;
   image-rendering: pixelated;
+}
+
+.rollTable {
+  width: 420px;
+  margin: 20px auto;
+  padding: 15px;
+  background: linear-gradient(145deg, #050505, #0a0a0a);
+  border: 2px solid #00ff9c;
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(0,255,156,0.25);
+}
+
+.rollRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  margin: 6px 0;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+  transition: 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.rollRow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, rgba(0,255,156,0.3), transparent);
+  transition: 0.3s;
+}
+
+.rollRow:hover::before {
+  opacity: 1;
+}
+
+.rollRow:hover {
+  transform: translateX(5px) scale(1.02);
 }
 
 #dailyRewardBtn{
@@ -3256,7 +3328,7 @@ display:none;
 <div id="voidTab" class="hidden">
     <h2>🌌 Void Event</h2>
 
-<h1>Coming Soon</h1>
+<h3>No quests, this event only creates low gravity lol!</h3>
 </div>
 
 <div id="hackTab">
@@ -3331,37 +3403,30 @@ display:none;
 
 <h2>🎲 Sword Roll</h2>
 
-<h3>Drop Chances</h3>
-
-<table style="margin:auto;border-collapse:collapse">
-<tr>
-<th style="padding:6px;border:1px solid white">Sword</th>
-<th style="padding:6px;border:1px solid white">Rarity</th>
-<th style="padding:6px;border:1px solid white">Chance</th>
-</tr>
-
-<tr><td>Iron Saber</td><td>Decent</td><td>20%</td></tr>
-<tr><td>Knight Blade</td><td>Decent</td><td>20%</td></tr>
-
-<tr><td>Emerald Cutter</td><td>Great</td><td>15%</td></tr>
-<tr><td>Crystal Edge</td><td>Great</td><td>15%</td></tr>
-
-<tr><td>Storm Katana</td><td>Insane</td><td>10%</td></tr>
-<tr><td>Shadow Reaver</td><td>Insane</td><td>10%</td></tr>
-<tr><td>Shadow Reaver</td><td>Insane</td><td>10%</td></tr>
-
-<tr><td>Void Greatsword</td><td>Alienish</td><td>3.50%</td></tr>
-
-<tr><td>Infernal Cleaver</td><td>Demonic</td><td>3.70%</td></tr>
-
-<tr><td>Divine Longblade</td><td>Blessed</td><td>0.10%</td></tr>
-<tr><td>Celestial Edge</td><td>Blessed</td><td>0.10%</td></tr>
-<tr><td>Mythic Halo Blade</td><td>Blessed</td><td>0.10%</td></tr>
-<tr><td>Celestial razor</td><td>Blessed</td><td>0.10%</td></tr>
-<tr><td>???</td><td>???</td><td>0.025%</td></tr>
-<tr><td>???</td><td>???</td><td>0.025%</td></tr>
-
-</table>
+<div id="rollTable" class="rollTable">
+  <h2>Drop Rates</h2>
+  <div class="rollRow r-decent">
+    <span>Decent</span><span>45%</span>
+  </div>
+  <div class="rollRow r-great">
+    <span>Great</span><span>30%</span>
+  </div>
+  <div class="rollRow r-insane">
+    <span>Insane</span><span>15%</span>
+  </div>
+  <div class="rollRow r-alienish">
+    <span>Alienish</span><span>7%</span>
+  </div>
+  <div class="rollRow r-demonic">
+    <span>Demonic</span><span>2.2%</span>
+  </div>
+  <div class="rollRow r-blessed">
+    <span>Blessed</span><span>0.25%</span>
+  </div>
+  <div class="rollRow r-exclusive">
+    <span>Exclusive</span><span>0.05%</span>
+  </div>
+</div>
 
 <br>
 
