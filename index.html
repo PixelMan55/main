@@ -121,12 +121,96 @@ window.cleanChatIfNeeded = async function(messages, snapshot) {
   }
 };
 
+window.sendDuelRequest = async function(targetUsername){
+  if(!targetUsername) return alert("Enter username");
+
+  const duelRef = doc(collection(db, "duels"));
+
+  await setDoc(duelRef, {
+    from: save.username,
+to: targetUid,
+    status: "pending",
+    created: Date.now()
+  });
+
+  alert("Duel request sent!");
+};
+
+window.startDuelListener = function(){
+  if(duelUnsub) return;
+
+  const duelCol = collection(db, "duels");
+
+  duelUnsub = onSnapshot(duelCol, (snap)=>{
+    snap.forEach(d => {
+      const data = d.data();
+
+      // 🔥 DEBUG (remove later)
+      console.log("DUEL CHECK:", data.to, "vs", save.username);
+
+      if(!save.username) return;
+
+      if(data.to === save.username && data.status === "pending"){
+
+        if(document.getElementById("duelPopup")) return;
+
+        const div = document.createElement("div");
+        div.id = "duelPopup";
+
+        div.style.position = "fixed";
+        div.style.top = "20px";
+        div.style.left = "50%";
+        div.style.transform = "translateX(-50%)";
+        div.style.background = "#000";
+        div.style.border = "2px solid #00ff9c";
+        div.style.padding = "15px";
+        div.style.zIndex = "9999";
+
+        div.innerHTML = `
+          <div>${data.from} challenged you!</div>
+          <button onclick="acceptDuel('${d.id}')">Accept</button>
+          <button onclick="declineDuel('${d.id}')">Decline</button>
+        `;
+
+        document.body.appendChild(div);
+      }
+    });
+  });
+};
+
+window.acceptDuel = async function(id){
+  const ref = doc(db, "duels", id);
+
+  await setDoc(ref, {
+    status: "active"
+  }, { merge: true });
+
+  currentDuelId = id;
+  isHost = false;
+
+  document.getElementById("duelPopup")?.remove();
+
+  startGameSync();
+};
+
+window.declineDuel = async function(id){
+  await deleteDoc(doc(db, "duels", id));
+  document.getElementById("duelPopup")?.remove();
+};
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 setPersistence(auth, browserLocalPersistence)
 .catch(e=>console.error(e));
 const db = getFirestore(app);
+// ================= MULTIPLAYER SYSTEM =================
+
+let duelUnsub = null;
+let gameUnsub = null;
+
+let currentDuelId = null;
+let isHost = false;
 
 const globalEventRef = doc(db, "global", "events");
 
@@ -188,6 +272,14 @@ onSnapshot(globalEventRef, (snap) => {
     }
   }
 
+  if (data.voidStart && data.voidEnd) {
+    if (now >= data.voidStart && now < data.voidEnd) {
+      startVoidEvent(data);
+    } else {
+      deactivateVoidEvent();
+    }
+  }
+
   // --- GLOBAL COINS ---
   if (data.coinsStart && data.coinsEnd) {
     if (now >= data.coinsStart && now < data.coinsEnd) {
@@ -227,6 +319,15 @@ window.triggerGlobalZoink = async function() {
   await setDoc(doc(db, "global", "events"), {
     zoinkStart: Date.now(),
     zoinkEnd: Date.now() + (15 * 60 * 1000), // 15 min
+    spawnedBy: username || "System"
+  });
+};
+
+window.startGlobalVoid = async function() {
+  const username = save.username;
+  await setDoc(doc(db, "global", "events"), {
+    voidStart: Date.now(),
+    voidEnd: Date.now() + (15 * 60 * 1000), // 15 min
     spawnedBy: username || "System"
   });
 };
@@ -353,7 +454,27 @@ window.triggerAdminAbuse = async function(){
   });
 };
 
+window.syncMyPlayer = async function(){
+  if(!currentDuelId) return;
 
+  const ref = doc(db, "games", currentDuelId);
+
+  if(isHost){
+    await setDoc(ref, {
+      p1x: p1.x,
+      p1y: p1.y,
+      p1hp: p1.health,
+      p1: save.username
+    }, { merge:true });
+  } else {
+    await setDoc(ref, {
+      p2x: p2.x,
+      p2y: p2.y,
+      p2hp: p2.health,
+      p2: save.username
+    }, { merge:true });
+  }
+};
 
 const announcementRef = doc(db, "global", "announcement");
 
@@ -2827,6 +2948,57 @@ body.megaShake::after{
     }
 }
 
+#blackHole {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    width: 200px;
+    height: 200px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 4;
+
+    background: radial-gradient(circle at center,
+        black 20%,
+        purple 40%,
+        rgba(100,0,255,0.5) 60%,
+        transparent 70%
+    );
+
+    box-shadow:
+        0 0 60px purple,
+        0 0 120px rgba(150,0,255,0.6);
+
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+/* 🌀 swirl animation */
+#blackHole::after {
+    content: "";
+    position: absolute;
+    inset: -40px;
+    border-radius: 50%;
+
+    background: conic-gradient(
+        from 0deg,
+        transparent,
+        purple,
+        transparent,
+        purple,
+        transparent
+    );
+
+    animation: spinBlackHole 3s linear infinite;
+    opacity: 0.6;
+}
+
+@keyframes spinBlackHole {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 </style>
 </head>
 
@@ -3016,6 +3188,8 @@ width:300px;
 
 </div>
 </div>
+
+<div id="blackHole"></div>
 
 <div id="settingsMenu" class="hidden" style="
 position:fixed;
@@ -3268,6 +3442,8 @@ Data Bits:
 <button onclick="triggerGlobalEaster()">Start Easter (Global)</button>
 <button onclick="activateHackedEvent()">Activate Hack Event (Local)</button>
 <button onclick="triggerGlobalHack()">HACK EVENT (Global)</button>
+<button onclick="startVoidEvent()">Activate Void Event (Local)</button>
+<button onclick="startGlobalVoid()">Start Void Event (Global)</button>
   <button onclick="globalFlashbang()">Flashbang ALL</button>
   <button onclick="triggerAdminAbuse()">⚠️ Admin Abuse</button><br>
 <input id="globalCoinInput" type="number" placeholder="Give coins (global)">
@@ -3552,6 +3728,9 @@ Coin Multiplier
   <h3>Hacked Event</h3>
 <button onclick="activateHackedEvent()">Activate Hack Event (Local)</button>
 <button onclick="triggerGlobalHack()">HACK EVENT (Global)</button>
+  <h3>Void Event</h3>
+<button onclick="startVoidEvent()">Activate Void Event (Local)</button>
+<button onclick="startGlobalVoid()">Start Void Event (Global)</button>
   <h3>Non-Event tools</h3>
 <button onclick="globalFlashbang()">Flashbang ALL</button>
     <button onclick="triggerAdminAbuse()">⚠️ Admin Abuse</button><br>
@@ -5021,7 +5200,14 @@ deactivateEasterEvent();
 
 }
 
-function startVoidEvent() {
+function startVoidEvent(data = {}){
+
+// ✅ SAFE DEFAULTS FOR LOCAL
+if (!data) data = {};
+
+const spawnedBy = data.spawnedBy || "Local Admin";
+
+  showAnnouncement(data.spawnedBy || "System", "Started Void Event");
     voidEventActive = true;
     window.voidActive = true;
     document.body.classList.add("void-gravity");
@@ -5046,6 +5232,10 @@ function generateVoidQuests(){
 }
 
 function endVoidEvent() {
+const blackHole = document.getElementById("blackHole");
+
+blackHole.style.opacity = "0";
+
     voidEventActive = false;
     document.body.classList.remove("void-gravity");
 
@@ -5070,16 +5260,6 @@ function createVoidOverlay() {
     }
 
     document.body.appendChild(overlay);
-}
-
-function generateVoidQuests() {
-    voidQuests = [
-        { id: 1, text: "Defeat 5 enemies", goal: 5, progress: 0, reward: 10 },
-        { id: 2, text: "Survive 30 seconds", goal: 30, progress: 0, reward: 15 },
-        { id: 3, text: "Collect 20 coins", goal: 20, progress: 0, reward: 20 }
-    ];
-
-    renderVoidQuests();
 }
 
 function renderVoidQuests() {
@@ -5166,13 +5346,13 @@ function giveVoidItem(item) {
 let zoinkRunning = false;
 let zoinkTimerInterval;
 
-function activateZoink(spawnedBy = "System"){
+function activateZoink(data){
 
   if (zoinkRunning) return;
   zoinkRunning = true;
 
   // 🔥 POPUP MESSAGE
-  showAnnouncement("Admin", "Spawned Zoink Event");
+  showAnnouncement(data.spawnedBy || "System", "Started Zoink Fest");
 
 // background
 document.body.style.backgroundImage = "url('https://pixelman55.github.io/main/gdbg.png')";
@@ -5906,7 +6086,9 @@ colorPicker.value=save.color;
 colorPicker.oninput=()=>{save.color=colorPicker.value;saveData()};
 
 function backToMenu(){
-
+    blackHole.style.opacity = "0";
+    blackHole.style.pointerEvents = "none";
+running = false;
 document.getElementById("pauseMenu").style.display="none";
 document.getElementById("pauseBtn").style.display = "none";
   stopGame();
@@ -6560,6 +6742,22 @@ if(voidEventActive){
     p1.vy *= 0.92;
   }
 }
+
+const blackHole = document.getElementById("blackHole");
+
+// ✅ ALWAYS CONTROL VISIBILITY (even in menus)
+if (blackHole) {
+  if (voidEventActive && running && !isPaused) {
+    blackHole.style.display = "block";
+    blackHole.style.opacity = "1";
+    blackHole.style.pointerEvents = "none"; // 👈 CRITICAL
+  } else {
+    blackHole.style.opacity = "0";
+    blackHole.style.pointerEvents = "none";
+  }
+}
+
+if(!running) return;
 
 if(voidEventActive){
 
@@ -7943,7 +8141,7 @@ if(liteLock) liteLock.appendChild(new Option(name,id));
 });
 
 }
-window.onload = () => {   
+window.onload = () => {  
   updateCoins();
   populateSwordDropdown();
 initEventQuests();
@@ -8043,55 +8241,6 @@ logServer("Account deleted: "+uid);
 
 alert("Account deleted");
 
-}
-
-async function sendDuelRequest(targetUID){
-
-if(!auth.currentUser){
-alert("Login first");
-return;
-}
-
-await setDoc(doc(db,"duels",targetUID),{
-challenger:auth.currentUser.uid,
-time:Date.now()
-});
-
-alert("Duel request sent!");
-
-}
-
-async function checkDuelRequests(){
-
-if(!auth.currentUser) return;
-
-const snap = await getDocs(collection(db,"duels"));
-
-snap.forEach(d=>{
-
-if(d.id===auth.currentUser.uid){
-
-const data=d.data();
-
-if(confirm("Player challenged you to a duel! Accept?")){
-
-startPvP(data.challenger);
-
-}
-
-}
-
-});
-
-}
-
-function startPvP(opponentUID){
-
-alert("PvP mode coming soon!");
-
-/*
-Later we sync positions with Firebase
-*/
 }
 
 async function killPlayer(){
@@ -8865,6 +9014,45 @@ async function sendChat() {
 
   input.value = "";
 }
+
+function startGameSync(){
+  if(!currentDuelId) return;
+
+  const gameRef = doc(db, "games", currentDuelId);
+
+  // HOST CREATES GAME
+  if(isHost){
+    setDoc(gameRef, {
+      p1: save.username,
+      p2: "",
+      p1x: 100,
+      p2x: 600,
+      p1y: 300,
+      p2y: 300,
+      p1hp: 100,
+      p2hp: 100
+    });
+  }
+
+  gameUnsub = onSnapshot(gameRef, (snap)=>{
+    const g = snap.data();
+    if(!g) return;
+
+    // 🔥 APPLY DATA TO YOUR GAME VARIABLES
+    p1.x = g.p1x;
+    p1.y = g.p1y;
+    p2.x = g.p2x;
+    p2.y = g.p2y;
+
+    p1.health = g.p1hp;
+    p2.health = g.p2hp;
+
+    // usernames
+    p1.name = g.p1;
+    p2.name = g.p2;
+  });
+}
+startDuelListener();
 </script>
 
 <div id="globalAnnouncement" style="
