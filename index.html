@@ -5413,11 +5413,13 @@ function giveVoidItem(item) {
 let zoinkRunning = false;
 let zoinkTimerInterval;
 
-function activateZoink(data){
+function activateZoink(data = {}){
 
   if (zoinkRunning) return;
   zoinkRunning = true;
+if (!data) data = {};
 
+const spawnedBy = data.spawnedBy || "Local Admin";
   // 🔥 POPUP MESSAGE
   showAnnouncement(data.spawnedBy || "System", "Started Zoink Fest");
 
