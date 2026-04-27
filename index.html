@@ -3070,6 +3070,17 @@ body.megaShake::after{
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
+.pixelEvent {
+image-rendering: pixelized;
+animation: pixel-shift;
+  }
+  @keyframes pixel-shift {
+  0%   { background-position: 0 0; }
+  25%  { background-position: 10px 0; } /* Discrete "jump" */
+  50%  { background-position: 10px 10px; }
+  75%  { background-position: 0 10px; }
+  100% { background-position: 0 0; }
+}
 
 </style>
 </head>
@@ -4140,7 +4151,7 @@ function slamSword(){
       sword.style.top = pos + "px";
 
       // 💥 IMPACT EFFECT
-      document.body.classList.add("megaShake");
+      document./style("megaShake");
       setTimeout(()=>{
         document.body.classList.remove("megaShake");
       },150);
@@ -7026,7 +7037,8 @@ setTimeout(()=>{document.body.style.background="";},300);
 if(sword.rarity === "pixelized"){
 document.body.style.background = "blue";
 setTimeout(()=>{document.body.style.background="";},300);
-acivatePixelizedEvent()
+activatePixelizedEvent()
+setTimeout(()=>{deactivatePixelized();},15000);
 }
 
 box.innerHTML = `
@@ -7047,6 +7059,14 @@ nextEventTime
 }));
 }
 
+function activatePixelizedEvent(){
+showAnnouncement("System", "You rolled pixelized, activated event")
+document.body.classList.add("pixelEvent");
+}
+
+function deactivatePixelizedEvent(){
+document.body.classList.remove("pixelEvent");
+}
 function unlockAllSwords(){
 
 save.wins = 999;
