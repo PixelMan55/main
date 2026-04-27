@@ -896,13 +896,13 @@ button[onclick="triggerAdminAbuse()"] {
 .r-alienish { border-color: #00ffcc; box-shadow: 0 0 12px #00ffcc; animation: rarityPulseAlienish 0.5s infinite alternate;}
 .r-demonic { border-color: #ff1744; box-shadow: 0 0 15px #ff1744; animation: rarityPulseDemonic 0.5s infinite alternate; }
 .r-blessed { border-color: gold; box-shadow: 0 0 18px gold; text-shadow: 0 0 5px gold; animation: rarityPulseBlessed 0.5s infinite alternate;}
-.r-exclusive { border-color: blue; box-shadow: 0 0 20px blue; animation: rarityPulseExclusive 0.5s infinite alternate; background-image:linear-gradient(to right, cyan, blue);}
+.r-pixelized { border-color: blue; box-shadow: 0 0 20px blue; animation: rarityPulsePixelized 0.5s infinite alternate; background-image:linear-gradient(to right, cyan, blue);}
 .r-limited { border-color: orange; box-shadow: 0 0 20px orange; background-image:linear-gradient(to right, orange, yellow);animation: rarityPulseLimited 0.5s infinite alternate;}
 
 @keyframes rarityPulseAlienish { from { box-shadow: green; } to { box-shadow: lime; } }
 @keyframes rarityPulseDemonic { from { box-shadow: 0 0 5px #ff1744; } to { box-shadow: 0 0 25px #ff1744; } }
 @keyframes rarityPulseBlessed{ from { box-shadow: 0 0 5px gold; } to { box-shadow: 0 0 30px gold; } }
-  @keyframes rarityPulseExclusive{ from { box-shadow: 0 0 5px blue; } to { box-shadow: 0 0 35px blue; } }
+  @keyframes rarityPulsePixelized{ from { box-shadow: 0 0 5px blue; } to { box-shadow: 0 0 35px blue; } }
     @keyframes rarityPulseLimited{ from { box-shadow: 0 0 5px orange; } to { box-shadow: 0 0 35px orange; } }
   
 /* Achievements */
@@ -1462,7 +1462,7 @@ background:linear-gradient(to left, gold, blue);
 .r-alienish{border-color:#00ffcc;box-shadow:0 0 8px #00ffcc}
 .r-demonic{border-color:#ff1744;box-shadow:0 0 10px #ff1744}
 .r-blessed{border-color:gold;box-shadow:0 0 12px gold}
-.r-exclusive{border-color:blue;box-shadow:0 0 14px blue}
+.r-pixelized{border-color:blue;box-shadow:0 0 14px blue}
 .r-limited{border-color:orange;box-shadow:0 0 16px orange}
 
 .swordBox{
@@ -2068,7 +2068,7 @@ transform:translateX(-50%);
   font-weight:bold;
 }
 
-.exclusiveText{
+.pixelizedText{
 background: linear-gradient(90deg,#00c6ff,#0044ff);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
@@ -3423,8 +3423,8 @@ display:none;
   <div class="rollRow r-blessed">
     <span>Blessed</span><span>0.25%</span>
   </div>
-  <div class="rollRow r-exclusive">
-    <span>Exclusive</span><span>0.05%</span>
+  <div class="rollRow r-pixelized">
+    <span>Pixelized</span><span>0.05%</span>
   </div>
 </div>
 
@@ -3556,7 +3556,7 @@ Data Bits:
 <input id="chanceAlienish" placeholder="Alienish %">
 <input id="chanceDemonic" placeholder="Demonic %">
 <input id="chanceBlessed" placeholder="Blessed %">
-<input id="chanceExclusive" placeholder="Exclusive %">
+<input id="chancePixelized" placeholder="Pixelized %">
 
 <button onclick="updateRollChances()">Apply</button>
 <hr>
@@ -3831,7 +3831,7 @@ Carrots:
 <input id="chanceAlienishLite" placeholder="Alienish %">
 <input id="chanceDemonicLite" placeholder="Demonic %">
 <input id="chanceBlessedLite" placeholder="Blessed %">
-<input id="chanceExclusiveLite" placeholder="Exclusive %">
+<input id="chancePixelizedLite" placeholder="Pixelized %">
 
 <button onclick="updateRollChancesLite()">Apply</button>
 <hr></div>
@@ -5958,8 +5958,8 @@ const rollSwords=[
 {name:"Celestial Edge",rarity:"blessed"},
 {name:"Mythic Halo Blade",rarity:"blessed"},
 {name:"Celestial Razor",rarity:"blessed"},
-{name:"Pixel Slicer",rarity:"exclusive"},
-{name:"Skull Cleaver",rarity:"exclusive"}
+{name:"Pixel Slicer",rarity:"pixelized"},
+{name:"Skull Cleaver",rarity:"pixelized"}
 ];
 const rollChances=[
 {rarity:"decent",chance:45},
@@ -5968,7 +5968,7 @@ const rollChances=[
 {rarity:"alienish",chance:7},
 {rarity:"demonic",chance:2.20,},
 {rarity:"blessed",chance:0.25},
-{rarity:"exclusive",chance:0.05}
+{rarity:"pixelized",chance:0.05}
 ];
 /* ===== ADD ROLL SWORDS INTO SWORD SYSTEM ===== */
 
@@ -5983,7 +5983,7 @@ insane:{dmg:22,knock:18,stun:18},
 alienish:{dmg:28,knock:22,stun:22},
 demonic:{dmg:34,knock:28,stun:26},
 blessed:{dmg:42,knock:36,stun:34},
-exclusive:{dmg:50,knock:43,stun:45}
+pixelized:{dmg:50,knock:43,stun:45}
 };
 
 const st=stats[s.rarity];
@@ -7023,9 +7023,10 @@ document.body.style.background = "gold";
 setTimeout(()=>{document.body.style.background="";},300);
 }
 
-if(sword.rarity === "exclusive"){
+if(sword.rarity === "pixelized"){
 document.body.style.background = "blue";
 setTimeout(()=>{document.body.style.background="";},300);
+acivatePixelizedEvent()
 }
 
 box.innerHTML = `
@@ -7576,7 +7577,7 @@ function updateRollChances() {
     {id:"chanceAlienish", rarity:"alienish"},
     {id:"chanceDemonic", rarity:"demonic"},
     {id:"chanceBlessed", rarity:"blessed"},
-    {id:"chanceExclusive", rarity:"exclusive"}
+    {id:"chancePixelized", rarity:"pixelized"}
   ];
 
   inputs.forEach((i, index) => {
@@ -7597,7 +7598,7 @@ function updateRollChances() {
     {id:"chanceAlienishLite", rarity:"alienish"},
     {id:"chanceDemonicLite", rarity:"demonic"},
     {id:"chanceBlessedLite", rarity:"blessed"},
-    {id:"chanceExclusiveLite", rarity:"exclusive"}
+    {id:"chancePixelizedLite", rarity:"pixelized"}
   ];
 
   inputs.forEach((i, index) => {
