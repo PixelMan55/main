@@ -3461,11 +3461,11 @@ font-weight:bold;
 <button class="tab active" onclick="switchAdminTab('adminAbuse', this)">Admin Abuse Stuff</button>
 <button class="tab" onclick="switchAdminTab('adminToggles', this)">Toggles</button>
   <button class="tab" onclick="switchAdminTab('adminInputs', this)">Inputs</button>
-  <button class="tab" onclick="switchAdminTab('AdminControl', this)">Player control</button>
+  <button class="tab" onclick="switchAdminTab('adminControl', this)">Player control</button>
     <button class="tab" onclick="switchAdminTab('swordControls', this)">Sword control</button>
 </div>
     <h2>ADMIN PANEL</h2>
-<div id="adminInputs" class="hidden">
+<div id="adminInputs" class="hidden adminStuff">
 <h3>Inputs</h3>
 
 Wins:
@@ -3511,7 +3511,7 @@ Data Bits:
 <button onclick="updateRollChances()">Apply</button>
 <hr>
 </div>
-    <div id="adminAbuse">
+    <div id="adminAbuse" class="adminStuff">
 <h3>Global Announcement</h3>
 
 <input id="announcementInput" placeholder="Write announcement">
@@ -3540,7 +3540,7 @@ Data Bits:
 <button onclick="giveGlobalCoinsSpecific()">Give</button>
 
 <hr>
-    </div><div id="adminControl" class="hidden">
+    </div><div id="adminControl" class="hidden adminStuff">
 <h3>Leaderboard Control</h3>
 
 <input id="deleteUserID" placeholder="Player UID">
@@ -3636,7 +3636,7 @@ font-size:12px">
 
 <hr>
 <hr></div>
-<div id="adminToggles" class="hidden">
+<div id="adminToggles" class="hidden adminStuff">
 <!-- TOGGLES -->
 <h3>Toggles</h3>
 
@@ -3699,7 +3699,7 @@ Instakill
   </div>
 <hr>
 
-<div id="swordControls" class="hidden">
+<div id="swordControls" class="hidden adminStuff">
 <h3>Sword Controls</h3>
 
 <!-- Inject sword -->
@@ -4882,7 +4882,7 @@ function switchAdminTab(id, btn) {
     btn.classList.add("active");
 
     // 2. Hide all content panels (give them all a class like "admin-content")
-    document.querySelectorAll(".admin-content").forEach(panel => panel.classList.add("hidden"));
+    document.querySelectorAll(".adminStuff").forEach(panel => panel.classList.add("hidden"));
     
     // 3. Show the target
     document.getElementById(id).classList.remove("hidden");
