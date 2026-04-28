@@ -3460,10 +3460,11 @@ font-weight:bold;
 <h2>ADMIN PANEL</h2>
 
   <div class="tabBar">
-  <button class="tab" onclick="switchAdminTab('adminAbuse', this)">Admin Abuse Stuff</button>
+  <button class="tabActive" onclick="switchAdminTab('adminAbuse', this)">Admin Abuse Stuff</button>
 <button class="tab" onclick="switchAdminTab('adminToggles', this)">Toggles</button>
   <button class="tab" onclick="switchAdminTab('adminInputs', this)">Inputs</button>
   <button class="tab" onclick="switchAdminTab('AdminControl', this)">Player control</button>
+    <button class="tab" onclick="switchAdminTab('swordControls', this)">Sword control</button>
 </div>
 <div id="adminInputs" class="hidden">
 <h3>Inputs</h3>
@@ -3540,7 +3541,7 @@ Data Bits:
 <button onclick="giveGlobalCoinsSpecific()">Give</button>
 
 <hr>
-    </div><div id="adminControl">
+    </div><div id="adminControl" class="hidden">
 <h3>Leaderboard Control</h3>
 
 <input id="deleteUserID" placeholder="Player UID">
@@ -3636,7 +3637,7 @@ font-size:12px">
 
 <hr>
 <hr></div>
-<div id="adminToggles">
+<div id="adminToggles" class="hidden">
 <!-- TOGGLES -->
 <h3>Toggles</h3>
 
@@ -3699,7 +3700,7 @@ Instakill
   </div>
 <hr>
 
-<div id="swordControls">
+<div id="swordControls" class="hidden">
 <h3>Sword Controls</h3>
 
 <!-- Inject sword -->
@@ -4872,6 +4873,19 @@ function switchEventTab(id, btn) {
   document.getElementById("easterTab").classList.add("hidden");
   document.getElementById("hackTab").classList.add("hidden");
   document.getElementById("voidTab").classList.add("hidden");
+
+  document.getElementById(id).classList.remove("hidden");
+}
+
+  function switchAdminTab(id, btn) {
+  document.querySelectorAll("#adminPanel .tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+
+  document.getElementById("adminAbuse").classList.add("hidden");
+  document.getElementById("AdminToggles").classList.add("hidden");
+  document.getElementById("adminIntputs").classList.add("hidden");
+  document.getElementById("adminControl").classList.add("hidden");
+  document.getElementById("swordControls").classList.add("hidden");
 
   document.getElementById(id).classList.remove("hidden");
 }
