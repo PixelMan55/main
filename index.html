@@ -3301,7 +3301,7 @@ text-align:center;
 
 </div>
 </div>
-
+  
 <div id="eventDisplay" style="
 position:fixed;
 bottom:15px;
@@ -3459,10 +3459,14 @@ font-weight:bold;
 
 <h2>ADMIN PANEL</h2>
 
-<!-- INPUT SECTION -->
+  <div class="tabBar">
+  <button class="tab" onclick="switchAdminTab('adminAbuse', this)">Admin Abuse Stuff</button>
+<button class="tab" onclick="switchAdminTab('adminToggles', this)">Toggles</button>
+  <button class="tab" onclick="switchAdminTab('adminInputs', this)">Inputs</button>
+  <button class="tab" onclick="switchAdminTab('AdminControl', this)">Player control</button>
+</div>
+<div id="adminInputs" class="hidden">
 <h3>Inputs</h3>
-
-<div>
 
 Wins:
 <input type="number" id="adminWins">
@@ -3491,6 +3495,23 @@ Data Bits:
 <input type="number" id="adminDataBits">
 <button onclick="setDataBits()">Apply</button>
 <br><br>
+<input id="setEventQuestsInput" type="number" placeholder="Set Event Quests">
+<button onclick="setEventQuests()">Set Quests</button>
+  <br>
+<h3>Edit Roll Chances</h3>
+
+<input id="chanceDecent" placeholder="Decent %">
+<input id="chanceGreat" placeholder="Great %">
+<input id="chanceInsane" placeholder="Insane %">
+<input id="chanceAlienish" placeholder="Alienish %">
+<input id="chanceDemonic" placeholder="Demonic %">
+<input id="chanceBlessed" placeholder="Blessed %">
+<input id="chancePixelized" placeholder="Pixelized %">
+
+<button onclick="updateRollChances()">Apply</button>
+<hr>
+</div>
+    <div id="adminAbuse">
 <h3>Global Announcement</h3>
 
 <input id="announcementInput" placeholder="Write announcement">
@@ -3499,7 +3520,6 @@ Data Bits:
 <button onclick="clearAnnouncement()">Clear</button>
 
 <hr>
-</div>
 <input id="setEventQuestsInput" type="number" placeholder="Set Event Quests">
 <button onclick="setEventQuests()">Set Quests</button>
   <br><hr>
@@ -3520,141 +3540,12 @@ Data Bits:
 <button onclick="giveGlobalCoinsSpecific()">Give</button>
 
 <hr>
-
+    </div><div id="adminControl">
 <h3>Leaderboard Control</h3>
 
 <input id="deleteUserID" placeholder="Player UID">
 
 <button onclick="deletePlayer()">Ban Player</button>
-
-<hr>
-
-<h3>Spawn Event</h3>
-
-<select id="eventType">
-
-<option value="coins2">2x Coins</option>
-<option value="coins3">3x Coins</option>
-<option value="coins4">4x Coins</option>
-
-<option value="luck2">2x Luck</option>
-<option value="luck3">3x Luck</option>
-<option value="luck4">4x Luck</option>
-<option value="activateZoink()">4x Luck</option>
-</select>
-
-<input id="eventTime" placeholder="5:00 or 1:00:00">
-
-<button onclick="spawnEvent()">Spawn Event</button>
-<hr>
-
-<h3>Edit Roll Chances</h3>
-
-<input id="chanceDecent" placeholder="Decent %">
-<input id="chanceGreat" placeholder="Great %">
-<input id="chanceInsane" placeholder="Insane %">
-<input id="chanceAlienish" placeholder="Alienish %">
-<input id="chanceDemonic" placeholder="Demonic %">
-<input id="chanceBlessed" placeholder="Blessed %">
-<input id="chancePixelized" placeholder="Pixelized %">
-
-<button onclick="updateRollChances()">Apply</button>
-<hr>
-
-<!-- TOGGLES -->
-<h3>Toggles</h3>
-
-<div>
-
-Launch Mode
-
-<label class="switch">
-<input type="checkbox" onchange="toggleLaunchMode()">
-<span class="slider"></span>
-</label>
-
-<br><br>
-
-Infinite Coins
-
-<label class="switch">
-<input type="checkbox" id="infiniteCoinsToggle" onchange="toggleInfiniteCoins()">
-<span class="slider"></span>
-</label>
-
-<br><br>
-Show Hitboxes
-
-<label class="switch">
-<input type="checkbox" onchange="toggleHitboxes()">
-<span class="slider"></span>
-</label>
-
-<br><br>
-
-Unlock All Swords
-
-<label class="switch">
-<input type="checkbox" id="Vishwan the fishwam" onchange="toggleUnlockAll()">
-<span class="slider"></span>
-</label>
-
-<br><br>
-
-Invincible
-
-<label class="switch">
-<input type="checkbox" onchange="toggleInvincible()">
-<span class="slider"></span>
-</label>
-
-<br><br>
-
-Instakill
-
-<label class="switch">
-<input type="checkbox" onchange="toggleInstakill()">
-<span class="slider"></span>
-</label>
-
-<br><br>
-
-</div>
-
-<hr>
-
-<!-- UNLOCK AREA -->
-<h3>Sword Controls</h3>
-
-<!-- Inject sword -->
-Give Sword (Injection):
-<select id="giveSword"></select>
-<button onclick="injectSword()">Give Sword</button>
-
-<br><br>
-
-<!-- Event sword -->
-Event Sword:
-<select id="eventSword"></select>
-<button onclick="giveEventSword()">Give Event Sword</button>
-
-<br><br>
-
-<!-- Unlock sword -->
-Unlock Specific Sword:
-<select id="swordDropdown"></select>
-<button onclick="unlockSelectedSword()">Unlock Sword</button>
-
-<br><br>
-
-Lock Specific Sword:
-<select id="lockSwordDropdown"></select>
-<button onclick="lockSelectedSword()">Lock Sword</button>
-
-<hr>
-
-
-
 
 <h3>Live Player List</h3>
 
@@ -3744,27 +3635,100 @@ font-size:12px">
 <button onclick="toggleConsole()">Console</button>
 
 <hr>
+<hr></div>
+<div id="adminToggles">
+<!-- TOGGLES -->
+<h3>Toggles</h3>
 
-<h3>Economy Controls</h3>
+<div>
 
-Coin Multiplier
-<input type="number" id="coinMultiplier" value="1">
+Launch Mode
 
-<button onclick="setMultiplier()">Apply</button>
+<label class="switch">
+<input type="checkbox" onchange="toggleLaunchMode()">
+<span class="slider"></span>
+</label>
 
 <br><br>
 
-<button onclick="disableRolling()">Disable Rolling</button>
-<button onclick="enableRolling()">Enable Rolling</button>
+Infinite Coins
 
+<label class="switch">
+<input type="checkbox" id="infiniteCoinsToggle" onchange="toggleInfiniteCoins()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+Show Hitboxes
+
+<label class="switch">
+<input type="checkbox" onchange="toggleHitboxes()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Unlock All Swords
+
+<label class="switch">
+<input type="checkbox" id="Vishwan the fishwam" onchange="toggleUnlockAll()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Invincible
+
+<label class="switch">
+<input type="checkbox" onchange="toggleInvincible()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+Instakill
+
+<label class="switch">
+<input type="checkbox" onchange="toggleInstakill()">
+<span class="slider"></span>
+</label>
+
+<br><br>
+
+</div>
+  </div>
 <hr>
 
-<h3>Event Swords</h3>
+<div id="swordControls">
+<h3>Sword Controls</h3>
 
+<!-- Inject sword -->
+Give Sword (Injection):
+<select id="giveSword"></select>
+<button onclick="injectSword()">Give Sword</button>
+
+<br><br>
+
+<!-- Event sword -->
+Event Sword:
 <select id="eventSword"></select>
+<button onclick="giveEventSword()">Give Event Sword</button>
 
-<button onclick="enableEventSword()">Enable Event</button>
-<button onclick="disableEventSword()">Disable Event</button>
+<br><br>
+
+<!-- Unlock sword -->
+Unlock Specific Sword:
+<select id="swordDropdown"></select>
+<button onclick="unlockSelectedSword()">Unlock Sword</button>
+
+<br><br>
+
+Lock Specific Sword:
+<select id="lockSwordDropdown"></select>
+<button onclick="lockSelectedSword()">Lock Sword</button>
+
+<hr>
+</div>
 
 <button onclick="backToMenu()">Exit</button>
 
