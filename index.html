@@ -3320,7 +3320,7 @@ display:none;
 
 <div class="tabBar">
   <button class="tab" onclick="switchEventTab('voidTab', this)">Void Event</button>
-<button class="tab" onclick="switchEventTab('hackTab', this)">Hacked Event 💻</button>
+<button class="tab active" onclick="switchEventTab('hackTab', this)">Hacked Event 💻</button>
   <button class="tab" onclick="switchEventTab('easterTab', this)">Easter Event</button>
   <button class="tab" onclick="switchEventTab('zoinkTab', this)">Zoink Fest</button>
 </div>
@@ -3458,7 +3458,7 @@ font-weight:bold;
   <div id="adminPanel" class="hidden">
 
   <div class="tabBar">
-  <button class="Active" onclick="switchAdminTab('adminAbuse', this)">Admin Abuse Stuff</button>
+<button class="tab active" onclick="switchAdminTab('adminAbuse', this)">Admin Abuse Stuff</button>
 <button class="tab" onclick="switchAdminTab('adminToggles', this)">Toggles</button>
   <button class="tab" onclick="switchAdminTab('adminInputs', this)">Inputs</button>
   <button class="tab" onclick="switchAdminTab('AdminControl', this)">Player control</button>
@@ -4876,18 +4876,18 @@ function switchEventTab(id, btn) {
   document.getElementById(id).classList.remove("hidden");
 }
 
-  function switchAdminTab(id, btn) {
-  document.querySelectorAll("#adminPanel .tab").forEach(t => t.classList.remove("active"));
-  btn.classList.add("active");
+function switchAdminTab(id, btn) {
+    // 1. Reset all buttons in this bar
+    btn.parentElement.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    btn.classList.add("active");
 
-  document.getElementById("adminAbuse").classList.add("hidden");
-  document.getElementById("AdminToggles").classList.add("hidden");
-  document.getElementById("adminIntputs").classList.add("hidden");
-  document.getElementById("adminControl").classList.add("hidden");
-  document.getElementById("swordControls").classList.add("hidden");
-
-  document.getElementById(id).classList.remove("hidden");
+    // 2. Hide all content panels (give them all a class like "admin-content")
+    document.querySelectorAll(".admin-content").forEach(panel => panel.classList.add("hidden"));
+    
+    // 3. Show the target
+    document.getElementById(id).classList.remove("hidden");
 }
+
 
 function checkHackQuests(){
 
