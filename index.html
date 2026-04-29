@@ -7037,6 +7037,9 @@ if(voidEventActive){
 }
 if(launchMode){
   currentGravity = GRAVITY * 0.1;
+    if(p1.vy > 0){
+    p1.vy *= 1.5;
+  }
 }
 
 const blackHole = document.getElementById("blackHole");
