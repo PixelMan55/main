@@ -5382,6 +5382,7 @@ display:none;
 let leaderboardInterval=null;
 
 let invincible=false;
+let launchMode=false;
 let instakill=false;
 let infiniteCoins = false;
 let storedCoins = 0;
@@ -7028,8 +7029,8 @@ if(voidEventActive){
   }
 }
 if(launchMode){
-  currentGravity = GRAVITY * 0.01;
-  }
+  currentGravity = GRAVITY * 0.1;
+}
 
 const blackHole = document.getElementById("blackHole");
 
@@ -9270,8 +9271,6 @@ function toggleSuperSpeed() {
 function toggleSuperJump() {
     superJumpEnabled = !superJumpEnabled;
 }
-
-let launchMode = false;
 
 function toggleLaunchMode() {
     launchMode = !launchMode;
