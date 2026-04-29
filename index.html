@@ -7027,6 +7027,9 @@ if(voidEventActive){
     p1.vy *= 0.92;
   }
 }
+if(launchMode){
+  currentGravity = GRAVITY * 0.01;
+  }
 
 const blackHole = document.getElementById("blackHole");
 
@@ -9272,6 +9275,7 @@ let launchMode = false;
 
 function toggleLaunchMode() {
     launchMode = !launchMode;
+alert("Launch mode enabled: "+launchMode);
 }
 
 function buyGlitchBlade(){
