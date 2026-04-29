@@ -256,6 +256,14 @@ onSnapshot(globalEventRef, (snap) => {
     }
   }
 
+if (data.pixelizedStart && data.pixelizedEnd) {
+  if (now >= data.pixelizedStart && now < data.pixelizedEnd) {
+    activatePixelizedEvent(data);
+  } else {
+    deactivatePixelizedEvent();
+  }
+}
+
   if (data.easterStart && data.easterEnd) {
     if (now >= data.easterStart && now < data.easterEnd) {
       startEasterEvent(data);
@@ -376,6 +384,29 @@ window.giveGlobalCoins = async function(){
     amount: amount,
     spawnedBy: username || "System"
   });
+};
+
+window.activatePixelizedEvent = function(data){
+  document.body.classList.add("pixelizedActive");
+
+const glow = document.getElementById("zoinkGlow");
+glow.style.opacity = "1";
+  showAnnouncement(
+    "System",
+    "⚡ PIXELIZED EVENT ACTIVATED ⚡"
+  );
+
+document.body.style.backgroundImage = "url('https://static.vecteezy.com/ti/vecteur-libre/p1/4933932-pixel-gradient-background-vector-illustration-vectoriel.jpg')";
+
+  // ensure currency exists
+  save.pixels = save.pixels || 0;
+};
+
+window.deactivatePixelizedEvent = function(){
+  document.body.classList.remove("pixelizedActive");
+
+  const glow = document.getElementById("eventGlow");
+  glow.style.opacity = 0;
 };
 
 window.giveGlobalCoinsSpecific = async function(){
@@ -611,6 +642,23 @@ input{
     font-family: monospace;
     box-shadow: 0 0 5px #ff00ff;
 }
+
+body.pixelizedActive {
+  image-rendering: pixelated;
+}
+
+@keyframes pixelScreenGlitch {
+  0% { filter: contrast(1.2) hue-rotate(0deg); }
+  50% { filter: contrast(2) hue-rotate(90deg); }
+  100% { filter: contrast(1.2) hue-rotate(0deg); }
+}
+
+@keyframes pixelPulse {
+  0% { box-shadow: 0 0 20px cyan; }
+  50% { box-shadow: 0 0 60px blue; }
+  100% { box-shadow: 0 0 20px cyan; }
+}
+
 .hidden { display: none !important; }
 
 /* --- MAIN MENU STYLING --- */
@@ -760,7 +808,7 @@ input{
 }
 
 /* Admin Action Buttons - Warning Style */
-#adminPanel button, #eventPanel button {
+#adminPanel button, #eventPanel button, #liteAdminPanel button {
     background: #200;
     border-color: #ff0000;
     color: #ff9999;
@@ -805,15 +853,40 @@ button[onclick="triggerAdminAbuse()"] {
 /* --- GAME & OTHER UI ELEMENT STYLES (CLEANUP/INTEGRATION) --- */
 
 #game {
-    width: 800px; height: 400px;
-    margin: 20px auto;
-    background: #000;
-    border: 4px solid #fff;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  width: 800px;
+  height: 400px;
+  margin: 20px auto;
+  position: relative;
+  overflow: hidden;
+
+  /* 🔥 layered background */
+  background:
+    radial-gradient(circle at 50% 20%, rgba(0,255,156,0.15), transparent 60%),
+    linear-gradient(180deg, #0a0a0a, #000);
+
+  border: 3px solid #00ff9c;
+  border-radius: 14px;
+
+  box-shadow:
+    0 0 20px #00ff9c,
+    inset 0 0 30px rgba(0,255,156,0.2);
+
+  transition: 0.1s;
 }
 
+/* subtle animated glow */
+#game::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent, rgba(0,255,156,0.2), transparent);
+  opacity: 0;
+  transition: 0.4s;
+}
+
+#game:hover::before {
+  opacity: 1;
+}
 /* Gambling/Coin Display */
 #coinDisplay {
     position: absolute;
@@ -1216,6 +1289,17 @@ button[onclick="triggerAdminAbuse()"] {
     letter-spacing: 5px;
 }
 
+#liteAdminPanel::before {
+    content: "WARNING: RESTRICTED ACCESS";
+    position: absolute;
+    top: 5px;
+    left: 20px;
+    font-size: 10px;
+    color: #ff0000;
+    opacity: 0.6;
+    letter-spacing: 5px;
+}
+
 /* Add a moving "radar" sweep across the panel */
 #adminPanel::after {
     content: "";
@@ -1227,6 +1311,41 @@ button[onclick="triggerAdminAbuse()"] {
     background: linear-gradient(rgba(255,0,0,0.1) 0%, transparent 10%);
     animation: sweep 4s linear infinite;
     pointer-events: none;
+}
+
+#liteAdminPanel::after {
+    content: "";
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 300%;
+    height: 300%;
+    background: linear-gradient(rgba(255,0,0,0.1) 0%, transparent 10%);
+    animation: sweep 4s linear infinite;
+    pointer-events: none;
+}
+
+#eventPanel::after {
+    content: "";
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 300%;
+    height: 300%;
+    background: linear-gradient(rgba(255,0,0,0.1) 0%, transparent 10%);
+    animation: sweep 4s linear infinite;
+    pointer-events: none;
+}
+
+#eventAdmin Panel::before {
+    content: "WARNING: RESTRICTED ACCESS";
+    position: absolute;
+    top: 5px;
+    left: 20px;
+    font-size: 10px;
+    color: #ff0000;
+    opacity: 0.6;
+    letter-spacing: 5px;
 }
 
 @keyframes sweep {
@@ -1871,6 +1990,20 @@ width:50px;
 height:26px;
 }
 
+.pixelizedText{
+  background: linear-gradient(90deg, cyan, blue, purple);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: bold;
+  animation: pixelShift 2s infinite linear;
+}
+
+@keyframes pixelShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
 #hatGrid{
   display:grid;
   grid-template-columns:repeat(4,150px);
@@ -2141,13 +2274,20 @@ to{opacity:1; transform:scale(1);}
 position:fixed;
 top:0;
 left:0;
-width:100%;
-height:100%;
+width:100vw;
+height:100vh;
 pointer-events:none;
-z-index:999;
+z-index:9999;
+
+background:linear-gradient(45deg, cyan, blue);
+background-size:300% 300%;
 
 opacity:0;
-transition:0.5s;
+transition:0.3s;
+
+/* 🔥 thinner edge glow */
+mask:radial-gradient(circle at center, transparent 75%, black 100%);
+-webkit-mask:radial-gradient(circle at center, transparent 75%, black 100%);
 }
 
 #zoinkGlow{
@@ -3301,7 +3441,7 @@ text-align:center;
 
 </div>
 </div>
-  
+
 <div id="eventDisplay" style="
 position:fixed;
 bottom:15px;
@@ -3320,9 +3460,23 @@ display:none;
 
 <div class="tabBar">
   <button class="tab" onclick="switchEventTab('voidTab', this)">Void Event</button>
-<button class="tab active" onclick="switchEventTab('hackTab', this)">Hacked Event 💻</button>
+<button class="tab" onclick="switchEventTab('hackTab', this)">Hacked Event 💻</button>
   <button class="tab" onclick="switchEventTab('easterTab', this)">Easter Event</button>
   <button class="tab" onclick="switchEventTab('zoinkTab', this)">Zoink Fest</button>
+  <button class="tab" onclick="switchEventTab('pixelTab', this)">Pixel Event</button>
+</div>
+
+<div id="pixelTab" class="hidden">
+  <h2>Pixelized Event</h2>
+
+  <div id="pixelCurrency">
+    Pixels: <span id="pixelCount">0</span>
+  </div>
+
+  <div id="pixelQuests"></div>
+
+  <button onclick="buyPixelHat()">Pixel Hat (75)</button>
+  <button onclick="buyPixelTag()">Pixelized Tag (200)</button>
 </div>
 
 <div id="voidTab" class="hidden">
@@ -3456,7 +3610,7 @@ font-weight:bold;
   </div>
   
   <div id="adminPanel" class="hidden">
-
+    <h2>ADMIN PANEL</h2>
   <div class="tabBar">
 <button class="tab active" onclick="switchAdminTab('adminAbuse', this)">Admin Abuse Stuff</button>
 <button class="tab" onclick="switchAdminTab('adminToggles', this)">Toggles</button>
@@ -3464,7 +3618,6 @@ font-weight:bold;
   <button class="tab" onclick="switchAdminTab('adminControl', this)">Player control</button>
     <button class="tab" onclick="switchAdminTab('swordControls', this)">Sword control</button>
 </div>
-    <h2>ADMIN PANEL</h2>
 <div id="adminInputs" class="hidden adminStuff">
 <h3>Inputs</h3>
 
@@ -3734,12 +3887,19 @@ Lock Specific Sword:
 
 </div>
 
-
 <div id="liteAdminPanel" class="hidden">
 
 
   <h2>LITE ADMIN PANEL</h2>
 
+  <div class="tabBar">
+<button class="tab active" onclick="switchAdminTabLite('adminAbuseLite', this)">Admin Abuse Stuff</button>
+<button class="tab" onclick="switchAdminTabLite('liteAdminToggles', this)">Toggles</button>
+  <button class="tab" onclick="switchAdminTabLite('liteAdminInputs', this)">Inputs</button>
+  <button class="tab" onclick="switchAdminTabLite('liteAdminControl', this)">Player control</button>
+    <button class="tab" onclick="switchAdminTabLite('swordControlsLite', this)">Sword control</button>
+</div>
+<div id="adminAbuseLite" class="adminStuffLite">
 <h2>Admin abuse tools</h2> <br>  
 <div id="liteAnnouncements">
 <h3>Global Announcement</h3>
@@ -3769,8 +3929,9 @@ Lock Specific Sword:
 <button onclick="giveGlobalCoinsLite()">Give</button>
   <hr>
 </div>
-
+</div>
 <br><br>
+<div id="liteAdminInputs" class="hidden adminStuffLite">
   <h3>Inputs</h3>
   Wins: <input type="number" id="liteWins"><button onclick="setWinsLite()">Apply</button><br><br>
   Losses: <input type="number" id="liteLosses"><button onclick="setLossesLite()">Apply</button><br><br>
@@ -3799,7 +3960,8 @@ Carrots:
 
 <button onclick="updateRollChancesLite()">Apply</button>
 <hr></div>
-
+</div>
+<div id="swordControlsLite" class="hidden adminStuffLite">
 <h3>Sword Controls</h3>
 
 Unlock Specific Sword:
@@ -3813,6 +3975,8 @@ Lock Specific Sword:
 <select id="liteLockSwordDropdown"></select>
 <button onclick="lockSelectedSwordLite()">Lock Sword</button>
   
+</div>
+<div id="liteAdminToggles" class="hidden adminStuffLite">
 <h2>Toggles</h2>
   
 <label>Invincible
@@ -3858,6 +4022,9 @@ Show Hitboxes
 <span class="slider"></span>
 </label>
 
+</div>
+
+<div id="liteAdminControl" class="hidden adminStuffLite">
   <h3>Live Player List</h3>
 
 <div id="playerListLite" style="max-height:200px;overflow:auto"></div>
@@ -3883,7 +4050,7 @@ border:1px solid white;
 padding:6px;
 font-size:12px">
 </div>
-
+</div>
 
   <button onclick="backToMenu()">Exit</button>
 </div>
@@ -4238,12 +4405,6 @@ glow.style.boxShadow = "0 0 60px gold inset";
 }else{
 el.style.display = "none";
 
-const glow = document.getElementById("eventGlow");
-
-
-
-glow.style.opacity = "1";
-
 }
 // 🔥 RESET when event ends
 if(currentEvent){
@@ -4341,7 +4502,9 @@ menu.classList.add("hidden");
 document.getElementById("eventMenu").classList.remove("hidden");
 
 renderEventQuests();
-
+renderQuests();
+  initPixelQuests(); // 🔥 THIS WAS MISSING
+  renderPixelQuests();
 }
 
 function renderEventQuests(){
@@ -4371,6 +4534,47 @@ Claim
 box.appendChild(div);
 
 });
+}
+
+function renderPixelQuests(){
+
+  const box = document.getElementById("pixelQuests");
+  if(!box) return;
+
+  box.innerHTML = "";
+
+  save.pixelEvent.quests.forEach((q,i)=>{
+
+    const done = q.progress >= q.goal;
+
+    const div = document.createElement("div");
+
+    div.innerHTML = `
+      ${q.text} (${q.progress}/${q.goal})
+      <button onclick="claimPixelQuest(${i})" ${!done ? "disabled" : ""}>
+        Claim
+      </button>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+function claimPixelQuest(i){
+
+  const q = save.pixelEvent.quests[i];
+
+  if(q.progress < q.goal) return;
+
+  // reward
+  save.pixels += q.reward;
+  save.pixelEvent.completed++;
+
+  // replace quest
+  save.pixelEvent.quests[i] = randomPixelQuest();
+
+  saveData();
+  renderPixelQuests();
 }
 
 function checkEventMilestones(){
@@ -4868,6 +5072,7 @@ function switchEventTab(id, btn) {
   document.querySelectorAll("#eventMenu .tab").forEach(t => t.classList.remove("active"));
   btn.classList.add("active");
 
+  document.getElementById("pixelTab").classList.add("hidden");
   document.getElementById("zoinkTab").classList.add("hidden");
   document.getElementById("easterTab").classList.add("hidden");
   document.getElementById("hackTab").classList.add("hidden");
@@ -4888,6 +5093,17 @@ function switchAdminTab(id, btn) {
     document.getElementById(id).classList.remove("hidden");
 }
 
+function switchAdminTabLite(id, btn) {
+    // 1. Reset all buttons in this bar
+    btn.parentElement.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    btn.classList.add("active");
+
+    // 2. Hide all content panels (give them all a class like "admin-content")
+    document.querySelectorAll(".adminStuffLite").forEach(panel => panel.classList.add("hidden"));
+    
+    // 3. Show the target
+    document.getElementById(id).classList.remove("hidden");
+}
 
 function checkHackQuests(){
 
@@ -5848,11 +6064,16 @@ claimed: []
 };
 }
 
+save.pixelEvent = save.pixelEvent || {
+  quests: [],
+  completed: 0
+};
+
 initEventQuests();
 
 save.coins = Number(save.coins || 0);
 save.dataBits = save.dataBits || 0;
-save.blackHoleBits = save.blackHoleBits || 0;
+save.pixels = save.pixels || 0;
 
 
 if(save.coins === undefined) save.coins = 0;
@@ -6046,6 +6267,24 @@ grid.appendChild(card);
 
 });
 
+}
+
+function randomPixelQuest(){
+  const pool = [
+    { text:"Win 3 matches", goal:3, progress:0, reward:1 },
+    { text:"Roll 10 swords", goal:10, progress:0, reward:2 },
+    { text:"Get a crit", goal:1, progress:0, reward:5 }
+  ];
+
+  return JSON.parse(JSON.stringify(pool[Math.floor(Math.random()*pool.length)]));
+}
+
+function initPixelQuests(){
+  if(save.pixelEvent.quests.length === 0){
+    for(let i=0;i<3;i++){
+      save.pixelEvent.quests.push(randomPixelQuest());
+    }
+  }
 }
 
 function setLeaderboardTab(tab){
@@ -7005,6 +7244,11 @@ setTimeout(()=>{document.body.style.background="";},300);
 if(sword.rarity === "pixelized"){
 document.body.style.background = "blue";
 setTimeout(()=>{document.body.style.background="";},300);
+  activatePixelizedEvent({
+    pixelizedStart: Date.now(),
+    pixelizedEnd: Date.now() + (15 * 60 * 1000),
+    spawnedBy: save.username
+  });
 }
 
 box.innerHTML = `
@@ -7361,9 +7605,6 @@ if(name==="lil_Jim"){
 name=`<span style="color:green">lil_Jim [Admin]</span>`;
 }
 
-
-let line = "";
-
 if(leaderboardTab === "global"){
   line = `${p.wins} Wins | ${p.losses} Losses`;
 }
@@ -7621,7 +7862,9 @@ saveData();
     rollSwords: save.unlockedRollSwords,
     eventSwords: save.unlockedSpecial,
     carrots: save.carrots,
-    dataBits: save.dataBits
+    dataBits: save.dataBits,
+  pixelized: save.pixelized || false,
+  pixels: save.pixels || 0
   };
   
   await setDoc(playerRef, playerData, { merge: true });
@@ -8447,6 +8690,40 @@ setTimeout(()=>{
 box.style.display = "none";
 },8400);
 
+}
+
+const pixelQuests = [
+  { text: "Win 3 matches", goal: 3, reward: 1 },
+  { text: "Roll 10 swords", goal: 10, reward: 2 },
+  { text: "Get a critical hit", goal: 1, reward: 5 }
+];
+
+function completePixelQuest(q){
+  if(q.completed) return;
+
+  q.completed = true;
+  save.pixels += q.reward;
+
+  showAnnouncement("System", `+${q.reward} Pixels`);
+}
+
+function buyPixelHat(){
+  if(save.pixels < 75) return alert("Not enough Pixels");
+
+  save.pixels -= 75;
+  save.unlockedHats = save.unlockedHats || [];
+  save.unlockedHats.push("pixelHat");
+
+  alert("Pixel Hat Unlocked!");
+}
+
+function buyPixelTag(){
+  if(save.pixels < 200) return alert("Not enough Pixels");
+
+  save.pixels -= 200;
+  save.pixelized = true; // 🔥 IMPORTANT BOOLEAN
+
+  alert("Pixelized Tag Unlocked!");
 }
 
 function lockSelectedSword(){
