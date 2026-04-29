@@ -311,27 +311,7 @@ if (data.pixelizedStart && data.pixelizedEnd) {
       }
     }
   }
-}); // This is the ONLY end of the onSnapshot function
-
-const globalEventRef = doc(db, "global", "events");
-
-onSnapshot(globalEventRef, (snap) => {
-  const data = snap.data();
-  if (!data) return;
-
-  const now = Date.now();
-
-  if (data.launchStart && data.launchEnd) {
-    if (now >= data.launchStart && now < data.launchEnd) {
-    launchMode = !launchMode;
-      showAnnouncement(data.spawnedBy || "System", `Turned on launch mode, you can jump high`);
-          setTimeout(()=>{
-          launchMode =false;
-    }, 900000);
-    }
-  }
-  
-});
+}); // This is the ONLY end of the onSnapshot functio
 window.auth = auth;
 window.db = db;
 window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
