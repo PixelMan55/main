@@ -3806,15 +3806,6 @@ Launch Mode
 
 <br><br>
 
-High Speed
-
-<label class="switch">
-<input type="checkbox" onchange="toggleHighSpeed()">
-<span class="slider"></span>
-</label>
-
-<br><br>
-
 Infinite Coins
 
 <label class="switch">
@@ -5402,7 +5393,6 @@ let leaderboardInterval=null;
 
 let invincible=false;
 let launchMode=false;
-let highSpeed=false;
 let instakill=false;
 let infiniteCoins = false;
 let storedCoins = 0;
@@ -7043,7 +7033,7 @@ return;
 
 // 🌌 VOID EVENT PHYSICS
 let currentGravity = GRAVITY;
-let currentSpeed = SPEED;
+
 if(voidEventActive){
   currentGravity = GRAVITY * 0.5;
 
@@ -7094,11 +7084,8 @@ p1.y += p1.vy;
   if(p1.y>0){p1.y=0;p1.vy=0;p1.onGround=true}
   if((keys.w||keys[" "])&&p1.onGround){p1.vy=JUMP_FORCE;p1.onGround=false}
     if((keys.keyup||keys["keyup"])&&p1.onGround){p1.vy=JUMP_FORCE;p1.onGround=false}
-if(highSpeed){
-  if(p1.stun===0){if(keys.a)p1.x-=8;if(keys.d)p1.x+=8; if(keys.keyleft)p1.x-=8;if(keys.keyright)p1.x+=8}
-  }else{
   if(p1.stun===0){if(keys.a)p1.x-=4;if(keys.d)p1.x+=4; if(keys.keyleft)p1.x-=4;if(keys.keyright)p1.x+=4}
-}
+
   const sword=swords[save.sword];
   if(keys.s&&p1.cd===0&&Math.abs(p1.x-p2.x)<60){
 if(instakill){
@@ -9302,13 +9289,8 @@ function toggleSuperJump() {
 
 function toggleLaunchMode() {
     launchMode = !launchMode;
-alert("Launch mode: "+launchMode);
+alert("Launch mode enabled: "+launchMode);
 }
-
-function toggleHighSpeed() {
-highSpeed = !highSpeed;
-alert("High speed: "+highSpeed); 
-  }
 
 function buyGlitchBlade(){
 if(save.dataBits < 250){
@@ -9482,7 +9464,6 @@ overflow:hidden;
 <div id="beam"></div>
 </body>
 </html>
-
 
 
 
