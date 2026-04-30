@@ -1372,37 +1372,54 @@ button,select{padding:10px;font-size:16px;margin:6px}
   text-transform: uppercase;
   font-family: sans-serif;
   
-  /* The Secret Sauce: A "Bounce-Back" Bezier for that mechanical hit */
-  animation: slotReveal 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  /* Increased duration to 2.5s to allow for the spin phase */
+  animation: fullSlotSpin 2.5s cubic-bezier(0.45, 0.05, 0.2, 1.2) forwards;
   
   opacity: 0;
   will-change: transform, opacity, filter;
-  display: inline-block; /* Essential for vertical transforms to work correctly */
+  display: inline-block;
 }
 
-@keyframes slotReveal {
+@keyframes fullSlotSpin {
+  /* 0% - 20%: Anticipation (Pull back slightly) */
   0% {
     opacity: 0;
-    /* Starts high up, stretched vertically, and very blurry */
-    transform: translateY(-100px) scaleY(2.5) skewY(10deg);
-    filter: blur(15px) brightness(2);
-    letter-spacing: 2px;
+    transform: translateY(0) scaleY(1);
+    filter: blur(0);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(15px) scaleY(0.8); /* Squish down before launch */
+    filter: blur(0);
+  }
+
+  /* 20% - 70%: The High-Speed Spin Blur */
+  20% {
+    transform: translateY(-100px) scaleY(3); /* Stretch way out */
+    filter: blur(15px) brightness(1.5);
+  }
+  40% {
+    transform: translateY(100px) scaleY(3); /* Simulate "looping" by switching positions */
+    opacity: 1;
   }
   60% {
+    transform: translateY(-100px) scaleY(3);
+    filter: blur(20px) brightness(2);
+  }
+
+  /* 70% - 100%: The Mechanical Slam Reveal (Your original physics) */
+  80% {
     opacity: 1;
-    /* Hits the "ground" slightly lower than the final position */
-    transform: translateY(10px) scaleY(0.9) skewY(0deg);
+    transform: translateY(20px) scaleY(0.7) skewY(-5deg); /* Impact hit */
     filter: blur(2px) brightness(1.2);
   }
-  85% {
-    /* Subtle bounce back up */
-    transform: translateY(-5px) scaleY(1.05);
+  90% {
+    transform: translateY(-10px) scaleY(1.1); /* Bounce back up */
   }
   100% {
     opacity: 1;
     transform: translateY(0) scaleY(1) skewY(0);
     filter: blur(0px);
-    /* Heavy shadow makes it feel like it landed on a solid surface */
     text-shadow: 0 5px 15px rgba(0,0,0,0.5), 0 2px 0 #ccc;
   }
 }
