@@ -145,35 +145,87 @@ const player = { x:230, y:0, w:30, h:40, vx:0, vy:0, onGround:false, speed:220, 
 let score = 0, levelIndex = 0, cameraY = 0;
 
 // ----- LEVEL GENERATION -----
+// ----- FIXED LEVEL GENERATION -----
 function generateLevels(){
   let levels = [];
-  for (let i=0;i<15;i++){
+  const maxJumpHeight = Math.pow(player.jumpPower, 2) / (2 * gravity); // Physics-based limit (~258px)
+  const safeJumpHeight = 180; // Keeping it well under the limit for fun gameplay
+
+  for (let i=0; i<15; i++){
     let platforms = [];
-    // starting blue platform lower
+    // Start Platform
     platforms.push({ x:160, y:780, width:140, height:20, color:'#2196f3', type:'solid' });
-    let difficulty = i+1;
-    let lastX = -999;
-    for (let j=1;j<10+Math.floor(difficulty/2);j++){
-      let x,y,type;
-      do { x = Math.random()*350; y = 780 - j*(120-difficulty*2) - i*30; } while (Math.abs(x-lastX) < 60);
+    
+    let difficulty = i + 1;
+    let currentY = 780;
+    let lastX = 160;
+
+    // Generate 10-15 platforms
+    for (let j=1; j < 10 + Math.floor(difficulty/2); j++){
+      // 1. Calculate Y first: Ensure the gap is NEVER larger than the player can jump
+      // We reduce the gap slightly as levels go up, but never exceed safeJumpHeight
+      let verticalGap = 130 + (difficulty * 2); 
+      if (verticalGap > safeJumpHeight) verticalGap = safeJumpHeight;
+      
+      currentY -= verticalGap;
+
+      // 2. Calculate X: Ensure horizontal distance is reachable
+      // Max horizontal drift allowed based on the jump
+      let x;
+      let maxDrift = 180; 
+      let minX = Math.max(0, lastX - maxDrift);
+      let maxX = Math.min(W - 120, lastX + maxDrift);
+      
+      x = Math.random() * (maxX - minX) + minX;
       lastX = x;
+
+      // 3. Determine Type
       const rand = Math.random();
-      if (rand < 0.2) type='moving'; else if (rand < 0.3) type='breaking'; else if (rand < 0.4) type='disappearing'; else type='solid';
-      let color = '#2b6f47'; if (type==='moving') color='#4caf50'; else if (type==='breaking') color='#8b4513'; else if (type==='disappearing') color='#ff9800';
-      platforms.push({ x, y, width:120, height:20, color, type, timer:0, dir:1 });
+      let type = 'solid';
+      if (rand < 0.15) type='moving'; 
+      else if (rand < 0.25) type='breaking'; 
+      else if (rand < 0.35) type='disappearing';
+
+      let color = '#2b6f47'; 
+      if (type==='moving') color='#4caf50'; 
+      else if (type==='breaking') color='#8b4513'; 
+      else if (type==='disappearing') color='#ff9800';
+
+      platforms.push({ x, y: currentY, width:120, height:20, color, type, timer:0, dir:1 });
     }
-    let obstacles = [];
-    for (const p of platforms.slice(1)){
-      if (Math.random() < 0.4){
-        const moveDir = Math.random() < 0.5 ? -1 : 1;
-        obstacles.push({ x: p.x + p.width/2 - 15, y: p.y - 30, size:30, color:'#d62828', dir: moveDir, speed:60, moving: Math.random() < 0.5 });
-      }
-    }
-    const portalY = Math.min(...platforms.map(p=>p.y)) - 100;
-    levels.push({ platforms, portal: { x: Math.random()*350+50, y: portalY, width:60, height:30, angle: 0 }, obstacles });
+
+    // Portal logic
+    const topPlatform = platforms[platforms.length - 1];
+    levels.push({ 
+      platforms, 
+      portal: { x: topPlatform.x + 30, y: topPlatform.y - 80, width:60, height:30, angle: 0 },
+      obstacles: generateObstacles(platforms, difficulty)
+    });
   }
   return levels;
 }
+
+// Helper to keep the generator clean
+function generateObstacles(platforms, difficulty) {
+  let obs = [];
+  // Only add obstacles after the first 3 platforms so players can start safely
+  for (let i = 3; i < platforms.length; i++) {
+    if (Math.random() < 0.3 + (difficulty * 0.02)) {
+      const p = platforms[i];
+      obs.push({ 
+        x: p.x + p.width/2 - 15, 
+        y: p.y - 40, 
+        size: 25, 
+        color: '#d62828', 
+        dir: Math.random() < 0.5 ? -1 : 1, 
+        speed: 40 + (difficulty * 5), 
+        moving: Math.random() < 0.4 
+      });
+    }
+  }
+  return obs;
+}
+
 let levels = generateLevels();
 
 // ----- CORE GAME FUNCTIONS -----
