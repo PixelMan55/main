@@ -685,10 +685,10 @@ body.pixelizedActive {
 
 /* Warping animation for the menu */
 @keyframes menudistort {
-    0% { transform: rotate(0deg) scale(1); border-color: #fff; }
-    33% { transform: rotate(1deg) scale(1.01); border-color: #ff00ff; }
-    66% { transform: rotate(-1deg) scale(0.99); border-color: #00ff9c; }
-    100% { transform: rotate(0deg) scale(1); border-color: #fff; }
+    0% { border-color: #fff; }
+    33% { border-color: #ff00ff; }
+    66% { border-color: #00ff9c; }
+    100% { border-color: #fff; }
 }
 
 /* Specific Menu Button Overrides */
@@ -992,20 +992,7 @@ button[onclick="triggerAdminAbuse()"] {
 .achievement.locked { opacity: 0.4; border-color: #333; }
 
 /* Daily Reward Button */
-#dailyRewardBtn {
-    position: fixed;
-    bottom: 20px; left: 15px; /* Moved to left */
-    background: linear-gradient(45deg, gold, #ff0);
-    color: black;
-    border: 2px solid #fff;
-    padding: 12px 16px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 0 15px gold;
-    z-index: 1000;
-    width: auto !important;
-    animation: rewardWobble 2s infinite;
-}
+
 @keyframes rewardWobble {
     0%, 100% { transform: rotate(-3deg); }
     50% { transform: rotate(3deg) scale(1.05); }
@@ -1734,9 +1721,6 @@ height:50px;
 }
 
 #dailyRewardBtn{
-position:fixed;
-bottom:15px;
-right:15px;
 background:gold;
 color:black;
 border:none;
@@ -3237,12 +3221,40 @@ body.megaShake::after{
     to { transform: rotate(360deg); }
 }
 
+
+/* === CARD HOVER EFFECT === */
+.swordCard, .hatCard {
+  border-radius: 12px;
+}
+
+.swordCard:hover, .hatCard:hover {
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 10px 25px rgba(255,255,255,0.2);
+}
+
+/* === SMOOTH POPUPS === */
+#endScreen > div,
+#pauseMenu > div,
+#settingsMenu > div {
+  border-radius: 16px;
+}
+
+/* === SCROLLBAR (GLOBAL) === */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00ff9c;
+  border-radius: 10px;
+}
+
 </style>
 </head>
 
 <body>
 
-<div id="menu">
+<div id="menu" class="panel">
 <div id="coinDisplay">
 <img src="https://e7.pngegg.com/pngimages/1003/599/png-clipart-pixel-art-mario-coin-text-rectangle-thumbnail.png">
 <span id="coinText">0</span>
@@ -3265,7 +3277,7 @@ body.megaShake::after{
 
 <button onclick="openLeaderboard()">Leaderboard 🏆</button>
 <button onclick="openChat()">Chat 💬</button>
-<button id="dailyRewardBtn" onclick="claimDailyReward()">🎁 Daily Reward</button><button onclick="openEventsMenu()">Events 🥳</button>
+<button onclick="openEventsMenu()">Events 🥳</button>
 <button onclick="openEventQuests()">Event Quests 👑</button>
 <button onclick="openMore()">More Games</button>
 <br><br>
@@ -3273,7 +3285,7 @@ body.megaShake::after{
 <button onclick="openSignup()">Sign Up</button>
 <button onclick="openSettings()">⚙️ Settings</button>
 <button onclick="openShop()">Shop 🛒</button>
-
+<button id="dailyRewardBtn" onclick="claimDailyReward()">🎁 Daily Reward</button>
 </div>
 <div id="fallingEggs" onclick="showAnnouncement('You found an easter egg! Get it?', 'LOL')"></div>
 <button id="adminBtn" onclick="openAdmin()" style="display:none">AP</button>
@@ -4106,6 +4118,7 @@ text-align:right;
   <br>
   <button onclick="window.location='https://pixelman55.github.io/main/pixel_platforms.html'">Pixel Platforms</button>
   <br>
+  <button onclick="window.location='https://pixelman55.github.io/main/srng'">Sword RNG</button>
   <button onclick="backToMenu()">Back</button>
 </div>
 <script>
@@ -9487,6 +9500,5 @@ overflow:hidden;
 <div id="beam"></div>
 </body>
 </html>
-
 
 
