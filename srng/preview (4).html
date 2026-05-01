@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RNG Sword</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+body{
+  margin:0;
+  font-family:Orbitron;
+  background:radial-gradient(circle at top,#0f1020,#05060c);
+  color:white;
+  text-align:center;
+}
+
+/* PAGES */
+.page{display:none;}
+.page.active{display:block;}
+
+/* LOGIN BTN */
+#loginBtn{
+  position:fixed;
+  top:10px;
+  right:10px;
+  padding:10px 15px;
+  border:none;
+  border-radius:8px;
+  background:linear-gradient(90deg,cyan,purple);
+  cursor:pointer;
+}
+
+/* SLOT */
+.slot{
+  margin:40px auto;
+  width:320px;
+  height:220px;
+  border-radius:15px;
+  border:2px solid #00f0ff33;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:rgba(255,255,255,0.05);
+  box-shadow:0 0 30px rgba(0,255,255,0.2);
+}
+.spinning{animation:shake 0.1s infinite alternate;}
+@keyframes shake{
+  from{transform:translateY(-4px);}
+  to{transform:translateY(4px);}
+}
+
+/* SWORD */
+.sword-svg{
+  width:70px;
+  height:120px;
+  animation:float 2s infinite ease-in-out;
+}
+@keyframes float{
+  0%{transform:translateY(0);}
+  50%{transform:translateY(-6px);}
+  100%{transform:translateY(0);}
+}
+
+/* RARITY */
+.common .sword-svg{filter:drop-shadow(0 0 5px gray);}
+.decent .sword-svg{filter:drop-shadow(0 0 8px #4caf50);}
+.great .sword-svg{filter:drop-shadow(0 0 10px cyan);}
+.insane .sword-svg{filter:drop-shadow(0 0 14px purple);}
+.alienish .sword-svg{filter:drop-shadow(0 0 16px lime);}
+.demonic .sword-svg{filter:drop-shadow(0 0 18px red);}
+.blessed .sword-svg{
+  filter:drop-shadow(0 0 30px gold);
+  animation:float 2s infinite, glow 1s infinite alternate;
+}
+@keyframes glow{
+  from{filter:drop-shadow(0 0 15px gold);}
+  to{filter:drop-shadow(0 0 30px gold);}
+}
+
+/* BUTTON */
+.btn{
+  padding:12px 25px;
+  margin:10px;
+  border:none;
+  border-radius:10px;
+  font-weight:bold;
+  cursor:pointer;
+  background:linear-gradient(90deg,cyan,purple);
+}
+
+/* COLLECTION */
+.collection{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:10px;
+  padding:10px;
+}
+.card{
+  background:#111;
+  padding:10px;
+  border-radius:10px;
+}
+
+/* MODAL */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.8);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+.modalBox{
+  background:#111;
+  padding:20px;
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<button id="loginBtn">LOGIN</button>
+
+<!-- MAIN PAGE -->
+<div id="mainPage" class="page active">
+  <h1>⚡ RNG SWORD ⚡</h1>
+
+  <div id="slot" class="slot">Press Roll</div>
+
+  <button class="btn" onclick="roll()">ROLL</button>
+  <button class="btn" onclick="openPage('swordsPage')">SWORDS</button>
+</div>
+
+<!-- SWORDS PAGE -->
+<div id="swordsPage" class="page">
+  <h2>Your Swords</h2>
+  <button class="btn" onclick="openPage('mainPage')">BACK</button>
+  <div id="collection" class="collection"></div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" class="modal">
+  <div class="modalBox">
+    <h2>Login</h2>
+    <input id="email" placeholder="Email"><br>
+    <input id="pass" type="password" placeholder="Password"><br>
+    <button onclick="signup()">Sign Up</button>
+    <button onclick="login()">Login</button>
+    <button onclick="googleLogin()">Google</button><br>
+    <button onclick="closeLogin()">Close</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+
+/* CONFIG */
+const firebaseConfig = {
+  apiKey: "AIzaSyBowtVKpNm3diK3NiBNzNDroSqMz4-cArk",
+  authDomain: "sword-rng.firebaseapp.com",
+  projectId: "sword-rng",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+/* DATA */
+let user=null;
+let collectionData=JSON.parse(localStorage.getItem("collection")||"[]");
+
+/* SWORDS */
+const items=[
+{id:"iron",name:"Iron Blade",rarity:"common",chance:40,color:"#bbb"},
+{id:"forest",name:"Forest Sword",rarity:"decent",chance:15,color:"#4caf50"},
+{id:"storm",name:"Storm Katana",rarity:"great",chance:3,color:"#00e5ff"},
+{id:"void",name:"Void Edge",rarity:"insane",chance:0.5,color:"#9c27b0"},
+{id:"alien",name:"Alien Fang",rarity:"alienish",chance:0.1,color:"#39ff14"},
+{id:"demon",name:"Demon Cleaver",rarity:"demonic",chance:0.05,color:"#ff1744"},
+{id:"blessed",name:"Blessed Lightblade",rarity:"blessed",chance:0.01,color:"gold"}
+];
+
+/* SVG */
+function swordSVG(c){
+return `<svg class="sword-svg" viewBox="0 0 100 200">
+<polygon points="50,10 60,140 40,140" fill="${c}"/>
+<rect x="30" y="140" width="40" height="10" fill="#444"/>
+<rect x="45" y="150" width="10" height="30" fill="#222"/>
+<circle cx="50" cy="185" r="6" fill="#666"/>
+</svg>`;
+}
+
+/* RNG */
+function getItem(){
+let total=items.reduce((s,i)=>s+i.chance,0);
+let r=Math.random()*total;
+for(let i of items){
+if(r<i.chance)return i;
+r-=i.chance;
+}
+return items[0];
+}
+
+/* ROLL */
+window.roll=()=>{
+slot.classList.add("spinning");
+
+let interval=setInterval(()=>{
+let r=items[Math.floor(Math.random()*items.length)];
+slot.innerHTML=swordSVG(r.color)+"<div>"+r.name+"</div>";
+},80);
+
+setTimeout(()=>{
+clearInterval(interval);
+
+let win=getItem();
+slot.className="slot "+win.rarity;
+slot.innerHTML=swordSVG(win.color)+"<div>"+win.name+"</div>";
+
+if(!collectionData.find(i=>i.id===win.id)){
+collectionData.push(win);
+localStorage.setItem("collection",JSON.stringify(collectionData));
+}
+
+},1200);
+};
+
+/* COLLECTION PAGE */
+function renderCollection(){
+collection.innerHTML="";
+collectionData.forEach(i=>{
+collection.innerHTML+=`
+<div class="card ${i.rarity}">
+${swordSVG(i.color)}
+${i.name}
+</div>`;
+});
+}
+
+/* NAV */
+window.openPage=(id)=>{
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+
+if(id==="swordsPage") renderCollection();
+};
+
+/* AUTH */
+window.signup=()=>createUserWithEmailAndPassword(auth,email.value,pass.value);
+window.login=()=>signInWithEmailAndPassword(auth,email.value,pass.value);
+
+window.googleLogin=async()=>{
+try{await signInWithPopup(auth,provider);}
+catch{await signInWithRedirect(auth,provider);}
+};
+
+getRedirectResult(auth);
+
+onAuthStateChanged(auth,u=>{
+user=u;
+loginBtn.textContent=u?"LOGOUT":"LOGIN";
+});
+
+loginBtn.onclick=()=>{
+if(user) signOut(auth);
+else loginModal.style.display="flex";
+};
+
+window.closeLogin=()=>loginModal.style.display="none";
+
+</script>
+
+</body>
+</html>
