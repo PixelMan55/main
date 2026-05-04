@@ -7304,7 +7304,6 @@ if(sword.rarity === "pixelized"){
     pixelizedEnd: Date.now() + (15 * 60 * 1000),
     spawnedBy: save.username
   });
-  showPixelizedMessage();
 }
 
 box.innerHTML = `
@@ -8196,14 +8195,6 @@ async function sendAnnouncement(){
   await setDoc(doc(db,"global","announcement"), {
     text: text,
     author: username,
-    time: Date.now()
-  });
-}
-
-async function showPixelizedMessage(){
-  await setDoc(doc(db,"global","announcement"), {
-    text: save.username "rolled a pixelized!",
-    author: "Nice Job!",
     time: Date.now()
   });
 }
@@ -9509,5 +9500,4 @@ overflow:hidden;
 <div id="beam"></div>
 </body>
 </html>
-
 
