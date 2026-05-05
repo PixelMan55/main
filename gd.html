@@ -1,2 +1,491 @@
-<button onclick="window.location.href='https://www.mediafire.com/file/bckoc5drskkjurl/Geometry-Dash-v2.206-iosvizor.ipa/file';">Download</button>
-<a>after clicking download, click "Download (149.41MB)" to get it :) and u might get an ad but it will download.</a>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>GD Full Fixed Editor</title>
+
+<style>
+body{
+  margin:0;
+  overflow:hidden;
+  font-family:Arial;
+  background:#0b0b22;
+  color:white;
+}
+
+#game{
+  width:100vw;
+  height:100vh;
+  position:relative;
+  overflow:hidden;
+}
+
+/* UI */
+#ui{
+  position:fixed;
+  top:10px;
+  left:10px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  z-index:1000;
+}
+
+button{
+  padding:6px 10px;
+  border-radius:6px;
+  border:none;
+  background:#222;
+  color:white;
+  cursor:pointer;
+}
+
+button.active{
+  background:cyan;
+  color:black;
+}
+
+/* PLAYER */
+.player{
+  position:absolute;
+  width:30px;
+  height:30px;
+  background:cyan;
+  border-radius:6px;
+  transform-origin:center;
+}
+
+/* OBJECTS */
+.block{
+  position:absolute;
+  width:120px;
+  height:20px;
+  background:linear-gradient(90deg,#ff00cc,#6600ff);
+  border-radius:6px;
+}
+
+.spike{
+  position:absolute;
+  width:30px;
+  height:30px;
+  background:red;
+  clip-path:polygon(50% 0,0 100%,100% 100%);
+}
+
+.portal{
+  position:absolute;
+  width:30px;
+  height:50px;
+  background:deepskyblue;
+  border-radius:10px;
+}
+
+.gportal{
+  position:absolute;
+  width:30px;
+  height:50px;
+  background:orange;
+  border-radius:10px;
+}
+
+.goal{
+  position:absolute;
+  width:40px;
+  height:80px;
+  background:lime;
+}
+
+/* POPUP */
+#popup{
+  position:fixed;
+  inset:0;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,0.7);
+  z-index:2000;
+}
+
+#panel{
+  background:#111;
+  padding:20px;
+  border-radius:10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- UI -->
+<div id="ui">
+
+<button onclick="setMode('play')">Play</button>
+<button onclick="setMode('edit')">Edit</button>
+
+<button onclick="tool='block'">Block</button>
+<button onclick="tool='spike'">Spike</button>
+<button onclick="tool='portal'">Portal</button>
+<button onclick="tool='gportal'">Gravity</button>
+<button onclick="tool='goal'">Goal</button>
+<button onclick="tool='delete'">Delete</button>
+
+<button onclick="saveLevel()">Save</button>
+<button onclick="loadLevel(prompt('Paste code'))">Load</button>
+
+<button onclick="openPopup()">Login</button>
+
+</div>
+
+<!-- GAME -->
+<div id="game"></div>
+
+<!-- POPUP -->
+<div id="popup">
+<div id="panel">
+<input id="email" placeholder="email">
+<input id="pass" type="password" placeholder="password">
+<button onclick="signup()">Sign Up</button>
+<button onclick="login()">Login</button>
+<button onclick="closePopup()">Close</button>
+</div>
+</div>
+
+<script type="module">
+
+/* FIREBASE */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import {
+getAuth,
+createUserWithEmailAndPassword,
+signInWithEmailAndPassword,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+
+const firebaseConfig={
+apiKey:"AIzaSyDk5qh-pydPe6vfBG7KFhl50zderbGggW4",
+authDomain:"gdeditor-b9a32.firebaseapp.com",
+projectId:"gdeditor-b9a32",
+storageBucket:"gdeditor-b9a32.firebasestorage.app",
+messagingSenderId:"417274191636",
+appId:"1:417274191636:web:5a826320e7fac5bc4eec01"
+};
+
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+
+let currentUser=null;
+onAuthStateChanged(auth,u=>currentUser=u);
+
+/* GAME STATE */
+const game=document.getElementById("game");
+
+let mode="play";
+let tool="block";
+
+let camera={x:0,y:0};
+let keys={};
+
+/* PLAYER */
+let player={
+x:100,y:200,
+vx:0,vy:0,
+rot:0,
+gravity:1,
+grounded:false,
+canJump:true
+};
+
+/* WORLD */
+let blocks=[],spikes=[],portals=[],gportals=[],goal=null;
+
+/* PLAYER EL */
+const p=document.createElement("div");
+p.className="player";
+game.appendChild(p);
+
+/* INPUT */
+addEventListener("keydown",e=>{
+keys[e.key]=true;
+
+if(e.key===" " && player.canJump && player.grounded){
+player.vy=-10;
+player.canJump=false;
+}
+});
+
+addEventListener("keyup",e=>{
+keys[e.key]=false;
+if(e.key===" ")player.canJump=true;
+});
+
+/* MODE */
+window.setMode=(m)=>mode=m;
+
+/* POPUP */
+window.openPopup=()=>popup.style.display="flex";
+window.closePopup=()=>popup.style.display="none";
+
+/* AUTH REAL */
+window.signup=async()=>{
+await createUserWithEmailAndPassword(auth,email.value,pass.value);
+};
+
+window.login=async()=>{
+await signInWithEmailAndPassword(auth,email.value,pass.value);
+};
+
+/* OBJECTS */
+function addBlock(x,y){
+let el=document.createElement("div");
+el.className="block";
+game.appendChild(el);
+blocks.push({x,y,el});
+}
+
+function addSpike(x,y){
+let el=document.createElement("div");
+el.className="spike";
+game.appendChild(el);
+spikes.push({x,y,el});
+}
+
+function addPortal(x,y){
+let el=document.createElement("div");
+el.className="portal";
+game.appendChild(el);
+portals.push({x,y,el});
+}
+
+function addGPortal(x,y){
+let el=document.createElement("div");
+el.className="gportal";
+game.appendChild(el);
+gportals.push({x,y,el});
+}
+
+function addGoal(x,y){
+if(goal)goal.el.remove();
+let el=document.createElement("div");
+el.className="goal";
+game.appendChild(el);
+goal={x,y,el};
+}
+
+/* SAVE */
+window.saveLevel=()=>{
+const code=btoa(JSON.stringify({blocks,spikes,portals,gportals,goal}));
+prompt("COPY CODE",code);
+};
+
+/* LOAD */
+window.loadLevel=(code)=>{
+const d=JSON.parse(atob(code));
+
+blocks.forEach(b=>b.el.remove());
+spikes.forEach(s=>s.el.remove());
+portals.forEach(p=>p.el.remove());
+gportals.forEach(g=>g.el.remove());
+if(goal)goal.el.remove();
+
+blocks=[];spikes=[];portals=[];gportals=[];goal=null;
+
+d.blocks.forEach(b=>addBlock(b.x,b.y));
+d.spikes.forEach(s=>addSpike(s.x,s.y));
+d.portals.forEach(p=>addPortal(p.x,p.y));
+d.gportals.forEach(g=>addGPortal(g.x,g.y));
+if(d.goal)addGoal(d.goal.x,d.goal.y);
+};
+
+/* CLICK EDITOR FIX (REAL WORKING) */
+game.addEventListener("click",(e)=>{
+
+if(mode!=="edit")return;
+
+const r=game.getBoundingClientRect();
+
+let x=e.clientX-r.left+camera.x;
+let y=e.clientY-r.top+camera.y;
+
+/* snap */
+x=Math.round(x/40)*40;
+y=Math.round(y/40)*40;
+
+/* delete */
+if(tool==="delete"){
+
+blocks=blocks.filter(b=>{
+let hit=Math.abs(b.x-x)<60&&Math.abs(b.y-y)<30;
+if(hit)b.el.remove();
+return !hit;
+});
+
+spikes=spikes.filter(s=>{
+let hit=Math.abs(s.x-x)<30&&Math.abs(s.y-y)<30;
+if(hit)s.el.remove();
+return !hit;
+});
+
+portals=portals.filter(p=>{
+let hit=Math.abs(p.x-x)<30&&Math.abs(p.y-y)<40;
+if(hit)p.el.remove();
+return !hit;
+});
+
+gportals=gportals.filter(g=>{
+let hit=Math.abs(g.x-x)<30&&Math.abs(g.y-y)<40;
+if(hit)g.el.remove();
+return !hit;
+});
+
+if(goal&&Math.abs(goal.x-x)<40&&Math.abs(goal.y-y)<60){
+goal.el.remove();
+goal=null;
+}
+
+return;
+}
+
+/* place */
+if(tool==="block")addBlock(x,y);
+if(tool==="spike")addSpike(x,y);
+if(tool==="portal")addPortal(x,y);
+if(tool==="gportal")addGPortal(x,y);
+if(tool==="goal")addGoal(x,y);
+
+});
+
+/* RESET */
+function reset(){
+player.x=100;
+player.y=200;
+player.vx=0;
+player.vy=0;
+player.rot=0;
+player.gravity=1;
+player.grounded=false;
+player.canJump=true;
+}
+
+/* CAMERA */
+function cam(){
+camera.x+=(player.x-200-camera.x)*0.08;
+camera.y+=(player.y-200-camera.y)*0.08;
+}
+
+/* COLLISION */
+function collide(){
+
+player.grounded=false;
+
+for(let b of blocks){
+if(player.x<b.x+120&&player.x+30>b.x&&player.y<b.y+20&&player.y+30>b.y){
+player.y=b.y-30;
+player.vy=0;
+player.grounded=true;
+player.rot=0;
+}
+}
+
+for(let s of spikes){
+if(Math.abs(player.x-s.x)<25&&Math.abs(player.y-s.y)<25){
+reset();
+}
+}
+
+for(let pz of portals){
+if(Math.abs(player.x-pz.x)<25&&Math.abs(player.y-pz.y)<40){
+player.gravity*=-1;
+player.rot+=180;
+}
+}
+
+for(let g of gportals){
+if(Math.abs(player.x-g.x)<25&&Math.abs(player.y-g.y)<40){
+player.gravity=1;
+}
+}
+
+if(goal&&Math.abs(player.x-goal.x)<40&&Math.abs(player.y-goal.y)<60){
+alert("LEVEL COMPLETE");
+reset();
+}
+
+}
+
+/* LOOP */
+function update(){
+
+cam();
+
+if(mode==="play"){
+
+if(keys.a)player.vx=-4;
+else if(keys.d)player.vx=4;
+else player.vx*=0.85;
+
+player.vy+=0.6*player.gravity;
+
+player.x+=player.vx;
+player.y+=player.vy;
+
+collide();
+
+if(!player.grounded)player.rot+=6;
+}
+
+if(player.y>2000||player.y<-2000)reset();
+
+render();
+requestAnimationFrame(update);
+}
+
+/* RENDER */
+function render(){
+
+p.style.left=(player.x-camera.x)+"px";
+p.style.top=(player.y-camera.y)+"px";
+p.style.transform=`rotate(${player.rot}deg)`;
+
+blocks.forEach(b=>{
+b.el.style.left=(b.x-camera.x)+"px";
+b.el.style.top=(b.y-camera.y)+"px";
+});
+
+spikes.forEach(s=>{
+s.el.style.left=(s.x-camera.x)+"px";
+s.el.style.top=(s.y-camera.y)+"px";
+});
+
+portals.forEach(p=>{
+p.el.style.left=(p.x-camera.x)+"px";
+p.el.style.top=(p.y-camera.y)+"px";
+});
+
+gportals.forEach(g=>{
+g.el.style.left=(g.x-camera.x)+"px";
+g.el.style.top=(g.y-camera.y)+"px";
+});
+
+if(goal){
+goal.el.style.left=(goal.x-camera.x)+"px";
+goal.el.style.top=(goal.y-camera.y)+"px";
+}
+}
+
+/* START LEVEL */
+addBlock(50,300);
+addBlock(200,300);
+addSpike(260,270);
+addPortal(320,260);
+addGPortal(420,260);
+addGoal(600,200);
+
+update();
+
+</script>
+
+</body>
+</html>
