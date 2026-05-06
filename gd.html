@@ -457,12 +457,48 @@ const r=game.getBoundingClientRect();
 let x=Math.round((e.clientX-r.left+camera.x)/40)*40;
 let y=Math.round((e.clientY-r.top+camera.y)/40)*40;
 
+if(tool==="delete"){
+
+blocks=blocks.filter(b=>{
+let hit=Math.abs(b.x-x)<60&&Math.abs(b.y-y)<30;
+if(hit)b.el.remove();
+return !hit;
+});
+
+spikes=spikes.filter(s=>{
+let hit=Math.abs(s.x-x)<30&&Math.abs(s.y-y)<30;
+if(hit)s.el.remove();
+return !hit;
+});
+
+portals=portals.filter(p=>{
+let hit=Math.abs(p.x-x)<30&&Math.abs(p.y-y)<40;
+if(hit)p.el.remove();
+return !hit;
+});
+
+gportals=gportals.filter(g=>{
+let hit=Math.abs(g.x-x)<30&&Math.abs(g.y-y)<40;
+if(hit)g.el.remove();
+return !hit;
+});
+
+if(goal&&Math.abs(goal.x-x)<40&&Math.abs(goal.y-y)<60){
+goal.el.remove();
+goal=null;
+}
+
+return;
+}
+  
 if(tool==="block")addBlock(x,y);
 if(tool==="spike")addSpike(x,y);
 if(tool==="portal")addPortal(x,y);
 if(tool==="gportal")addGPortal(x,y);
 if(tool==="goal")addGoal(x,y);
 };
+
+
 
 /* LOOP */
 function update(){
