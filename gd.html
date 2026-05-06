@@ -2,215 +2,217 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>GD Full Fixed Editor</title>
+<title>GD Full Online FINAL</title>
 
 <style>
-body{
-  margin:0;
-  overflow:hidden;
-  font-family:Arial;
-  background:#0b0b22;
-  color:white;
-}
+body{margin:0;overflow:hidden;background:#0b0b22;font-family:Arial;}
+#game{width:100vw;height:100vh;position:relative;overflow:hidden;}
 
-#game{
-  width:100vw;
-  height:100vh;
-  position:relative;
-  overflow:hidden;
-}
-
-/* UI */
 #ui{
-  position:fixed;
-  top:10px;
-  left:10px;
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  z-index:1000;
+position:fixed;top:10px;left:10px;
+display:flex;gap:6px;flex-wrap:wrap;
+z-index:1000;
 }
 
 button{
-  padding:6px 10px;
-  border-radius:6px;
-  border:none;
-  background:#222;
-  color:white;
-  cursor:pointer;
+padding:6px 10px;border:none;border-radius:6px;
+background:#222;color:white;cursor:pointer;
 }
 
-button.active{
-  background:cyan;
-  color:black;
-}
-
-/* PLAYER */
 .player{
-  position:absolute;
-  width:30px;
-  height:30px;
-  background:cyan;
-  border-radius:6px;
-  transform-origin:center;
+position:absolute;
+width:30px;height:30px;
+background:cyan;
+border-radius:6px;
+transition:transform 0.1s linear;
 }
 
-/* OBJECTS */
-.block{
-  position:absolute;
-  width:120px;
-  height:20px;
-  background:linear-gradient(90deg,#ff00cc,#6600ff);
-  border-radius:6px;
+.block{position:absolute;width:120px;height:20px;background:purple;border-radius:6px;}
+.spike{position:absolute;width:30px;height:30px;background:red;clip-path:polygon(50% 0,0 100%,100% 100%);}
+.portal{position:absolute;width:30px;height:50px;background:deepskyblue;border-radius:10px;}
+.gportal{position:absolute;width:30px;height:50px;background:orange;border-radius:10px;}
+.goal{position:absolute;width:40px;height:80px;background:lime;}
+
+#userDisplay{
+position:fixed;
+top:10px;
+right:10px;
+color:white;
+background:#111;
+padding:6px 10px;
+border-radius:6px;
+z-index:1000;
 }
 
-.spike{
-  position:absolute;
-  width:30px;
-  height:30px;
-  background:red;
-  clip-path:polygon(50% 0,0 100%,100% 100%);
-}
-
-.portal{
-  position:absolute;
-  width:30px;
-  height:50px;
-  background:deepskyblue;
-  border-radius:10px;
-}
-
-.gportal{
-  position:absolute;
-  width:30px;
-  height:50px;
-  background:orange;
-  border-radius:10px;
-}
-
-.goal{
-  position:absolute;
-  width:40px;
-  height:80px;
-  background:lime;
-}
-
-/* POPUP */
 #popup{
-  position:fixed;
-  inset:0;
-  display:none;
-  justify-content:center;
-  align-items:center;
-  background:rgba(0,0,0,0.7);
-  z-index:2000;
+position:fixed;inset:0;
+display:none;justify-content:center;align-items:center;
+background:rgba(0,0,0,0.85);
+z-index:10000;
 }
+#popup.show{display:flex;}
 
 #panel{
-  background:#111;
-  padding:20px;
-  border-radius:10px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
+background:#111;padding:20px;border-radius:10px;
+display:flex;flex-direction:column;gap:8px;
+min-width:200px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- UI -->
 <div id="ui">
-
 <button onclick="setMode('play')">Play</button>
 <button onclick="setMode('edit')">Edit</button>
 
-<button onclick="tool='block'">Block</button>
-<button onclick="tool='spike'">Spike</button>
-<button onclick="tool='portal'">Portal</button>
-<button onclick="tool='gportal'">Gravity</button>
-<button onclick="tool='goal'">Goal</button>
-<button onclick="tool='delete'">Delete</button>
+<button onclick="setTool('block')">Block</button>
+<button onclick="setTool('spike')">Spike</button>
+<button onclick="setTool('portal')">Portal</button>
+<button onclick="setTool('gportal')">Gravity</button>
+<button onclick="setTool('goal')">Goal</button>
+<button onclick="setTool('delete')">Delete</button>
 
 <button onclick="saveLevel()">Save</button>
 <button onclick="loadLevel(prompt('Paste code'))">Load</button>
 
-<button onclick="openPopup()">Login</button>
+<button onclick="uploadLevel()">Upload</button>
+<button onclick="loadFeed()">Feed</button>
+<button onclick="searchLevels()">Search</button>
 
+<button onclick="openPopup()">Login</button>
 </div>
 
-<!-- GAME -->
-<div id="game"></div>
+<div id="userDisplay">Not logged in</div>
 
-<!-- POPUP -->
 <div id="popup">
 <div id="panel">
 <input id="email" placeholder="email">
 <input id="pass" type="password" placeholder="password">
-<button onclick="signup()">Sign Up</button>
+<input id="usernameInput" placeholder="username (signup only)">
 <button onclick="login()">Login</button>
+<button onclick="signup()">Sign Up</button>
 <button onclick="closePopup()">Close</button>
 </div>
 </div>
 
+<div id="game"></div>
+
 <script type="module">
 
-/* FIREBASE */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import {
-getAuth,
-createUserWithEmailAndPassword,
-signInWithEmailAndPassword,
-onAuthStateChanged
+getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
 
-const firebaseConfig={
+import {
+getFirestore, collection, addDoc, getDocs, query,
+orderBy, limit, updateDoc, doc, increment, where,
+setDoc, getDoc
+} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+/* FIREBASE */
+const app=initializeApp({
 apiKey:"AIzaSyDk5qh-pydPe6vfBG7KFhl50zderbGggW4",
 authDomain:"gdeditor-b9a32.firebaseapp.com",
-projectId:"gdeditor-b9a32",
-storageBucket:"gdeditor-b9a32.firebasestorage.app",
-messagingSenderId:"417274191636",
-appId:"1:417274191636:web:5a826320e7fac5bc4eec01"
+projectId:"gdeditor-b9a32"
+});
+const auth=getAuth(app);
+const db=getFirestore(app);
+
+/* USER */
+let currentUser=null;
+let username="";
+
+onAuthStateChanged(auth, async (u)=>{
+currentUser = u;
+
+const display = document.getElementById("userDisplay");
+
+if(!u){
+username = "";
+display.innerText = "Not logged in";
+return;
+}
+
+try{
+const snap = await getDoc(doc(db,"users",u.uid));
+
+if(snap.exists()){
+username = snap.data().username || "";
+display.innerText = username || "No username";
+}else{
+username = "";
+display.innerText = "No profile";
+}
+}catch(e){
+console.error(e);
+display.innerText = "Error loading user";
+}
+});
+
+/* POPUP */
+const popup=document.getElementById("popup");
+window.openPopup=()=>{
+popup.classList.add("show");
+document.getElementById("ui").style.pointerEvents="none";
+};
+window.closePopup=()=>{
+popup.classList.remove("show");
+document.getElementById("ui").style.pointerEvents="auto";
 };
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
+/* AUTH */
+window.login=async()=>{
+try{
+await signInWithEmailAndPassword(auth,email.value,pass.value);
+closePopup();
+}catch(e){alert(e.message);}
+};
 
-let currentUser=null;
-onAuthStateChanged(auth,u=>currentUser=u);
+window.signup=async()=>{
+try{
+const name=usernameInput.value.trim();
+if(!name) return alert("Enter username");
 
-/* GAME STATE */
+const user=await createUserWithEmailAndPassword(auth,email.value,pass.value);
+await setDoc(doc(db,"users",user.user.uid),{username:name});
+
+username=name;
+alert("Account created!");
+closePopup();
+}catch(e){alert(e.message);}
+};
+
+/* GAME */
 const game=document.getElementById("game");
 
 let mode="play";
 let tool="block";
-
 let camera={x:0,y:0};
 let keys={};
 
-/* PLAYER */
 let player={
 x:100,y:200,
 vx:0,vy:0,
-rot:0,
-gravity:1,
 grounded:false,
 canJump:true
 };
 
-/* WORLD */
-let blocks=[],spikes=[],portals=[],gportals=[],goal=null;
+let rotation=0;
 
-/* PLAYER EL */
 const p=document.createElement("div");
 p.className="player";
 game.appendChild(p);
+
+/* WORLD */
+let blocks=[],spikes=[],portals=[],gportals=[],goal=null;
 
 /* INPUT */
 addEventListener("keydown",e=>{
 keys[e.key]=true;
 
-if(e.key===" " && player.canJump && player.grounded){
+if((e.key===" "||e.key==="ArrowUp") && player.canJump && player.grounded){
 player.vy=-10;
 player.canJump=false;
 }
@@ -218,53 +220,24 @@ player.canJump=false;
 
 addEventListener("keyup",e=>{
 keys[e.key]=false;
-if(e.key===" ")player.canJump=true;
+if(e.key===" "||e.key==="ArrowUp") player.canJump=true;
 });
 
-/* MODE */
+/* UI */
 window.setMode=(m)=>mode=m;
-
-/* POPUP */
-window.openPopup=()=>popup.style.display="flex";
-window.closePopup=()=>popup.style.display="none";
-
-/* AUTH REAL */
-window.signup=async()=>{
-await createUserWithEmailAndPassword(auth,email.value,pass.value);
-};
-
-window.login=async()=>{
-await signInWithEmailAndPassword(auth,email.value,pass.value);
-};
+window.setTool=(t)=>tool=t;
 
 /* OBJECTS */
-function addBlock(x,y){
+function make(cls,x,y,arr){
 let el=document.createElement("div");
-el.className="block";
+el.className=cls;
 game.appendChild(el);
-blocks.push({x,y,el});
+arr.push({x,y,el});
 }
-
-function addSpike(x,y){
-let el=document.createElement("div");
-el.className="spike";
-game.appendChild(el);
-spikes.push({x,y,el});
-}
-
-function addPortal(x,y){
-let el=document.createElement("div");
-el.className="portal";
-game.appendChild(el);
-portals.push({x,y,el});
-}
-
-function addGPortal(x,y){
-let el=document.createElement("div");
-el.className="gportal";
-game.appendChild(el);
-gportals.push({x,y,el});
-}
+const addBlock=(x,y)=>make("block",x,y,blocks);
+const addSpike=(x,y)=>make("spike",x,y,spikes);
+const addPortal=(x,y)=>make("portal",x,y,portals);
+const addGPortal=(x,y)=>make("gportal",x,y,gportals);
 
 function addGoal(x,y){
 if(goal)goal.el.remove();
@@ -276,18 +249,21 @@ goal={x,y,el};
 
 /* SAVE */
 window.saveLevel=()=>{
-const code=btoa(JSON.stringify({blocks,spikes,portals,gportals,goal}));
-prompt("COPY CODE",code);
+const data={
+blocks:blocks.map(b=>({x:b.x,y:b.y})),
+spikes:spikes.map(s=>({x:s.x,y:s.y})),
+portals:portals.map(p=>({x:p.x,y:p.y})),
+gportals:gportals.map(g=>({x:g.x,y:g.y})),
+goal:goal?{x:goal.x,y:goal.y}:null
+};
+prompt("COPY",btoa(JSON.stringify(data)));
 };
 
 /* LOAD */
 window.loadLevel=(code)=>{
 const d=JSON.parse(atob(code));
 
-blocks.forEach(b=>b.el.remove());
-spikes.forEach(s=>s.el.remove());
-portals.forEach(p=>p.el.remove());
-gportals.forEach(g=>g.el.remove());
+[blocks,spikes,portals,gportals].forEach(arr=>arr.forEach(o=>o.el.remove()));
 if(goal)goal.el.remove();
 
 blocks=[];spikes=[];portals=[];gportals=[];goal=null;
@@ -299,193 +275,259 @@ d.gportals.forEach(g=>addGPortal(g.x,g.y));
 if(d.goal)addGoal(d.goal.x,d.goal.y);
 };
 
-/* CLICK EDITOR FIX (REAL WORKING) */
-game.addEventListener("click",(e)=>{
+window.uploadLevel = async()=>{
+if(!currentUser) return alert("Login first");
 
-if(mode!=="edit")return;
-
-const r=game.getBoundingClientRect();
-
-let x=e.clientX-r.left+camera.x;
-let y=e.clientY-r.top+camera.y;
-
-/* snap */
-x=Math.round(x/40)*40;
-y=Math.round(y/40)*40;
-
-/* delete */
-if(tool==="delete"){
-
-blocks=blocks.filter(b=>{
-let hit=Math.abs(b.x-x)<60&&Math.abs(b.y-y)<30;
-if(hit)b.el.remove();
-return !hit;
-});
-
-spikes=spikes.filter(s=>{
-let hit=Math.abs(s.x-x)<30&&Math.abs(s.y-y)<30;
-if(hit)s.el.remove();
-return !hit;
-});
-
-portals=portals.filter(p=>{
-let hit=Math.abs(p.x-x)<30&&Math.abs(p.y-y)<40;
-if(hit)p.el.remove();
-return !hit;
-});
-
-gportals=gportals.filter(g=>{
-let hit=Math.abs(g.x-x)<30&&Math.abs(g.y-y)<40;
-if(hit)g.el.remove();
-return !hit;
-});
-
-if(goal&&Math.abs(goal.x-x)<40&&Math.abs(goal.y-y)<60){
-goal.el.remove();
-goal=null;
-}
-
+if(!username){
+alert("Username not loaded yet. Try again in a second.");
 return;
 }
 
-/* place */
+const name = prompt("Level name?");
+if(!name) return;
+
+const code = btoa(JSON.stringify({
+blocks:blocks.map(b=>({x:b.x,y:b.y})),
+spikes:spikes.map(s=>({x:s.x,y:s.y})),
+portals:portals.map(p=>({x:p.x,y:p.y})),
+gportals:gportals.map(g=>({x:g.x,y:g.y})),
+goal:goal?{x:goal.x,y:goal.y}:null
+}));
+
+await addDoc(collection(db,"levels"),{
+name,
+code,
+creator: username, // ✅ NOW ALWAYS VALID
+creatorId: currentUser.uid,
+createdAt: Date.now(),
+likes:0,
+rating:0,
+ratingCount:0,
+featured:false
+});
+
+alert("Uploaded!");
+};
+
+/* FEED */
+window.loadFeed=async()=>{
+const q=query(collection(db,"levels"),orderBy("likes","desc"),limit(10));
+const snap=await getDocs(q);
+
+let levels=[];
+snap.forEach(d=>levels.push({id:d.id,...d.data()}));
+
+showFeed(levels);
+};
+
+/* SEARCH */
+window.searchLevels=async()=>{
+let name=prompt("Level name");
+const q=query(collection(db,"levels"),where("name","==",name));
+const snap=await getDocs(q);
+
+let levels=[];
+snap.forEach(d=>levels.push({id:d.id,...d.data()}));
+
+showFeed(levels);
+};
+
+/* FEED UI */
+function showFeed(levels){
+let w=window.open();
+w.document.write(`<body style="background:#0b0b22;color:white;font-family:Arial"><h2>Levels</h2><div id="list"></div></body>`);
+
+let list=w.document.getElementById("list");
+
+levels.forEach(l=>{
+let avg = l.ratingCount ? (l.rating / l.ratingCount) : 0;
+avg = Number.isInteger(avg) ? avg : avg.toFixed(1);
+
+let div=w.document.createElement("div");
+
+/* STYLE */
+let border="2px solid gray";
+let glow="none";
+
+if(l.featured){
+border="2px solid gold";
+glow="0 0 15px gold";
+}
+else if(l.ratingCount>0){
+border="2px solid deepskyblue";
+}
+
+div.style=`
+background:#111;
+padding:12px;
+margin:12px;
+border-radius:10px;
+border:${border};
+box-shadow:${glow};
+`;
+
+div.innerHTML=`
+<b>${l.name}</b><br>
+By: ${l.creator}<br>
+Likes: ${l.likes}<br>
+Rating: ${avg} ⭐ (${l.ratingCount})<br><br>
+<button>Play</button>
+<button>Like</button>
+<button>Rate</button>
+`;
+
+let [play,like,rate]=div.querySelectorAll("button");
+
+play.onclick=()=>{loadLevel(l.code);w.close();};
+like.onclick=async()=>{await likeLevel(l.id);like.innerText="Liked!";};
+
+/* FIXED RATE BUTTON */
+rate.onclick=()=>{
+let input = w.prompt("Rate this level (1-10)");
+if(input === null) return;
+
+let r = Number(input.trim());
+if(Number.isNaN(r) || r < 1 || r > 10){
+w.alert("Invalid rating");
+return;
+}
+
+let featured = w.confirm("Feature this level?");
+
+// call parent safely
+window.rateLevelFromChild(l.id, r, featured);
+};
+
+list.appendChild(div);
+});
+}
+
+/* LIKE */
+window.likeLevel=async(id)=>{
+await updateDoc(doc(db,"levels",id),{likes:increment(1)});
+};
+
+/* RATE (ONLY YOU + WORKING PROMPT) */
+window.rateLevel=async(id)=>{
+if(auth.currentUser?.email!=="alexsmall313@gmail.com"){
+alert("Only you can rate");
+return;
+}
+
+let input=window.prompt("Rate this level (1-10)");
+if(input===null) return;
+
+let r=Number(input.trim());
+if(Number.isNaN(r)||r<1||r>10){
+alert("Invalid rating");
+return;
+}
+
+let featured=window.confirm("Feature this level?");
+
+await updateDoc(doc(db,"levels",id),{
+rating:increment(r),
+ratingCount:increment(1),
+featured:featured
+});
+
+alert("Rated!");
+};
+
+window.rateLevelFromChild = async(id, r, featured)=>{
+if(!currentUser || currentUser.email !== "alexsmall313@gmail.com"){
+alert("Only you can rate");
+return;
+}
+
+await updateDoc(doc(db,"levels",id),{
+rating: increment(r),
+ratingCount: increment(1),
+featured: featured
+});
+
+alert("Rated!");
+};
+
+/* EDIT */
+game.onclick=e=>{
+if(mode!=="edit")return;
+
+const r=game.getBoundingClientRect();
+let x=Math.round((e.clientX-r.left+camera.x)/40)*40;
+let y=Math.round((e.clientY-r.top+camera.y)/40)*40;
+
 if(tool==="block")addBlock(x,y);
 if(tool==="spike")addSpike(x,y);
 if(tool==="portal")addPortal(x,y);
 if(tool==="gportal")addGPortal(x,y);
 if(tool==="goal")addGoal(x,y);
-
-});
-
-/* RESET */
-function reset(){
-player.x=100;
-player.y=200;
-player.vx=0;
-player.vy=0;
-player.rot=0;
-player.gravity=1;
-player.grounded=false;
-player.canJump=true;
-}
-
-/* CAMERA */
-function cam(){
-camera.x+=(player.x-200-camera.x)*0.08;
-camera.y+=(player.y-200-camera.y)*0.08;
-}
-
-/* COLLISION */
-function collide(){
-
-player.grounded=false;
-
-for(let b of blocks){
-if(player.x<b.x+120&&player.x+30>b.x&&player.y<b.y+20&&player.y+30>b.y){
-player.y=b.y-30;
-player.vy=0;
-player.grounded=true;
-player.rot=0;
-}
-}
-
-for(let s of spikes){
-if(Math.abs(player.x-s.x)<25&&Math.abs(player.y-s.y)<25){
-reset();
-}
-}
-
-for(let pz of portals){
-if(Math.abs(player.x-pz.x)<25&&Math.abs(player.y-pz.y)<40){
-player.gravity*=-1;
-player.rot+=180;
-}
-}
-
-for(let g of gportals){
-if(Math.abs(player.x-g.x)<25&&Math.abs(player.y-g.y)<40){
-player.gravity=1;
-}
-}
-
-if(goal&&Math.abs(player.x-goal.x)<40&&Math.abs(player.y-goal.y)<60){
-alert("LEVEL COMPLETE");
-reset();
-}
-
-}
+};
 
 /* LOOP */
 function update(){
 
-cam();
+camera.x+=(player.x-200-camera.x)*0.08;
+camera.y+=(player.y-200-camera.y)*0.08;
 
 if(mode==="play"){
 
-if(keys.a)player.vx=-4;
-else if(keys.d)player.vx=4;
-else player.vx*=0.85;
+if(keys["a"]||keys["ArrowLeft"]) player.vx=-4;
+else if(keys["d"]||keys["ArrowRight"]) player.vx=4;
+else player.vx*=0.8;
 
-player.vy+=0.6*player.gravity;
-
+player.vy+=0.6;
 player.x+=player.vx;
 player.y+=player.vy;
 
-collide();
+player.grounded=false;
 
-if(!player.grounded)player.rot+=6;
+blocks.forEach(b=>{
+if(player.x<b.x+120 && player.x+30>b.x && player.y<b.y+20 && player.y+30>b.y){
+player.y=b.y-30;
+player.vy=0;
+player.grounded=true;
+}
+});
+
+/* ROTATION */
+if(!player.grounded){
+rotation+=8;
+}else{
+rotation=0;
 }
 
-if(player.y>2000||player.y<-2000)reset();
+spikes.forEach(s=>{
+if(Math.abs(player.x-s.x)<25 && Math.abs(player.y-s.y)<25){
+player.x=100;player.y=200;player.vx=0;player.vy=0;
+}
+});
 
-render();
-requestAnimationFrame(update);
 }
 
 /* RENDER */
-function render(){
-
 p.style.left=(player.x-camera.x)+"px";
 p.style.top=(player.y-camera.y)+"px";
-p.style.transform=`rotate(${player.rot}deg)`;
+p.style.transform=`rotate(${rotation}deg)`;
 
-blocks.forEach(b=>{
-b.el.style.left=(b.x-camera.x)+"px";
-b.el.style.top=(b.y-camera.y)+"px";
+[blocks,spikes,portals,gportals].forEach(arr=>{
+arr.forEach(o=>{
+o.el.style.left=(o.x-camera.x)+"px";
+o.el.style.top=(o.y-camera.y)+"px";
 });
-
-spikes.forEach(s=>{
-s.el.style.left=(s.x-camera.x)+"px";
-s.el.style.top=(s.y-camera.y)+"px";
-});
-
-portals.forEach(p=>{
-p.el.style.left=(p.x-camera.x)+"px";
-p.el.style.top=(p.y-camera.y)+"px";
-});
-
-gportals.forEach(g=>{
-g.el.style.left=(g.x-camera.x)+"px";
-g.el.style.top=(g.y-camera.y)+"px";
 });
 
 if(goal){
 goal.el.style.left=(goal.x-camera.x)+"px";
 goal.el.style.top=(goal.y-camera.y)+"px";
 }
+
+requestAnimationFrame(update);
 }
 
-/* START LEVEL */
 addBlock(50,300);
-addBlock(200,300);
-addSpike(260,270);
-addPortal(320,260);
-addGPortal(420,260);
-addGoal(600,200);
-
 update();
 
 </script>
-
 </body>
 </html>
