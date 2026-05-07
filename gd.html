@@ -5,33 +5,102 @@
 <title>GD Full Online FINAL</title>
 
 <style>
-body{margin:0;overflow:hidden;background:#0b0b22;font-family:Arial;}
-#game{width:100vw;height:100vh;position:relative;overflow:hidden;}
+body{
+margin:0;
+overflow:hidden;
+background:#0b0b22;
+font-family:Arial;
+}
+
+#game{
+width:100vw;
+height:100vh;
+position:relative;
+overflow:hidden;
+}
 
 #ui{
-position:fixed;top:10px;left:10px;
-display:flex;gap:6px;flex-wrap:wrap;
+position:fixed;
+top:10px;
+left:10px;
+display:flex;
+gap:6px;
+flex-wrap:wrap;
 z-index:1000;
 }
 
 button{
-padding:6px 10px;border:none;border-radius:6px;
-background:#222;color:white;cursor:pointer;
+padding:6px 10px;
+border:none;
+border-radius:6px;
+background:#222;
+color:white;
+cursor:pointer;
 }
 
 .player{
 position:absolute;
-width:30px;height:30px;
+width:30px;
+height:30px;
 background:cyan;
 border-radius:6px;
 transition:transform 0.1s linear;
 }
 
-.block{position:absolute;width:120px;height:20px;background:purple;border-radius:6px;}
-.spike{position:absolute;width:30px;height:30px;background:red;clip-path:polygon(50% 0,0 100%,100% 100%);}
-.portal{position:absolute;width:30px;height:50px;background:deepskyblue;border-radius:10px;}
-.gportal{position:absolute;width:30px;height:50px;background:orange;border-radius:10px;}
-.goal{position:absolute;width:40px;height:80px;background:lime;}
+.block{
+position:absolute;
+width:120px;
+height:20px;
+background:purple;
+border-radius:6px;
+}
+
+.spike{
+position:absolute;
+width:30px;
+height:30px;
+background:red;
+clip-path:polygon(50% 0,0 100%,100% 100%);
+}
+
+.fakeblock{
+position:absolute;
+width:120px;
+height:20px;
+background:purple;
+border-radius:6px;
+}
+
+.fakespike{
+position:absolute;
+width:30px;
+height:30px;
+background:red;
+clip-path:polygon(50% 0,0 100%,100% 100%);
+}
+
+.portal{
+position:absolute;
+width:30px;
+height:50px;
+background:deepskyblue;
+border-radius:10px;
+}
+
+.gportal{
+position:absolute;
+width:30px;
+height:50px;
+background:orange;
+border-radius:10px;
+}
+
+.goal{
+position:absolute;
+width:40px;
+height:80px;
+background:lime;
+}
 
 #userDisplay{
 position:fixed;
@@ -45,17 +114,35 @@ z-index:1000;
 }
 
 #popup{
-position:fixed;inset:0;
-display:none;justify-content:center;align-items:center;
+position:fixed;
+inset:0;
+display:none;
+justify-content:center;
+align-items:center;
 background:rgba(0,0,0,0.85);
 z-index:10000;
 }
-#popup.show{display:flex;}
+
+#popup.show{
+display:flex;
+}
 
 #panel{
-background:#111;padding:20px;border-radius:10px;
-display:flex;flex-direction:column;gap:8px;
+background:#111;
+padding:20px;
+border-radius:10px;
+display:flex;
+flex-direction:column;
+gap:8px;
 min-width:200px;
+}
+
+input{
+padding:8px;
+border:none;
+border-radius:6px;
+background:#222;
+color:white;
 }
 </style>
 </head>
@@ -68,6 +155,8 @@ min-width:200px;
 
 <button onclick="setTool('block')">Block</button>
 <button onclick="setTool('spike')">Spike</button>
+<button onclick="setTool('fakeblock')">Fake Block</button>
+<button onclick="setTool('fakespike')">Fake Spike</button>
 <button onclick="setTool('portal')">Portal</button>
 <button onclick="setTool('gportal')">Gravity</button>
 <button onclick="setTool('goal')">Goal</button>
@@ -101,87 +190,134 @@ min-width:200px;
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+
 import {
-getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged
+getAuth,
+signInWithEmailAndPassword,
+createUserWithEmailAndPassword,
+onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
 
 import {
-getFirestore, collection, addDoc, getDocs, query,
-orderBy, limit, updateDoc, doc, increment, where,
-setDoc, getDoc
+getFirestore,
+collection,
+addDoc,
+getDocs,
+query,
+orderBy,
+limit,
+updateDoc,
+doc,
+increment,
+where,
+setDoc,
+getDoc,
+deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
 /* FIREBASE */
-const app=initializeApp({
+const app = initializeApp({
 apiKey:"AIzaSyDk5qh-pydPe6vfBG7KFhl50zderbGggW4",
 authDomain:"gdeditor-b9a32.firebaseapp.com",
 projectId:"gdeditor-b9a32"
 });
-const auth=getAuth(app);
-const db=getFirestore(app);
+
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 /* USER */
-let currentUser=null;
-let username="";
+let currentUser = null;
+let username = "";
+let editingLevelId = null;
 
-onAuthStateChanged(auth, async (u)=>{
+onAuthStateChanged(auth, async(u)=>{
+
 currentUser = u;
 
 const display = document.getElementById("userDisplay");
 
 if(!u){
-username = "";
-display.innerText = "Not logged in";
+username="";
+display.innerText="Not logged in";
 return;
 }
 
 try{
+
 const snap = await getDoc(doc(db,"users",u.uid));
 
 if(snap.exists()){
 username = snap.data().username || "";
-display.innerText = username || "No username";
+display.innerText = username;
 }else{
-username = "";
 display.innerText = "No profile";
 }
+
 }catch(e){
 console.error(e);
-display.innerText = "Error loading user";
+display.innerText = "Error";
 }
+
 });
 
 /* POPUP */
 const popup=document.getElementById("popup");
+
 window.openPopup=()=>{
 popup.classList.add("show");
-document.getElementById("ui").style.pointerEvents="none";
 };
+
 window.closePopup=()=>{
 popup.classList.remove("show");
-document.getElementById("ui").style.pointerEvents="auto";
 };
 
 /* AUTH */
 window.login=async()=>{
+
 try{
-await signInWithEmailAndPassword(auth,email.value,pass.value);
+
+await signInWithEmailAndPassword(
+auth,
+email.value,
+pass.value
+);
+
 closePopup();
-}catch(e){alert(e.message);}
+
+}catch(e){
+alert(e.message);
+}
+
 };
 
 window.signup=async()=>{
+
 try{
+
 const name=usernameInput.value.trim();
+
 if(!name) return alert("Enter username");
 
-const user=await createUserWithEmailAndPassword(auth,email.value,pass.value);
-await setDoc(doc(db,"users",user.user.uid),{username:name});
+const user = await createUserWithEmailAndPassword(
+auth,
+email.value,
+pass.value
+);
+
+await setDoc(doc(db,"users",user.user.uid),{
+username:name
+});
 
 username=name;
+
 alert("Account created!");
+
 closePopup();
-}catch(e){alert(e.message);}
+
+}catch(e){
+alert(e.message);
+}
+
 };
 
 /* GAME */
@@ -189,12 +325,19 @@ const game=document.getElementById("game");
 
 let mode="play";
 let tool="block";
-let camera={x:0,y:0};
+
+let camera={
+x:0,
+y:0
+};
+
 let keys={};
 
 let player={
-x:100,y:200,
-vx:0,vy:0,
+x:100,
+y:200,
+vx:0,
+vy:0,
 grounded:false,
 canJump:true
 };
@@ -206,21 +349,38 @@ p.className="player";
 game.appendChild(p);
 
 /* WORLD */
-let blocks=[],spikes=[],portals=[],gportals=[],goal=null;
+let blocks=[];
+let spikes=[];
+let fakeblocks=[];
+let fakespikes=[];
+let portals=[];
+let gportals=[];
+let goal=null;
 
 /* INPUT */
 addEventListener("keydown",e=>{
+
 keys[e.key]=true;
 
-if((e.key===" "||e.key==="ArrowUp") && player.canJump && player.grounded){
+if(
+(e.key===" " || e.key==="ArrowUp")
+&& player.canJump
+&& player.grounded
+){
 player.vy=-10;
 player.canJump=false;
 }
+
 });
 
 addEventListener("keyup",e=>{
+
 keys[e.key]=false;
-if(e.key===" "||e.key==="ArrowUp") player.canJump=true;
+
+if(e.key===" " || e.key==="ArrowUp"){
+player.canJump=true;
+}
+
 });
 
 /* UI */
@@ -229,301 +389,969 @@ window.setTool=(t)=>tool=t;
 
 /* OBJECTS */
 function make(cls,x,y,arr){
+
 let el=document.createElement("div");
+
 el.className=cls;
+
 game.appendChild(el);
-arr.push({x,y,el});
+
+arr.push({
+x,
+y,
+el
+});
+
 }
+
 const addBlock=(x,y)=>make("block",x,y,blocks);
 const addSpike=(x,y)=>make("spike",x,y,spikes);
+const addFakeBlock=(x,y)=>make("fakeblock",x,y,fakeblocks);
+const addFakeSpike=(x,y)=>make("fakespike",x,y,fakespikes);
 const addPortal=(x,y)=>make("portal",x,y,portals);
 const addGPortal=(x,y)=>make("gportal",x,y,gportals);
 
 function addGoal(x,y){
-if(goal)goal.el.remove();
+
+if(goal){
+goal.el.remove();
+}
+
 let el=document.createElement("div");
+
 el.className="goal";
+
 game.appendChild(el);
-goal={x,y,el};
+
+goal={
+x,
+y,
+el
+};
+
 }
 
 /* SAVE */
 window.saveLevel=()=>{
+
 const data={
-blocks:blocks.map(b=>({x:b.x,y:b.y})),
-spikes:spikes.map(s=>({x:s.x,y:s.y})),
-portals:portals.map(p=>({x:p.x,y:p.y})),
-gportals:gportals.map(g=>({x:g.x,y:g.y})),
-goal:goal?{x:goal.x,y:goal.y}:null
+
+blocks:blocks.map(b=>({
+x:b.x,
+y:b.y
+})),
+
+spikes:spikes.map(s=>({
+x:s.x,
+y:s.y
+})),
+
+fakeblocks:fakeblocks.map(b=>({
+x:b.x,
+y:b.y
+})),
+
+fakespikes:fakespikes.map(s=>({
+x:s.x,
+y:s.y
+})),
+
+portals:portals.map(p=>({
+x:p.x,
+y:p.y
+})),
+
+gportals:gportals.map(g=>({
+x:g.x,
+y:g.y
+})),
+
+goal:goal ? {
+x:goal.x,
+y:goal.y
+} : null
+
 };
-prompt("COPY",btoa(JSON.stringify(data)));
+
+prompt(
+"COPY",
+btoa(JSON.stringify(data))
+);
+
 };
 
 /* LOAD */
 window.loadLevel=(code)=>{
+
 const d=JSON.parse(atob(code));
 
-[blocks,spikes,portals,gportals].forEach(arr=>arr.forEach(o=>o.el.remove()));
-if(goal)goal.el.remove();
+[
+blocks,
+spikes,
+fakeblocks,
+fakespikes,
+portals,
+gportals
+].forEach(arr=>{
 
-blocks=[];spikes=[];portals=[];gportals=[];goal=null;
+arr.forEach(o=>o.el.remove());
 
-d.blocks.forEach(b=>addBlock(b.x,b.y));
-d.spikes.forEach(s=>addSpike(s.x,s.y));
-d.portals.forEach(p=>addPortal(p.x,p.y));
-d.gportals.forEach(g=>addGPortal(g.x,g.y));
-if(d.goal)addGoal(d.goal.x,d.goal.y);
-};
+});
 
-window.uploadLevel = async()=>{
-if(!currentUser) return alert("Login first");
-
-if(!username){
-alert("Username not loaded yet. Try again in a second.");
-return;
+if(goal){
+goal.el.remove();
 }
 
-const name = prompt("Level name?");
-if(!name) return;
+blocks=[];
+spikes=[];
+fakeblocks=[];
+fakespikes=[];
+portals=[];
+gportals=[];
+goal=null;
+
+(d.blocks||[]).forEach(b=>addBlock(b.x,b.y));
+(d.spikes||[]).forEach(s=>addSpike(s.x,s.y));
+(d.fakeblocks||[]).forEach(b=>addFakeBlock(b.x,b.y));
+(d.fakespikes||[]).forEach(s=>addFakeSpike(s.x,s.y));
+(d.portals||[]).forEach(p=>addPortal(p.x,p.y));
+(d.gportals||[]).forEach(g=>addGPortal(g.x,g.y));
+
+if(d.goal){
+addGoal(d.goal.x,d.goal.y);
+}
+
+};
+
+/* UPLOAD */
+window.uploadLevel = async()=>{
+
+if(!currentUser){
+return alert("Login first");
+}
+
+if(!username){
+return alert("Username not loaded yet.");
+}
 
 const code = btoa(JSON.stringify({
-blocks:blocks.map(b=>({x:b.x,y:b.y})),
-spikes:spikes.map(s=>({x:s.x,y:s.y})),
-portals:portals.map(p=>({x:p.x,y:p.y})),
-gportals:gportals.map(g=>({x:g.x,y:g.y})),
-goal:goal?{x:goal.x,y:goal.y}:null
+
+blocks:blocks.map(b=>({
+x:b.x,
+y:b.y
+})),
+
+spikes:spikes.map(s=>({
+x:s.x,
+y:s.y
+})),
+
+fakeblocks:fakeblocks.map(b=>({
+x:b.x,
+y:b.y
+})),
+
+fakespikes:fakespikes.map(s=>({
+x:s.x,
+y:s.y
+})),
+
+portals:portals.map(p=>({
+x:p.x,
+y:p.y
+})),
+
+gportals:gportals.map(g=>({
+x:g.x,
+y:g.y
+})),
+
+goal:goal ? {
+x:goal.x,
+y:goal.y
+} : null
+
 }));
 
+/* EDIT */
+if(editingLevelId){
+
+try{
+
+await updateDoc(
+doc(db,"levels",editingLevelId),
+{
+code,
+updatedAt:Date.now()
+}
+);
+
+alert("Level updated!");
+
+editingLevelId=null;
+
+return;
+
+}catch(e){
+
+console.error(e);
+
+editingLevelId=null;
+
+alert("Edit failed.");
+}
+
+}
+
+/* NEW UPLOAD */
+const name=prompt("Level name?");
+
+if(!name) return;
+
 await addDoc(collection(db,"levels"),{
+
 name,
 code,
-creator: username, // ✅ NOW ALWAYS VALID
-creatorId: currentUser.uid,
-createdAt: Date.now(),
+
+creator:username,
+creatorId:currentUser.uid,
+
+createdAt:Date.now(),
+
 likes:0,
 rating:0,
 ratingCount:0,
 featured:false
+
 });
 
+editingLevelId=null;
+
 alert("Uploaded!");
+
 };
 
 /* FEED */
 window.loadFeed=async()=>{
-const q=query(collection(db,"levels"),orderBy("likes","desc"),limit(10));
+
+const q=query(
+collection(db,"levels"),
+orderBy("likes","desc"),
+limit(20)
+);
+
 const snap=await getDocs(q);
 
 let levels=[];
-snap.forEach(d=>levels.push({id:d.id,...d.data()}));
+
+snap.forEach(d=>{
+
+levels.push({
+id:d.id,
+...d.data()
+});
+
+});
 
 showFeed(levels);
+
 };
 
 /* SEARCH */
 window.searchLevels=async()=>{
+
 let name=prompt("Level name");
-const q=query(collection(db,"levels"),where("name","==",name));
+
+const q=query(
+collection(db,"levels"),
+where("name","==",name)
+);
+
 const snap=await getDocs(q);
 
 let levels=[];
-snap.forEach(d=>levels.push({id:d.id,...d.data()}));
+
+snap.forEach(d=>{
+
+levels.push({
+id:d.id,
+...d.data()
+});
+
+});
 
 showFeed(levels);
+
 };
 
 /* FEED UI */
 function showFeed(levels){
+
 let w=window.open();
-w.document.write(`<body style="background:#0b0b22;color:white;font-family:Arial"><h2>Levels</h2><div id="list"></div></body>`);
+
+w.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+<title>Level Feed</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:
+radial-gradient(circle at top,#1a1a40,#090916 70%);
+color:white;
+overflow-x:hidden;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{
+width:12px;
+}
+
+::-webkit-scrollbar-track{
+background:#111;
+}
+
+::-webkit-scrollbar-thumb{
+background:#444;
+border-radius:10px;
+}
+
+/* TOP BAR */
+#topbar{
+position:sticky;
+top:0;
+z-index:100;
+padding:20px;
+background:rgba(0,0,0,0.5);
+backdrop-filter:blur(10px);
+border-bottom:1px solid rgba(255,255,255,0.08);
+box-shadow:0 0 20px rgba(0,0,0,0.4);
+}
+
+#title{
+font-size:40px;
+font-weight:900;
+background:linear-gradient(90deg,#4da3ff,#9d6bff,#ffcc4d);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+letter-spacing:1px;
+}
+
+/* GRID */
+#list{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(350px,1fr));
+gap:22px;
+padding:30px;
+}
+
+/* CARD */
+.card{
+position:relative;
+background:linear-gradient(
+180deg,
+rgba(35,35,60,0.95),
+rgba(18,18,35,0.98)
+);
+
+border-radius:24px;
+padding:22px;
+
+overflow:hidden;
+
+transition:
+transform 0.18s,
+box-shadow 0.18s,
+border 0.18s;
+
+border:2px solid rgba(255,255,255,0.08);
+
+box-shadow:
+0 10px 25px rgba(0,0,0,0.45),
+inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.card:hover{
+transform:
+translateY(-8px)
+scale(1.02);
+}
+
+/* SHINY TOP */
+.card::before{
+content:"";
+position:absolute;
+top:0;
+left:0;
+right:0;
+height:90px;
+
+background:linear-gradient(
+180deg,
+rgba(255,255,255,0.08),
+transparent
+);
+
+pointer-events:none;
+}
+
+/* FEATURED */
+.featured{
+border:2px solid gold;
+
+box-shadow:
+0 0 25px rgba(255,215,0,0.45),
+0 10px 25px rgba(0,0,0,0.45);
+}
+
+/* RATED */
+.rated{
+border:2px solid deepskyblue;
+
+box-shadow:
+0 0 20px rgba(0,191,255,0.35),
+0 10px 25px rgba(0,0,0,0.45);
+}
+
+/* TITLE */
+.levelTitle{
+font-size:28px;
+font-weight:900;
+margin-bottom:10px;
+
+background:linear-gradient(
+90deg,
+white,
+#b8c6ff
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+/* CREATOR */
+.creator{
+color:#b8b8d8;
+font-size:15px;
+margin-bottom:16px;
+}
+
+/* STATS */
+.stats{
+display:flex;
+gap:12px;
+flex-wrap:wrap;
+margin-bottom:18px;
+}
+
+.stat{
+padding:8px 12px;
+border-radius:999px;
+
+background:rgba(255,255,255,0.06);
+
+font-size:14px;
+font-weight:bold;
+
+border:1px solid rgba(255,255,255,0.06);
+}
+
+/* BUTTON AREA */
+.btnRow{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+}
+
+/* BUTTONS */
+button{
+border:none;
+border-radius:14px;
+
+padding:10px 16px;
+
+font-weight:900;
+font-size:14px;
+
+cursor:pointer;
+
+transition:
+transform 0.12s,
+filter 0.12s,
+box-shadow 0.12s;
+
+color:white;
+
+box-shadow:
+0 5px 12px rgba(0,0,0,0.35);
+}
+
+button:hover{
+transform:
+translateY(-2px)
+scale(1.05);
+
+filter:brightness(1.1);
+}
+
+button:active{
+transform:scale(0.95);
+}
+
+/* BTN COLORS */
+.playBtn{
+background:linear-gradient(180deg,#38d66b,#1d8f44);
+}
+
+.likeBtn{
+background:linear-gradient(180deg,#4da3ff,#2465c0);
+}
+
+.dislikeBtn{
+background:linear-gradient(180deg,#ff6a6a,#c72f2f);
+}
+
+.rateBtn{
+background:linear-gradient(180deg,#ffd84d,#d6a000);
+color:black;
+}
+
+.editBtn{
+background:linear-gradient(180deg,#c26cff,#6e2dc2);
+}
+
+.deleteBtn{
+background:linear-gradient(180deg,#ff6666,#b61e1e);
+}
+
+/* FEATURED BADGE */
+.badge{
+position:absolute;
+top:16px;
+right:16px;
+
+padding:8px 12px;
+
+border-radius:999px;
+
+font-size:12px;
+font-weight:900;
+letter-spacing:1px;
+}
+
+.featuredBadge{
+background:linear-gradient(180deg,#ffe16b,#dca700);
+color:black;
+
+box-shadow:
+0 0 12px rgba(255,215,0,0.5);
+}
+
+.ratedBadge{
+background:linear-gradient(180deg,#5fc4ff,#1f73d4);
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="topbar">
+<div id="title">ONLINE LEVEL FEED</div>
+</div>
+
+<div id="list"></div>
+
+</body>
+</html>
+`);
 
 let list=w.document.getElementById("list");
 
 levels.forEach(l=>{
-let avg = l.ratingCount ? (l.rating / l.ratingCount) : 0;
-avg = Number.isInteger(avg) ? avg : avg.toFixed(1);
 
+let avg = l.ratingCount > 0
+? Math.round(l.rating)
+: "Unrated";
+
+/* CARD */
 let div=w.document.createElement("div");
 
-/* STYLE */
-let border="2px solid gray";
-let glow="none";
+let classes="card";
 
 if(l.featured){
-border="2px solid gold";
-glow="0 0 15px gold";
+classes+=" featured";
 }
 else if(l.ratingCount>0){
-border="2px solid deepskyblue";
+classes+=" rated";
 }
 
-div.style=`
-background:#111;
-padding:12px;
-margin:12px;
-border-radius:10px;
-border:${border};
-box-shadow:${glow};
-`;
+div.className=classes;
 
+/* BADGES */
+let badge="";
+
+if(l.featured){
+badge=`<div class="badge featuredBadge">FEATURED</div>`;
+}
+else if(l.ratingCount>0){
+badge=`<div class="badge ratedBadge">RATED</div>`;
+}
+
+/* HTML */
 div.innerHTML=`
-<b>${l.name}</b><br>
-By: ${l.creator}<br>
-Likes: ${l.likes}<br>
-Rating: ${avg} ⭐ (${l.ratingCount})<br><br>
-<button>Play</button>
-<button>Like</button>
-<button>Rate</button>
+
+${badge}
+
+<div class="levelTitle">${l.name}</div>
+
+<div class="creator">
+By ${l.creator}
+</div>
+
+<div class="stats">
+
+<div class="stat">
+👍 ${l.likes}
+</div>
+
+<div class="stat">
+⭐ ${avg}
+</div>
+
+</div>
+
+<div class="btnRow">
+
+<button class="playBtn">
+▶ Play
+</button>
+
+<button class="likeBtn">
+👍 Like
+</button>
+
+<button class="dislikeBtn">
+👎 Dislike
+</button>
+
+${currentUser?.email==="alexsmall313@gmail.com"
+? `
+<button class="rateBtn">
+⭐ Rate
+</button>
+`
+: ""
+}
+
+${l.creatorId===currentUser?.uid
+? `
+<button class="editBtn">
+✏ Edit
+</button>
+
+<button class="deleteBtn">
+🗑 Delete
+</button>
+`
+: ""
+}
+
+</div>
 `;
 
-let [play,like,rate]=div.querySelectorAll("button");
+/* BUTTONS */
+const play=div.querySelector(".playBtn");
+const like=div.querySelector(".likeBtn");
+const dislike=div.querySelector(".dislikeBtn");
+const rate=div.querySelector(".rateBtn");
+const edit=div.querySelector(".editBtn");
+const del=div.querySelector(".deleteBtn");
 
-play.onclick=()=>{loadLevel(l.code);w.close();};
-like.onclick=async()=>{await likeLevel(l.id);like.innerText="Liked!";};
+/* PLAY */
+play.onclick=()=>{
 
-/* FIXED RATE BUTTON */
-rate.onclick=()=>{
-let input = w.prompt("Rate this level (1-10)");
-if(input === null) return;
+editingLevelId=null;
 
-let r = Number(input.trim());
-if(Number.isNaN(r) || r < 1 || r > 10){
-w.alert("Invalid rating");
-return;
-}
+loadLevel(l.code);
 
-let featured = w.confirm("Feature this level?");
+player.x=100;
+player.y=200;
 
-// call parent safely
-window.rateLevelFromChild(l.id, r, featured);
+player.vx=0;
+player.vy=0;
+
+keys={};
+
+rotation=0;
+
+mode="play";
+
+w.close();
+
 };
-
-list.appendChild(div);
-});
-}
 
 /* LIKE */
-window.likeLevel=async(id)=>{
-await updateDoc(doc(db,"levels",id),{likes:increment(1)});
+like.onclick=async()=>{
+
+await likeLevel(l.id);
+
 };
 
-/* RATE (ONLY YOU + WORKING PROMPT) */
-window.rateLevel=async(id)=>{
-if(auth.currentUser?.email!=="alexsmall313@gmail.com"){
-alert("Only you can rate");
-return;
-}
+/* DISLIKE */
+dislike.onclick=async()=>{
 
-let input=window.prompt("Rate this level (1-10)");
+await dislikeLevel(l.id);
+
+};
+
+/* RATE */
+if(rate){
+
+rate.onclick=()=>{
+
+let input=w.prompt("Rate 1-10");
+
 if(input===null) return;
 
-let r=Number(input.trim());
+let r=Number(input);
+
 if(Number.isNaN(r)||r<1||r>10){
-alert("Invalid rating");
-return;
+return w.alert("Invalid");
 }
 
-let featured=window.confirm("Feature this level?");
+let featured=w.confirm("Feature level?");
 
-await updateDoc(doc(db,"levels",id),{
-rating:increment(r),
-ratingCount:increment(1),
-featured:featured
-});
+window.rateLevelFromChild(
+l.id,
+r,
+featured
+);
 
-alert("Rated!");
 };
 
-window.rateLevelFromChild = async(id, r, featured)=>{
-if(!currentUser || currentUser.email !== "alexsmall313@gmail.com"){
-alert("Only you can rate");
-return;
 }
-
-await updateDoc(doc(db,"levels",id),{
-rating: increment(r),
-ratingCount: increment(1),
-featured: featured
-});
-
-alert("Rated!");
-};
 
 /* EDIT */
+if(edit){
+
+edit.onclick=()=>{
+
+editingLevelId=l.id;
+
+loadLevel(l.code);
+
+player.x=100;
+player.y=200;
+
+player.vx=0;
+player.vy=0;
+
+keys={};
+
+rotation=0;
+
+mode="edit";
+
+w.close();
+
+};
+
+}
+
+/* DELETE */
+if(del){
+
+del.onclick=async()=>{
+
+let yes=w.confirm("Delete level?");
+
+if(!yes) return;
+
+await deleteDoc(
+doc(db,"levels",l.id)
+);
+
+div.remove();
+
+};
+
+}
+
+list.appendChild(div);
+
+});
+
+}
+window.rateLevelFromChild = async(id,r,featured)=>{
+
+if(currentUser?.email!=="alexsmall313@gmail.com"){
+return alert("No permission");
+}
+
+const ref = doc(db,"levels",id);
+
+await updateDoc(ref,{
+rating:r,
+ratingCount:1,
+featured
+});
+
+alert("Rated!");
+};
+
+/* EDIT MODE */
 game.onclick=e=>{
-if(mode!=="edit")return;
+
+if(mode!=="edit") return;
 
 const r=game.getBoundingClientRect();
-let x=Math.round((e.clientX-r.left+camera.x)/40)*40;
-let y=Math.round((e.clientY-r.top+camera.y)/40)*40;
 
+let x=Math.round(
+(e.clientX-r.left+camera.x)/40
+)*40;
+
+let y=Math.round(
+(e.clientY-r.top+camera.y)/40
+)*40;
+
+/* DELETE */
 if(tool==="delete"){
 
-blocks=blocks.filter(b=>{
-let hit=Math.abs(b.x-x)<60&&Math.abs(b.y-y)<30;
-if(hit)b.el.remove();
+const delCheck=(arr,w,h)=>{
+
+return arr.filter(o=>{
+
+let hit=
+Math.abs(o.x-x)<w &&
+Math.abs(o.y-y)<h;
+
+if(hit){
+o.el.remove();
+}
+
 return !hit;
+
 });
 
-spikes=spikes.filter(s=>{
-let hit=Math.abs(s.x-x)<30&&Math.abs(s.y-y)<30;
-if(hit)s.el.remove();
-return !hit;
-});
+};
 
-portals=portals.filter(p=>{
-let hit=Math.abs(p.x-x)<30&&Math.abs(p.y-y)<40;
-if(hit)p.el.remove();
-return !hit;
-});
+blocks=delCheck(blocks,60,30);
+spikes=delCheck(spikes,30,30);
+fakeblocks=delCheck(fakeblocks,60,30);
+fakespikes=delCheck(fakespikes,30,30);
+portals=delCheck(portals,30,40);
+gportals=delCheck(gportals,30,40);
 
-gportals=gportals.filter(g=>{
-let hit=Math.abs(g.x-x)<30&&Math.abs(g.y-y)<40;
-if(hit)g.el.remove();
-return !hit;
-});
-
-if(goal&&Math.abs(goal.x-x)<40&&Math.abs(goal.y-y)<60){
+if(
+goal &&
+Math.abs(goal.x-x)<40 &&
+Math.abs(goal.y-y)<60
+){
 goal.el.remove();
 goal=null;
 }
 
 return;
+
 }
-  
-if(tool==="block")addBlock(x,y);
-if(tool==="spike")addSpike(x,y);
-if(tool==="portal")addPortal(x,y);
-if(tool==="gportal")addGPortal(x,y);
-if(tool==="goal")addGoal(x,y);
+
+/* PLACE */
+if(tool==="block") addBlock(x,y);
+if(tool==="spike") addSpike(x,y);
+if(tool==="fakeblock") addFakeBlock(x,y);
+if(tool==="fakespike") addFakeSpike(x,y);
+if(tool==="portal") addPortal(x,y);
+if(tool==="gportal") addGPortal(x,y);
+if(tool==="goal") addGoal(x,y);
+
 };
 
-
-
-/* LOOP */
+/* UPDATE */
 function update(){
+
+if(mode==="play"){
 
 camera.x+=(player.x-200-camera.x)*0.08;
 camera.y+=(player.y-200-camera.y)*0.08;
 
+}
+
+/* EDITOR CAMERA MOVEMENT */
+if(mode==="edit"){
+
+const speed = 10;
+
+if(keys["a"] || keys["ArrowLeft"]){
+camera.x -= speed;
+}
+
+if(keys["d"] || keys["ArrowRight"]){
+camera.x += speed;
+}
+
+if(keys["w"] || keys["ArrowUp"]){
+camera.y -= speed;
+}
+
+if(keys["s"] || keys["ArrowDown"]){
+camera.y += speed;
+}
+
+}
+
 if(mode==="play"){
 
-if(keys["a"]||keys["ArrowLeft"]) player.vx=-4;
-else if(keys["d"]||keys["ArrowRight"]) player.vx=4;
-else player.vx*=0.8;
+if(keys["a"]||keys["ArrowLeft"]){
+player.vx=-4;
+}
+else if(keys["d"]||keys["ArrowRight"]){
+player.vx=4;
+}
+else{
+player.vx*=0.8;
+}
 
 player.vy+=0.6;
+
 player.x+=player.vx;
 player.y+=player.vy;
 
+/* FALL RESET */
+if(player.y>window.innerHeight+2000){
+
+player.x=100;
+player.y=200;
+
+player.vx=0;
+player.vy=0;
+
+}
+
+/* COLLISION */
 player.grounded=false;
 
 blocks.forEach(b=>{
-if(player.x<b.x+120 && player.x+30>b.x && player.y<b.y+20 && player.y+30>b.y){
+
+if(
+player.x<b.x+120 &&
+player.x+30>b.x &&
+player.y<b.y+20 &&
+player.y+30>b.y
+){
+
 player.y=b.y-30;
+
 player.vy=0;
+
 player.grounded=true;
+
 }
+
 });
 
 /* ROTATION */
@@ -533,35 +1361,100 @@ rotation+=8;
 rotation=0;
 }
 
+/* SPIKES */
 spikes.forEach(s=>{
-if(Math.abs(player.x-s.x)<25 && Math.abs(player.y-s.y)<25){
-player.x=100;player.y=200;player.vx=0;player.vy=0;
+
+if(
+Math.abs(player.x-s.x)<25 &&
+Math.abs(player.y-s.y)<25
+){
+
+player.x=100;
+player.y=200;
+
+player.vx=0;
+player.vy=0;
+
+keys={};
+
+rotation=0;
+
 }
+
 });
+
+/* GOAL */
+if(goal){
+
+if(
+
+player.x < goal.x+40 &&
+player.x+30 > goal.x &&
+player.y < goal.y+80 &&
+player.y+30 > goal.y
+
+){
+
+alert("Level Complete!");
+
+player.x=100;
+player.y=200;
+
+player.vx=0;
+player.vy=0;
+
+player.grounded=false;
+player.canJump=true;
+
+keys={};
+
+rotation=0;
+
+}
+
+}
 
 }
 
 /* RENDER */
 p.style.left=(player.x-camera.x)+"px";
 p.style.top=(player.y-camera.y)+"px";
-p.style.transform=`rotate(${rotation}deg)`;
 
-[blocks,spikes,portals,gportals].forEach(arr=>{
+p.style.transform=`
+rotate(${rotation}deg)
+`;
+
+[
+blocks,
+spikes,
+fakeblocks,
+fakespikes,
+portals,
+gportals
+].forEach(arr=>{
+
 arr.forEach(o=>{
+
 o.el.style.left=(o.x-camera.x)+"px";
 o.el.style.top=(o.y-camera.y)+"px";
+
 });
+
 });
 
 if(goal){
+
 goal.el.style.left=(goal.x-camera.x)+"px";
 goal.el.style.top=(goal.y-camera.y)+"px";
+
 }
 
 requestAnimationFrame(update);
+
 }
 
 addBlock(50,300);
+
 update();
 
 </script>
