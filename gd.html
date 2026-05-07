@@ -1098,7 +1098,9 @@ w.close();
 /* LIKE */
 like.onclick=async()=>{
 
-await likeLevel(l.id);
+
+await updateDoc(doc(db,"levels",id),{likes:increment(1)});
+
 
 };
 
