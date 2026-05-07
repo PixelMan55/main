@@ -1553,6 +1553,35 @@ w.close();
 /* LIKE */
 like.onclick=async()=>{
 
+if(!currentUser){
+return alert("Login first");
+}
+
+const voteRef=doc(
+db,
+"levels",
+l.id,
+"votes",
+currentUser.uid
+);
+
+const existing=await getDoc(voteRef);
+
+if(existing.exists()){
+
+if(existing.data().type==="like"){
+return;
+}
+
+/* switch dislike -> like */
+await updateDoc(
+doc(db,"levels",l.id),
+{
+likes:increment(2)
+}
+);
+
+}else{
 
 await updateDoc(
 doc(db,"levels",l.id),
@@ -1561,6 +1590,11 @@ likes:increment(1)
 }
 );
 
+}
+
+await setDoc(voteRef,{
+type:"like"
+});
 
 };
 
@@ -1671,12 +1705,48 @@ alert("Rated!");
 
 window.dislikeLevel=async(id)=>{
 
+if(!currentUser){
+return alert("Login first");
+}
+
+const voteRef=doc(
+db,
+"levels",
+id,
+"votes",
+currentUser.uid
+);
+
+const existing=await getDoc(voteRef);
+
+if(existing.exists()){
+
+if(existing.data().type==="dislike"){
+return;
+}
+
+/* switch like -> dislike */
+await updateDoc(
+doc(db,"levels",id),
+{
+likes:increment(-2)
+}
+);
+
+}else{
+
 await updateDoc(
 doc(db,"levels",id),
 {
 likes:increment(-1)
 }
 );
+
+}
+
+await setDoc(voteRef,{
+type:"dislike"
+});
 
 };
 
