@@ -251,12 +251,6 @@ background:
 purple;
 
 border-radius:8px;
-
-border:2px solid rgba(255,255,255,0.08);
-
-box-shadow:
-0 8px 20px rgba(0,0,0,0.35),
-0 0 18px rgba(180,80,255,0.3);
 }
 
 .spike{
@@ -450,6 +444,10 @@ onclick="setMode('edit')">
 👤 Login
 </button>
 
+<button onclick="uploadLevel()" id="uplBtn">
+☁ Upload
+</button>
+
 </div>
 
 <div id="editorBar" class="editorOnly">
@@ -532,10 +530,6 @@ onclick="setTool('delete')">
 📂 Load
 </button>
 
-<button onclick="uploadLevel()">
-☁ Upload
-</button>
-
 </div>
 <div id="userDisplay">Not logged in</div>
 
@@ -595,6 +589,8 @@ let currentUser = null;
 let username = "";
 let editingLevelId = null;
 let playingOnlineLevel=false;
+let currentLevelVerified = false;
+let currentLevelBeaten = false;
 
 onAuthStateChanged(auth, async(u)=>{
 
@@ -803,15 +799,16 @@ editorBar.style.display =
 : "none";
 
 const editBtn=document.getElementById("editBtn");
+const uplBtn=document.getElementById("uplBtn");
 
 if(playingOnlineLevel){
 
 editBtn.style.display="none";
-
+uplBtn.style.display="none";
 }else{
 
 editBtn.style.display="";
-
+uplBtn.style.display="";
 }
 
 }
@@ -1013,13 +1010,15 @@ await updateDoc(
 doc(db,"levels",editingLevelId),
 {
 code,
-updatedAt:Date.now()
+updatedAt:Date.now(),
+verified:false
 }
 );
 
-alert("Level updated!");
+alert("Level updated! Verification reset.");
 
 editingLevelId=null;
+currentLevelVerified=false;
 
 return;
 
@@ -1039,6 +1038,16 @@ const name=prompt("Level name?");
 
 if(!name) return;
 
+if(!currentLevelVerified){
+
+let yes = confirm(
+"This level is not verified, you sure you want to upload?"
+);
+
+if(!yes) return;
+
+}
+
 await addDoc(collection(db,"levels"),{
 
 name,
@@ -1052,7 +1061,9 @@ createdAt:Date.now(),
 likes:0,
 rating:0,
 ratingCount:0,
-featured:false
+featured:false,
+
+verified:currentLevelVerified
 
 });
 
@@ -1474,6 +1485,10 @@ By ${l.creator}
 ⭐ ${avg}
 </div>
 
+<div class="stat">
+✅ ${l.verified ? "Yes" : "No"}
+</div>
+
 </div>
 
 <div class="btnRow">
@@ -1505,6 +1520,10 @@ ${l.creatorId===currentUser?.uid
 ✏ Edit
 </button>
 
+<button class="renameBtn">
+📝 Rename
+</button>
+
 <button class="deleteBtn">
 🗑 Delete
 </button>
@@ -1522,11 +1541,14 @@ const dislike=div.querySelector(".dislikeBtn");
 const rate=div.querySelector(".rateBtn");
 const edit=div.querySelector(".editBtn");
 const del=div.querySelector(".deleteBtn");
+const renameBtn=div.querySelector(".renameBtn");
 
-/* PLAY */
 play.onclick=()=>{
 
-editingLevelId=null;
+editingLevelId=l.id;
+
+currentLevelVerified = !!l.verified;
+currentLevelBeaten = false;
 
 loadLevel(l.code);
 
@@ -1638,6 +1660,7 @@ if(edit){
 edit.onclick=()=>{
 
 editingLevelId=l.id;
+currentLevelVerified = !!l.verified;
 
 loadLevel(l.code);
 
@@ -1660,6 +1683,33 @@ w.close();
 }catch(e){}
 
 };
+}
+
+/* RENAME */
+if(renameBtn){
+
+renameBtn.onclick=async()=>{
+
+let newName = w.prompt(
+"New level name?",
+l.name
+);
+
+if(!newName) return;
+
+await updateDoc(
+doc(db,"levels",l.id),
+{
+name:newName
+}
+);
+
+div.querySelector(".levelTitle").innerText=newName;
+
+l.name=newName;
+
+};
+
 }
 
 /* DELETE */
@@ -1790,6 +1840,8 @@ blocks=delCheck(blocks,60,30);
 spikes=delCheck(spikes,30,30);
 fakeblocks=delCheck(fakeblocks,60,30);
 fakespikes=delCheck(fakespikes,30,30);
+invisblocks=delCheck(fakeblocks,60,30);
+invisspikes=delCheck(invisspikes,30,30);
 portals=delCheck(portals,30,40);
 gportals=delCheck(gportals,30,40);
 
@@ -1958,7 +2010,7 @@ portals.forEach(s=>{
 
 if(
 Math.abs(player.x-s.x)<25 &&
-Math.abs(player.y-s.y)<50
+Math.abs(player.y-s.y)<35
 ){
 
 gravity=-1;
@@ -1971,7 +2023,7 @@ gportals.forEach(s=>{
 
 if(
 Math.abs(player.x-s.x)<25 &&
-Math.abs(player.y-s.y)<50
+Math.abs(player.y-s.y)<35
 ){
 
 gravity=1;
@@ -2055,6 +2107,27 @@ player.y+30 > goal.y
 ){
 
 alert("Level Complete!");
+
+currentLevelBeaten = true;
+
+/* local verification */
+if(!currentLevelVerified){
+
+currentLevelVerified = true;
+
+}
+
+/* existing uploaded level */
+if(editingLevelId){
+
+updateDoc(
+doc(db,"levels",editingLevelId),
+{
+verified:true
+}
+);
+
+}
 
 player.x=100;
 player.y=200;
