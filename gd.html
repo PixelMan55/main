@@ -271,7 +271,6 @@ clip-path:polygon(50% 0,0 100%,100% 100%);
 filter:
 drop-shadow(0 0 10px rgba(255,0,0,0.5));
 }
-  
 
 .fakeblock{
 position:absolute;
@@ -293,6 +292,12 @@ linear-gradient(
 #ff7070,
 #d11414
 );
+
+clip-path:polygon(50% 0,0 100%,100% 100%);
+
+filter:
+drop-shadow(0 0 10px rgba(255,0,0,0.5));
+}
 
 .invisblock{
 position:absolute;
@@ -373,6 +378,162 @@ box-shadow:
 0 0 35px rgba(0,255,100,0.7);
 
 border:2px solid rgba(255,255,255,0.15);
+}
+
+/* BETTER GLOW */
+.glowdeco{
+position:absolute;
+width:120px;
+height:120px;
+border-radius:50%;
+pointer-events:none;
+filter:blur(30px);
+opacity:0.55;
+mix-blend-mode:screen;
+}
+
+/* BETTER PULSE */
+.pulselight{
+position:absolute;
+width:180px;
+height:180px;
+border-radius:50%;
+pointer-events:none;
+opacity:0.35;
+animation:pulseLight 1.4s infinite ease-in-out;
+filter:blur(8px);
+
+box-shadow:
+0 0 40px currentColor,
+0 0 120px currentColor;
+}
+
+@keyframes pulseLight{
+
+0%{
+transform:scale(0.8);
+opacity:0.2;
+}
+
+50%{
+transform:scale(1.2);
+opacity:0.7;
+}
+
+100%{
+transform:scale(0.8);
+opacity:0.2;
+}
+
+}
+
+/* BETTER CHAIN */
+.chain{
+position:absolute;
+width:18px;
+
+background:
+repeating-linear-gradient(
+180deg,
+#d0d0d0 0px,
+#8d8d8d 10px,
+#4e4e4e 20px,
+#d0d0d0 30px
+);
+
+border-radius:999px;
+
+box-shadow:
+0 0 10px rgba(255,255,255,0.18),
+inset 0 0 6px rgba(255,255,255,0.4);
+
+transform-origin:top center;
+}
+
+/* BETTER COLOR PICKER BUTTON */
+.colorPickWrap{
+position:relative;
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+gap:8px;
+
+padding:12px 18px;
+
+border-radius:16px;
+
+background:
+linear-gradient(
+180deg,
+#34345f,
+#1b1b36
+);
+
+color:white;
+
+font-weight:900;
+font-size:14px;
+
+cursor:pointer;
+
+border:2px solid rgba(255,255,255,0.05);
+
+box-shadow:
+0 6px 14px rgba(0,0,0,0.35),
+inset 0 1px 0 rgba(255,255,255,0.08);
+
+overflow:hidden;
+}
+
+.colorPickWrap input{
+position:absolute;
+inset:0;
+opacity:0;
+cursor:pointer;
+}
+
+.bgdeco{
+position:absolute;
+width:240px;
+height:140px;
+
+background:
+linear-gradient(
+180deg,
+rgba(255,255,255,0.08),
+rgba(255,255,255,0.02)
+);
+
+border:2px solid rgba(255,255,255,0.08);
+
+border-radius:20px;
+
+backdrop-filter:blur(4px);
+
+pointer-events:none;
+}
+
+.pulselight{ position:absolute; width:180px; height:180px; border-radius:50%; pointer-events:none; opacity:0.35; animation:pulseLight 1.4s infinite ease-in-out; filter:blur(8px); box-shadow: 0 0 40px currentColor, 0 0 120px currentColor; }
+
+@keyframes pulseLight{
+
+0%{
+transform:scale(0.8);
+opacity:0.2;
+}
+
+50%{
+transform:scale(1.2);
+opacity:0.7;
+}
+
+100%{
+transform:scale(0.8);
+opacity:0.2;
+}
+
 }
 
 #userDisplay{
@@ -515,11 +676,44 @@ onclick="setTool('gportal')">
 </button>
 
 <button
+id="glowBtn"
+class="toolBtn"
+onclick="setTool('glow')">
+✨ Glow
+</button>
+
+<button
+id="chainBtn"
+class="toolBtn"
+onclick="setTool('chain')">
+⛓ Chain
+</button>
+
+<button
+id="bgdecoBtn"
+class="toolBtn"
+onclick="setTool('bgdeco')">
+🖼 BG
+</button>
+
+<button
+id="pulseBtn"
+class="toolBtn"
+onclick="setTool('pulse')">
+💡 Pulse
+</button>
+
+<button
 id="goalBtn"
 class="toolBtn"
 onclick="setTool('goal')">
 🏁 Goal
 </button>
+
+<label class="colorPickWrap">
+🎨 Color
+<input type="color" id="colorPicker" value="#800080">
+</label>
 
 <button
 id="deleteBtn"
@@ -726,6 +920,10 @@ let invisblocks=[];
 let invisspikes=[];
 let portals=[];
 let gportals=[];
+let glows=[];
+let chains=[];
+let bgdecos=[];
+let pulselights=[];
 let goal=null;
 
 /* INPUT */
@@ -819,31 +1017,71 @@ uplBtn.style.display="";
 
 }
 
-/* OBJECTS */
-function make(cls,x,y,arr){
+function make(cls,x,y,arr,color=null,extra={}){
 
 let el=document.createElement("div");
 
 el.className=cls;
+
+if(color){
+
+if(
+cls==="block" ||
+cls==="fakeblock"
+){
+el.style.background=color;
+}
+
+if(
+cls==="glowdeco" ||
+cls==="pulselight"
+){
+el.style.background=color;
+}
+
+}
+
+if(cls==="pulselight"){
+el.style.color=color;
+}
+
+Object.assign(el.style,extra);
 
 game.appendChild(el);
 
 arr.push({
 x,
 y,
-el
+el,
+color,
+extra
 });
 
 }
 
-const addBlock=(x,y)=>make("block",x,y,blocks);
+const addBlock=(x,y,color)=>make("block",x,y,blocks,color);
 const addSpike=(x,y)=>make("spike",x,y,spikes);
-const addFakeBlock=(x,y)=>make("fakeblock",x,y,fakeblocks);
+const addFakeBlock=(x,y,color)=>make("fakeblock",x,y,fakeblocks,color);
 const addFakeSpike=(x,y)=>make("fakespike",x,y,fakespikes);
 const addInvisBlock=(x,y)=>make("invisblock",x,y,invisblocks);
 const addInvisSpike=(x,y)=>make("invisspike",x,y,invisspikes);
 const addPortal=(x,y)=>make("portal",x,y,portals);
 const addGPortal=(x,y)=>make("gportal",x,y,gportals);
+const addGlow=(x,y,color)=>
+make("glowdeco",x,y,glows,color);
+
+const addChain=(x,y)=>
+make("chain",x,y,chains,null,{
+height:(120+Math.random()*220)+"px",
+transform:`rotate(${(-8+Math.random()*16)}deg)`
+});
+
+const addBGDeco=(x,y)=>
+make("bgdeco",x,y,bgdecos);
+
+const addPulse=(x,y,color)=>
+make("pulselight",x,y,pulselights,color);
+
 
 function addGoal(x,y){
 
@@ -872,7 +1110,8 @@ const data={
 
 blocks:blocks.map(b=>({
 x:b.x,
-y:b.y
+y:b.y,
+color:b.color
 })),
 
 spikes:spikes.map(s=>({
@@ -882,10 +1121,21 @@ y:s.y
 
 fakeblocks:fakeblocks.map(b=>({
 x:b.x,
-y:b.y
+y:b.y,
+color:b.color
 })),
 
 fakespikes:fakespikes.map(s=>({
+x:s.x,
+y:s.y
+})),
+
+invisblocks:invisblocks.map(b=>({
+x:b.x,
+y:b.y
+})),
+
+invisspikes:invisspikes.map(s=>({
 x:s.x,
 y:s.y
 })),
@@ -898,6 +1148,18 @@ y:p.y
 gportals:gportals.map(g=>({
 x:g.x,
 y:g.y
+})),
+
+glows:glows.map(g=>({
+x:g.x,
+y:g.y,
+color:g.color
+})),
+
+pulselights:pulselights.map(p=>({
+x:p.x,
+y:p.y,
+color:p.color
 })),
 
 goal:goal ? {
@@ -924,6 +1186,10 @@ blocks,
 spikes,
 fakeblocks,
 fakespikes,
+invisblocks,
+invisspikes,
+pulselights,
+glows,
 portals,
 gportals
 ].forEach(arr=>{
@@ -942,14 +1208,26 @@ fakeblocks=[];
 fakespikes=[];
 portals=[];
 gportals=[];
+glows=[];
+pulselights=[];
 goal=null;
 
-(d.blocks||[]).forEach(b=>addBlock(b.x,b.y));
+(d.blocks||[]).forEach(b=>addBlock(b.x,b.y,b.color));
 (d.spikes||[]).forEach(s=>addSpike(s.x,s.y));
-(d.fakeblocks||[]).forEach(b=>addFakeBlock(b.x,b.y));
+(d.fakeblocks||[]).forEach(b=>addFakeBlock(b.x,b.y,b.color));
 (d.fakespikes||[]).forEach(s=>addFakeSpike(s.x,s.y));
+(d.invisblocks||[]).forEach(b=>addInvisBlock(b.x,b.y));
+(d.invisspikes||[]).forEach(s=>addInvisSpike(s.x,s.y));
 (d.portals||[]).forEach(p=>addPortal(p.x,p.y));
 (d.gportals||[]).forEach(g=>addGPortal(g.x,g.y));
+
+(d.glows||[]).forEach(g=>
+addGlow(g.x,g.y,g.color)
+);
+
+(d.pulselights||[]).forEach(p=>
+addPulse(p.x,p.y,p.color)
+);
 
 if(d.goal){
 addGoal(d.goal.x,d.goal.y);
@@ -972,7 +1250,8 @@ const code = btoa(JSON.stringify({
 
 blocks:blocks.map(b=>({
 x:b.x,
-y:b.y
+y:b.y,
+color:b.color
 })),
 
 spikes:spikes.map(s=>({
@@ -982,10 +1261,21 @@ y:s.y
 
 fakeblocks:fakeblocks.map(b=>({
 x:b.x,
-y:b.y
+y:b.y,
+color:b.color
 })),
 
 fakespikes:fakespikes.map(s=>({
+x:s.x,
+y:s.y
+})),
+
+invisblocks:invisblocks.map(b=>({
+x:b.x,
+y:b.y
+})),
+
+invisspikes:invisspikes.map(s=>({
 x:s.x,
 y:s.y
 })),
@@ -998,6 +1288,18 @@ y:p.y
 gportals:gportals.map(g=>({
 x:g.x,
 y:g.y
+})),
+
+glows:glows.map(g=>({
+x:g.x,
+y:g.y,
+color:g.color
+})),
+
+pulselights:pulselights.map(p=>({
+x:p.x,
+y:p.y,
+color:p.color
 })),
 
 goal:goal ? {
@@ -1390,6 +1692,10 @@ color:black;
 
 .editBtn{
 background:linear-gradient(180deg,#c26cff,#6e2dc2);
+}
+
+.renameBtn{
+background:linear-gradient(180deg,#4da3ff,#2465c0);
 }
 
 .deleteBtn{
@@ -1846,7 +2152,7 @@ blocks=delCheck(blocks,60,30);
 spikes=delCheck(spikes,30,30);
 fakeblocks=delCheck(fakeblocks,60,30);
 fakespikes=delCheck(fakespikes,30,30);
-invisblocks=delCheck(fakeblocks,60,30);
+invisblocks=delCheck(invisblocks,60,30);
 invisspikes=delCheck(invisspikes,30,30);
 portals=delCheck(portals,30,40);
 gportals=delCheck(gportals,30,40);
@@ -1865,9 +2171,27 @@ return;
 }
 
 /* PLACE */
-if(tool==="block") addBlock(x,y);
+const color =
+document.getElementById("colorPicker").value;
+
+if(tool==="block")
+addBlock(x,y,color);
+
+if(tool==="fakeblock")
+addFakeBlock(x,y,color);
+
+if(tool==="glow")
+addGlow(x,y,color);
+
+if(tool==="chain")
+addChain(x,y);
+
+if(tool==="bgdeco")
+addBGDeco(x,y);
+
+if(tool==="pulse")
+addPulse(x,y,color);
 if(tool==="spike") addSpike(x,y);
-if(tool==="fakeblock") addFakeBlock(x,y);
 if(tool==="fakespike") addFakeSpike(x,y);
 if(tool==="invisblock")addInvisBlock(x,y);
 if(tool==="invisspike")addInvisSpike(x,y);
@@ -2086,20 +2410,6 @@ rotation=0;
 
 });
 
-invisblocks.forEach(b=>{
-b.el.style.opacity =
-mode==="edit"
-? "0.5"
-: "0";
-});
-
-invisspikes.forEach(s=>{
-s.el.style.opacity =
-mode==="edit"
-? "0.5"
-: "0";
-});
-
 /* GOAL */
 if(goal){
 
@@ -2163,6 +2473,11 @@ p.style.transform=
 `rotate(${rotation}deg) scaleY(${gravity})`;
 
 [
+glows,
+chains,
+bgdecos,
+pulselights,
+
 blocks,
 spikes,
 fakeblocks,
@@ -2189,13 +2504,27 @@ goal.el.style.top=(goal.y-camera.y)+"px";
 
 }
 
+/* invis visibility */
+invisblocks.forEach(b=>{
+b.el.style.opacity =
+mode==="edit"
+? "0.5"
+: "0";
+});
+
+invisspikes.forEach(s=>{
+s.el.style.opacity =
+mode==="edit"
+? "0.5"
+: "0";
+});
+
 requestAnimationFrame(update);
 
 }
 
 function killPlayer(){
 
-/* death effect */
 const death=document.createElement("div");
 
 death.style.position="absolute";
@@ -2206,39 +2535,41 @@ death.style.width="30px";
 death.style.height="30px";
 
 death.style.borderRadius="8px";
-
 death.style.background="cyan";
 
 death.style.pointerEvents="none";
-
 death.style.boxShadow="0 0 40px cyan";
 
 death.style.zIndex="999";
 
 game.appendChild(death);
 
-let size=1;
-let opacity=1;
+let start=performance.now();
 
-const effect=setInterval(()=>{
+function animateDeath(t){
 
-size+=0.15;
-opacity-=0.06;
+let elapsed=t-start;
+
+let progress=elapsed/300;
+
+if(progress>=1){
+death.remove();
+return;
+}
+
+let size=1+(progress*2);
+let opacity=1-progress;
 
 death.style.transform=
 `translate(${-15*(size-1)}px,${-15*(size-1)}px) scale(${size})`;
 
 death.style.opacity=opacity;
 
-if(opacity<=0){
-
-clearInterval(effect);
-
-death.remove();
+requestAnimationFrame(animateDeath);
 
 }
 
-},16);
+requestAnimationFrame(animateDeath);
 
 /* respawn */
 player.x=100;
