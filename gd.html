@@ -100,6 +100,8 @@ border-radius:999px;
 background:transparent;
 }
 
+
+
 button{
 
 position:relative;
@@ -139,6 +141,19 @@ inset 0 1px 0 rgba(255,255,255,0.08);
 
 overflow:hidden;
 }
+
+.toolBtn{
+width:140px;
+height:58px;
+align-items:center;
+justify-content:center;
+
+padding:0 12px;
+
+white-space:nowrap;
+}
+
+
 
 button::before{
 content:"";
@@ -271,6 +286,27 @@ clip-path:polygon(50% 0,0 100%,100% 100%);
 filter:
 drop-shadow(0 0 10px rgba(255,0,0,0.5));
 }
+
+.upspike{
+position:absolute;
+
+width:30px;
+height:30px;
+
+background:
+linear-gradient(
+180deg,
+#ff7070,
+#d11414
+);
+
+clip-path:polygon(0 0,100% 0,50% 100%);
+
+filter:
+drop-shadow(0 0 10px rgba(255,0,0,0.5));
+}
+
+
 
 .fakeblock{
 position:absolute;
@@ -619,118 +655,18 @@ onclick="setMode('edit')">
 
 <div id="editorBar" class="editorOnly">
 
-<button
-id="blockBtn"
-class="toolBtn"
-onclick="setTool('block')">
-🟪 Block
+<button onclick="changePage(-1)">
+⬅
 </button>
 
-<button
-id="spikeBtn"
-class="toolBtn"
-onclick="setTool('spike')">
-🔺 Spike
-</button>
+<div id="editorPage"></div>
 
-<button
-id="fakeblockBtn"
-class="toolBtn"
-onclick="setTool('fakeblock')">
-🟫 Fake Block
-</button>
-
-<button
-id="fakespikeBtn"
-class="toolBtn"
-onclick="setTool('fakespike')">
-🔻 Fake Spike
-</button>
-
-<button
-id="invisblockBtn"
-class="toolBtn"
-onclick="setTool('invisblock')">
-⬜ Invis Block
-</button>
-
-<button
-id="invisspikeBtn"
-class="toolBtn"
-onclick="setTool('invisspike')">
-⚪ Invis Spike
-</button>
-
-<button
-id="portalBtn"
-class="toolBtn"
-onclick="setTool('portal')">
-🌀 Up Portal
-</button>
-
-<button
-id="gportalBtn"
-class="toolBtn"
-onclick="setTool('gportal')">
-🌗 Down Portal
-</button>
-
-<button
-id="glowBtn"
-class="toolBtn"
-onclick="setTool('glow')">
-✨ Glow
-</button>
-
-<button
-id="chainBtn"
-class="toolBtn"
-onclick="setTool('chain')">
-⛓ Chain
-</button>
-
-<button
-id="bgdecoBtn"
-class="toolBtn"
-onclick="setTool('bgdeco')">
-🖼 BG
-</button>
-
-<button
-id="pulseBtn"
-class="toolBtn"
-onclick="setTool('pulse')">
-💡 Pulse
-</button>
-
-<button
-id="goalBtn"
-class="toolBtn"
-onclick="setTool('goal')">
-🏁 Goal
-</button>
-
-<label class="colorPickWrap">
-🎨 Color
-<input type="color" id="colorPicker" value="#800080">
-</label>
-
-<button
-id="deleteBtn"
-class="toolBtn"
-onclick="setTool('delete')">
-🗑 Delete
-</button>
-
-<button onclick="saveLevel()">
-💾 Save
-</button>
-
-<button onclick="loadLevel(prompt('Paste code'))">
-📂 Load
+<button onclick="changePage(1)">
+➡
 </button>
 
 </div>
+
 <div id="userDisplay">Not logged in</div>
 
 <div id="popup">
@@ -791,6 +727,7 @@ let editingLevelId = null;
 let playingOnlineLevel=false;
 let currentLevelVerified = false;
 let currentLevelBeaten = false;
+
 
 onAuthStateChanged(auth, async(u)=>{
 
@@ -882,12 +819,118 @@ alert(e.message);
 
 };
 
+const editorPages=[
+
+[
+["block","🟪 Block"],
+["spike","🔺 Spike"],
+["upspike","🔻 Upside Spike"],
+["fakeblock","🟫 Fake Block"],
+["fakespike","⚠ Fake Spike"],
+["invisblock","⬜ Invis Block"],
+["invisspike","⚪ Invis Spike"],
+["portal","🌀 Up Portal"],
+["gportal","🌗 Down Portal"],
+["glow","✨ Glow"],
+["pulse","💡 Pulse"],
+["goal","🏁 Goal"]
+],
+
+[
+["chain","⛓ Chain"],
+["bgdeco","🖼 BG"],
+["delete","🗑 Delete"],
+["save","💾 Save"],
+["load","📂 Load"]
+]
+
+];
+
+function renderEditorPage(){
+
+const page=document.getElementById("editorPage");
+
+page.innerHTML="";
+
+editorPages[editorPage].forEach(([id,label])=>{
+
+if(id==="save"){
+
+const b=document.createElement("button");
+b.innerText=label;
+b.onclick=saveLevel;
+page.appendChild(b);
+return;
+
+}
+
+if(id==="load"){
+
+const b=document.createElement("button");
+b.innerText=label;
+b.onclick=()=>loadLevel(prompt("Paste code"));
+page.appendChild(b);
+return;
+
+}
+
+const b=document.createElement("button");
+
+b.id=id+"Btn";
+
+b.className="toolBtn";
+
+b.innerText=label;
+
+b.onclick=()=>setTool(id);
+
+if(tool===id){
+b.classList.add("toolActive");
+}
+
+page.appendChild(b);
+
+});
+
+/* color picker */
+const wrap=document.createElement("label");
+
+wrap.className="colorPickWrap";
+
+wrap.innerHTML=`
+🎨 Color
+<input type="color" id="colorPicker" value="#800080">
+`;
+
+page.appendChild(wrap);
+
+}
+
+window.changePage=(dir)=>{
+
+editorPage+=dir;
+
+if(editorPage<0){
+editorPage=editorPages.length-1;
+}
+
+if(editorPage>=editorPages.length){
+editorPage=0;
+}
+
+renderEditorPage();
+
+};
+
 /* GAME */
 const game=document.getElementById("game");
 
 let mode="play";
 let tool="block";
 let gravity=1;
+let editorPage=0;
+
+
 
 let camera={
 x:0,
@@ -916,6 +959,7 @@ let blocks=[];
 let spikes=[];
 let fakeblocks=[];
 let fakespikes=[];
+let upspikes=[];
 let invisblocks=[];
 let invisspikes=[];
 let portals=[];
@@ -978,6 +1022,7 @@ document.getElementById(m+"Btn")
 
 /* editor ui */
 updateEditorUI();
+renderEditorPage();
 
 };
 window.setTool=(t)=>{
@@ -1062,6 +1107,7 @@ extra
 const addBlock=(x,y,color)=>make("block",x,y,blocks,color);
 const addSpike=(x,y)=>make("spike",x,y,spikes);
 const addFakeBlock=(x,y,color)=>make("fakeblock",x,y,fakeblocks,color);
+const addUpSpike=(x,y)=>make("upspike",x,y,upspikes);
 const addFakeSpike=(x,y)=>make("fakespike",x,y,fakespikes);
 const addInvisBlock=(x,y)=>make("invisblock",x,y,invisblocks);
 const addInvisSpike=(x,y)=>make("invisspike",x,y,invisspikes);
@@ -1115,6 +1161,11 @@ color:b.color
 })),
 
 spikes:spikes.map(s=>({
+x:s.x,
+y:s.y
+})),
+
+upspikes:upspikes.map(s=>({
 x:s.x,
 y:s.y
 })),
@@ -1182,14 +1233,18 @@ window.loadLevel=(code)=>{
 const d=JSON.parse(atob(code));
 
 [
+glows,
+chains,
+bgdecos,
+pulselights,
+
 blocks,
 spikes,
+upspikes,
 fakeblocks,
 fakespikes,
 invisblocks,
 invisspikes,
-pulselights,
-glows,
 portals,
 gportals
 ].forEach(arr=>{
@@ -1210,6 +1265,7 @@ portals=[];
 gportals=[];
 glows=[];
 pulselights=[];
+upspikes=[];
 goal=null;
 
 (d.blocks||[]).forEach(b=>addBlock(b.x,b.y,b.color));
@@ -1218,6 +1274,7 @@ goal=null;
 (d.fakespikes||[]).forEach(s=>addFakeSpike(s.x,s.y));
 (d.invisblocks||[]).forEach(b=>addInvisBlock(b.x,b.y));
 (d.invisspikes||[]).forEach(s=>addInvisSpike(s.x,s.y));
+(d.upspikes||[]).forEach(s=>addUpSpike(s.x,s.y));
 (d.portals||[]).forEach(p=>addPortal(p.x,p.y));
 (d.gportals||[]).forEach(g=>addGPortal(g.x,g.y));
 
@@ -1255,6 +1312,11 @@ color:b.color
 })),
 
 spikes:spikes.map(s=>({
+x:s.x,
+y:s.y
+})),
+
+upspikes:upspikes.map(s=>({
 x:s.x,
 y:s.y
 })),
@@ -2150,6 +2212,8 @@ return !hit;
 
 blocks=delCheck(blocks,60,30);
 spikes=delCheck(spikes,30,30);
+upspikes=delCheck(upspikes,30,30);
+pulselights=delCheck(pulselights,70,70);
 fakeblocks=delCheck(fakeblocks,60,30);
 fakespikes=delCheck(fakespikes,30,30);
 invisblocks=delCheck(invisblocks,60,30);
@@ -2188,6 +2252,9 @@ addChain(x,y);
 
 if(tool==="bgdeco")
 addBGDeco(x,y);
+
+if(tool==="upspike")
+addUpSpike(x,y);
 
 if(tool==="pulse")
 addPulse(x,y,color);
@@ -2324,6 +2391,26 @@ Math.abs(player.y-s.y)<25
 ){
 
 killPlayer(s);
+
+player.vx=0;
+player.vy=0;
+
+keys={};
+
+rotation=0;
+
+}
+
+});
+
+upspikes.forEach(s=>{
+
+if(
+Math.abs(player.x-s.x)<25 &&
+Math.abs(player.y-s.y)<25
+){
+
+killPlayer();
 
 player.vx=0;
 player.vy=0;
@@ -2484,6 +2571,7 @@ fakeblocks,
 fakespikes,
 invisblocks,
 invisspikes,
+upspikes,
 portals,
 gportals
 ].forEach(arr=>{
