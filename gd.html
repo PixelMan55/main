@@ -2004,8 +2004,8 @@ await dislikeLevel(l.id);
 /* RATE */
 if (rate) {
   rate.onclick = () => {
-    // Target the current about:blank document context we are already in
-    const currentDoc = window.document;
+    // FORCE 1: Always grab the document bound strictly to the current executing execution context (self)
+    const currentDoc = self.document;
 
     // 1. Create the container overlay
     const popup = currentDoc.createElement('div');
@@ -2122,11 +2122,11 @@ if (rate) {
       errorMsg.style.display = "none";
       popup.remove();
 
-      // Explicitly send the rating to the normal window via window.opener
-      if (window.opener && typeof window.opener.rateLevelFromChild === 'function') {
-        window.opener.rateLevelFromChild(l.id, r, checkFeature.checked);
-      } else {
-        console.error("Could not find rateLevelFromChild on the parent window context.");
+      // FORCE 2: Route callbacks directly out to the parent window frame context via self.opener
+      if (self.opener && typeof self.opener.rateLevelFromChild === 'function') {
+        self.opener.rateLevelFromChild(l.id, r, checkFeature.checked);
+      } else if (typeof window.rateLevelFromChild === 'function') {
+        window.rateLevelFromChild(l.id, r, checkFeature.checked);
       }
     };
 
@@ -2136,7 +2136,6 @@ if (rate) {
     };
   };
 }
-
 
 
 
