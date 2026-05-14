@@ -2004,8 +2004,11 @@ await dislikeLevel(l.id);
 /* RATE */
 if (rate) {
   rate.onclick = () => {
+    // FIX 1: Explicitly build elements inside the about:blank context (this window)
+    const currentDoc = window.document;
+
     // 1. Create the container overlay
-    const popup = document.createElement('div');
+    const popup = currentDoc.createElement('div');
     popup.style.cssText = `
       position: fixed;
       inset: 0;
@@ -2018,7 +2021,7 @@ if (rate) {
     `;
 
     // 2. Create the interactive panel box
-    const panel = document.createElement('div');
+    const panel = currentDoc.createElement('div');
     panel.style.cssText = `
       background: #222;
       color: #fff;
@@ -2032,46 +2035,65 @@ if (rate) {
     `;
 
     // 3. UI Elements: Heading & Inputs
-    const title = document.createElement('h3');
+    const title = currentDoc.createElement('h3');
     title.innerText = "Rate Level";
     title.style.margin = "0 0 5px 0";
 
-    const labelScore = document.createElement('label');
+    const labelScore = currentDoc.createElement('label');
     labelScore.innerText = "Score (1-10):";
     
-    const inputScore = document.createElement('input');
+    const inputScore = currentDoc.createElement('input');
     inputScore.type = "number";
     inputScore.min = "1";
     inputScore.max = "10";
-    inputScore.style.padding = "6px";
+    // FIX 2: Added black text and white background explicitly so input text isn't invisible
+    inputScore.style.cssText = `
+      padding: 8px;
+      background: #ffffff;
+      color: #000000;
+      border: 1px solid #555;
+      border-radius: 4px;
+      font-size: 16px;
+    `;
 
-    const labelFeature = document.createElement('label');
-    labelFeature.style.display = "flex";
-    labelFeature.style.alignItems = "center";
-    labelFeature.style.gap = "8px";
-    labelFeature.style.cursor = "pointer";
+    const labelFeature = currentDoc.createElement('label');
+    labelFeature.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px 0;
+    `;
 
-    const checkFeature = document.createElement('input');
+    const checkFeature = currentDoc.createElement('input');
     checkFeature.type = "checkbox";
+    // FIX 3: Styled the checkbox to look decent, larger, and modern
+    checkFeature.style.cssText = `
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #007bff;
+    `;
 
     labelFeature.appendChild(checkFeature);
-    labelFeature.appendChild(document.createTextNode("Feature level?"));
+    labelFeature.appendChild(currentDoc.createTextNode("Feature level?"));
 
     // Error text placeholder
-    const errorMsg = document.createElement('div');
+    const errorMsg = currentDoc.createElement('div');
     errorMsg.style.cssText = "color: #ff4a4a; font-size: 13px; display: none;";
 
     // Action Row Buttons
-    const buttonRow = document.createElement('div');
+    const buttonRow = currentDoc.createElement('div');
     buttonRow.style.cssText = "display: flex; gap: 10px; margin-top: 5px;";
 
-    const submitBtn = document.createElement('button');
+    const submitBtn = currentDoc.createElement('button');
     submitBtn.innerText = "Submit";
-    submitBtn.style.cssText = "flex: 1; padding: 8px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;";
+    submitBtn.style.cssText = "flex: 1; padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;";
 
-    const cancelBtn = document.createElement('button');
+    const cancelBtn = currentDoc.createElement('button');
     cancelBtn.innerText = "Cancel";
-    cancelBtn.style.cssText = "flex: 1; padding: 8px; background: #555; color: white; border: none; border-radius: 4px; cursor: pointer;";
+    cancelBtn.style.cssText = "flex: 1; padding: 10px; background: #555; color: white; border: none; border-radius: 4px; cursor: pointer;";
 
     // Assemble the components
     buttonRow.appendChild(submitBtn);
@@ -2084,7 +2106,7 @@ if (rate) {
     panel.appendChild(errorMsg);
     panel.appendChild(buttonRow);
     popup.appendChild(panel);
-    document.body.appendChild(popup);
+    currentDoc.body.appendChild(popup);
 
     // Focus score input immediately
     inputScore.focus();
@@ -2099,16 +2121,15 @@ if (rate) {
         return;
       }
 
-      // Hide error and destroy popup
       errorMsg.style.display = "none";
       popup.remove();
 
-      // Fire off data to the parent window handler
-      window.rateLevelFromChild(
-        l.id,
-        r,
-        checkFeature.checked
-      );
+      // FIX 4: Call the rating function explicitly scoped through window.opener (the normal parent window context)
+      if (window.opener && typeof window.opener.rateLevelFromChild === 'function') {
+        window.opener.rateLevelFromChild(l.id, r, checkFeature.checked);
+      } else if (typeof window.rateLevelFromChild === 'function') {
+        window.rateLevelFromChild(l.id, r, checkFeature.checked);
+      }
     };
 
     // 5. Cancel Event Logic
