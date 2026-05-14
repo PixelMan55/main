@@ -2004,8 +2004,13 @@ await dislikeLevel(l.id);
 /* RATE */
 if (rate) {
   rate.onclick = () => {
-    // FORCE 1: Always grab the document bound strictly to the current executing execution context (self)
-    const currentDoc = self.document;
+    // Open the about:blank window and extract its document context
+    let w = window.open("about:blank", "_blank");
+    if (!w) {
+      alert("Popup blocked! Please allow popups for this site.");
+      return;
+    }
+    const currentDoc = w.document;
 
     // 1. Create the container overlay
     const popup = currentDoc.createElement('div');
@@ -2120,19 +2125,17 @@ if (rate) {
       }
 
       errorMsg.style.display = "none";
-      popup.remove();
+      w.close(); // Close the newly opened child window frame
 
-      // FORCE 2: Route callbacks directly out to the parent window frame context via self.opener
-      if (self.opener && typeof self.opener.rateLevelFromChild === 'function') {
-        self.opener.rateLevelFromChild(l.id, r, checkFeature.checked);
-      } else if (typeof window.rateLevelFromChild === 'function') {
+      // Execute callback directly on the normal window context
+      if (typeof window.rateLevelFromChild === 'function') {
         window.rateLevelFromChild(l.id, r, checkFeature.checked);
       }
     };
 
     // 5. Cancel Event Logic
     cancelBtn.onclick = () => {
-      popup.remove();
+      w.close(); // Close the child window frame
     };
   };
 }
