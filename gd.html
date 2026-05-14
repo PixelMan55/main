@@ -2221,13 +2221,20 @@ list.appendChild(div);
 });
 
 }
-window.rateLevelFromChild = function(levelId, rating, isFeatured) {
-  // 1. Process your level rating logic silently here 
-  // (e.g., fetch database calls, saving stats, updating game state arrays)
-  
-  console.log(`Level ${levelId} rated: ${rating}. Featured: ${isFeatured}`);
+window.rateLevelFromChild = async(id,r,featured)=>{
 
-  // 2. ALERT REMOVED: Native window popups have been safely stripped out.
+if(currentUser?.email!=="alexsmall313@gmail.com"){
+return alert("No permission");
+}
+
+const ref = doc(db,"levels",id);
+
+await updateDoc(ref,{
+rating:r,
+ratingCount:1,
+featured
+});
+
 };
 
 
