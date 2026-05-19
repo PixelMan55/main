@@ -573,7 +573,31 @@ z-index:10000;
 display:flex;
 }
 
+#popup2{
+position:fixed;
+inset:0;
+display:none;
+justify-content:center;
+align-items:center;
+background:rgba(0,0,0,0.85);
+z-index:10000;
+}
+
+#popup2.show{
+display:flex;
+}
+  
 #panel{
+background:#111;
+padding:20px;
+border-radius:10px;
+display:flex;
+flex-direction:column;
+gap:8px;
+min-width:200px;
+}
+
+#panel2{
 background:#111;
 padding:20px;
 border-radius:10px;
@@ -710,6 +734,8 @@ display:none;
 <div id="menuUserBar">
 <div id="menuUser">Guest</div>
 <button onclick="openPopup()">Login</button>
+  <button onclick="openPopup2()">
+<span class="material-symbols-outlined">news</span></button>
 </div>
 
 <div class="menuButtons">
@@ -788,6 +814,17 @@ onclick="setMode('edit')">
 <button onclick="login()">Login</button>
 <button onclick="signup()">Sign Up</button>
 <button onclick="closePopup()">Close</button>
+</div>
+</div>
+
+<div id="popup2">
+<h2>News</h2>
+<p>Contest: create a main level! </p>
+<p>  Make a level. Theme: Void, Black holes!</p>
+ <p> Winner gets it in main levels! </p>
+<p>  Used deco and coloring!
+  </p>
+<button onclick="closePopup2()">Close</button>
 </div>
 </div>
 
@@ -884,6 +921,14 @@ window.closePopup=()=>{
 popup.classList.remove("show");
 };
 
+window.openPopup2=()=>{
+popup2.classList.add("show");
+};
+
+window.closePopup2=()=>{
+popup2.classList.remove("show");
+};
+  
 /* AUTH */
 window.login=async()=>{
 
