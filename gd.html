@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Pixel Platforms Editor</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
 <style>
 body{
@@ -589,12 +590,147 @@ border-radius:6px;
 background:#222;
 color:white;
 }
+
+#mainMenu{
+position:fixed;
+inset:0;
+background:
+radial-gradient(circle at top,#243bff 0%,#131347 35%,#090916 100%);
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+z-index:5000;
+overflow:hidden;
+}
+
+#mainMenu::before{
+content:"";
+position:absolute;
+inset:-20%;
+background:
+repeating-linear-gradient(
+90deg,
+rgba(255,255,255,0.03) 0px,
+rgba(255,255,255,0.03) 4px,
+transparent 4px,
+transparent 120px
+);
+transform:rotate(-8deg);
+}
+
+.menuTitle{
+position:absolute;
+top:60px;
+font-size:90px;
+font-weight:900;
+color:white;
+text-shadow:0 0 30px rgba(0,170,255,0.7);
+letter-spacing:4px;
+z-index:2;
+}
+
+.menuButtons{
+display:flex;
+gap:70px;
+z-index:2;
+align-items:center;
+}
+
+.menuBtn{
+width:130px;
+height:130px;
+border-radius:30px;
+display:flex;
+align-items:center;
+justify-content:center;
+background:linear-gradient(180deg,#5ad1ff,#005eff);
+box-shadow:
+0 18px 40px rgba(0,0,0,0.45),
+0 0 40px rgba(0,140,255,0.5);
+border:5px solid rgba(255,255,255,0.18);
+cursor:pointer;
+transition:0.15s;
+}
+
+.menuBtn:nth-child(1){
+background:linear-gradient(180deg,#57ff8b,#0d9b4a);
+}
+
+.menuBtn:nth-child(3){
+background:linear-gradient(180deg,#ffcf5a,#ff7b00);
+}
+
+.menuBtn:hover{
+transform:translateY(-10px) scale(1.08);
+}
+
+.menuBtn .material-symbols-outlined{
+font-size:74px;
+color:white;
+font-variation-settings:'FILL' 1;
+}
+
+#menuUserBar{
+position:absolute;
+top:20px;
+right:20px;
+display:flex;
+gap:12px;
+align-items:center;
+z-index:2;
+}
+
+#menuUser{
+padding:14px 20px;
+border-radius:18px;
+background:rgba(0,0,0,0.4);
+color:white;
+font-weight:900;
+backdrop-filter:blur(12px);
+border:2px solid rgba(255,255,255,0.08);
+}
+
+#backBtn{
+position:fixed;
+top:18px;
+left:18px;
+z-index:4000;
+display:none;
+}
+
 </style>
 </head>
 
 <body>
 
-<div id="topBar">
+<div id="mainMenu">
+<div class="menuTitle">PIXEL PLATFORMS</div>
+
+<div id="menuUserBar">
+<div id="menuUser">Guest</div>
+<button onclick="openPopup()">Login</button>
+</div>
+
+<div class="menuButtons">
+<div class="menuBtn" onclick="openOnline()">
+<span class="material-symbols-outlined">language</span>
+</div>
+
+<div class="menuBtn" onclick="openLevelsMenu()">
+<span class="material-symbols-outlined">sound_sampler</span>
+</div>
+
+<div class="menuBtn" onclick="openCreator()">
+<span class="material-symbols-outlined">handyman</span>
+</div>
+</div>
+</div>
+
+<button id="backBtn" onclick="backToMenu()">⬅ Back</button>
+
+
+<div id="topBar" style="display:none;">
 
 <button
 id="playBtn"
@@ -702,6 +838,7 @@ let editingLevelId = null;
 let playingOnlineLevel=false;
 let currentLevelVerified = false;
 let currentLevelBeaten = false;
+let builtInMode = false;
 
 
 onAuthStateChanged(auth, async(u)=>{
@@ -713,6 +850,7 @@ const display = document.getElementById("userDisplay");
 if(!u){
 username="";
 display.innerText="Not logged in";
+document.getElementById("menuUser").innerText="Guest";
 return;
 }
 
@@ -723,6 +861,7 @@ const snap = await getDoc(doc(db,"users",u.uid));
 if(snap.exists()){
 username = snap.data().username || "";
 display.innerText = username;
+document.getElementById("menuUser").innerText=username;
 }else{
 display.innerText = "No profile";
 }
@@ -897,6 +1036,279 @@ renderEditorPage();
 
 };
 
+
+const builtInLevels = [
+{
+name:"Aurora",
+stars:1,
+code:`eyJibG9ja3MiOlt7IngiOjUwLCJ5IjozMDAsImNvbG9yIjpudWxsfSx7IngiOjIwMCwieSI6MjQwLCJjb2xvciI6IiM4MDAwODAifSx7IngiOjQwMCwieSI6MTIwLCJjb2xvciI6IiMyNmFlMDAifSx7IngiOjg4MCwieSI6NDAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6NjAwLCJ5Ijo0MCwiY29sb3IiOiIjZmZiZTA0In0seyJ4Ijo2MDAsInkiOjQwLCJjb2xvciI6IiNmZmJlMDQifSx7IngiOjYwMCwieSI6NDAsImNvbG9yIjoiI2ZmYmUwNCJ9LHsieCI6NjAwLCJ5Ijo0MCwiY29sb3IiOiIjZmZiZTA0In0seyJ4Ijo1NjAsInkiOjQwLCJjb2xvciI6IiNmZmJlMDQifSx7IngiOjgwMCwieSI6LTQwLCJjb2xvciI6IiNlNTAwZjQifSx7IngiOjc2MCwieSI6LTQwLCJjb2xvciI6IiNlNTAwZjQifV0sInNwaWtlcyI6W3sieCI6MjgwLCJ5IjoyMDB9XSwidXBzcGlrZXMiOlt7IngiOjQ4MCwieSI6MTYwfSx7IngiOjY4MCwieSI6ODB9LHsieCI6MTI4MCwieSI6MjgwfSx7IngiOjk2MCwieSI6ODB9XSwiZmFrZWJsb2NrcyI6W3sieCI6NzYwLCJ5IjotNDAsImNvbG9yIjoiIzgwMDA4MCJ9XSwiZmFrZXNwaWtlcyI6W10sImludmlzYmxvY2tzIjpbeyJ4Ijo4ODAsInkiOjQwfV0sImludmlzc3Bpa2VzIjpbXSwicG9ydGFscyI6W3sieCI6MzYwLCJ5IjoyODB9XSwiZ3BvcnRhbHMiOltdLCJnbG93cyI6W3sieCI6MjgwLCJ5IjoyMDAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6MjQwLCJ5IjoyMDAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6MTYwLCJ5IjoxNjAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6ODAwLCJ5IjoyODAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6NDgwLCJ5IjoxNjAsImNvbG9yIjoiIzAwMGFhOSJ9LHsieCI6NDAwLCJ5IjoxNjAsImNvbG9yIjoiIzAwMGFhOSJ9LHsieCI6NDQwLCJ5IjoxNjAsImNvbG9yIjoiIzAwMGFhOSJ9LHsieCI6NjQwLCJ5Ijo4MCwiY29sb3IiOiIjNTRmZjQ0In0seyJ4Ijo2MDAsInkiOjQwLCJjb2xvciI6IiM1NGZmNDQifSx7IngiOjYwMCIsInkiOjQwLCJjb2xvciI6IiM1NGZmNDQifV0sInB1bHNlbGlnaHRzIjpbXSwiZ29hbCI6eyJ4IjoxMDQwLCJ5Ijo0MH19`
+},
+{name:"Neon Run",stars:2,code:"eyJibG9ja3MiOlt7IngiOjUwLCJ5IjozMDB9LHsieCI6MjAwLCJ5IjoyNjB9LHsieCI6MzYwLCJ5IjoyMjB9LHsieCI6NTYwLCJ5IjoxODB9XSwic3Bpa2VzIjpbeyJ4IjoyODBLCJ5IjoyMzB9LHsieCI6NDgwLCJ5IjoxOTB9XSwiZ29hbCI6eyJ4Ijo3MjAsInkiOjE0MH19"},
+{name:"Sky Temple",stars:3,code:"eyJibG9ja3MiOlt7IngiOjUwLCJ5IjozMDB9LHsieCI6MjAwLCJ5IjoyNjB9LHsieCI6MzYwLCJ5IjoyMjB9LHsieCI6NTIwLCJ5IjoxODB9LHsieCI6NzIwLCJ5IjoxNDB9XSwic3Bpa2VzIjpbeyJ4IjoyODBLCJ5IjoyMzB9LHsieCI6NDQwLCJ5IjoxOTB9LHsieCI6NjQwLCJ5IjoxNTB9XSwiZ29hbCI6eyJ4Ijo4ODAsInkiOjEwMH19"},
+{name:"Gravity Core",stars:4,code:"eyJibG9ja3MiOlt7IngiOjUwLCJ5IjozMDB9LHsieCI6MjAwLCJ5IjoyNjB9LHsieCI6MzYwLCJ5IjoyMjB9XSwicG9ydGFscyI6W3sieCI6NDgwLCJ5IjoyMDB9XSwiZ3BvcnRhbHMiOlt7IngiOjg0MCwieSI6ODB9XSwidXBzcGlrZXMiOlt7IngiOjY0MCwieSI6ODB9XSwic3Bpa2VzIjpbeyJ4IjoyODBLCJ5IjoyMzB9XSwiZ29hbCI6eyJ4IjoxMDQwLCJ5Ijo0MH19"},
+{name:"Inferno Pulse",stars:5,code:"eyJibG9ja3MiOlt7IngiOjUwLCJ5IjozMDB9LHsieCI6MjAwLCJ5IjoyNjB9LHsieCI6MzYwLCJ5IjoyMjB9LHsieCI6NTIwLCJ5IjoxODB9LHsieCI6NzIwLCJ5IjoxNDB9LHsieCI6OTIwLCJ5IjoxMDB9XSwic3Bpa2VzIjpbeyJ4IjoyODBLCJ5IjoyMzB9LHsieCI6NDQwLCJ5IjoxOTB9LHsieCI6NjQwLCJ5IjoxNTB9LHsieCI6ODQwLCJ5IjoxMTB9XSwidXBzcGlrZXMiOlt7IngiOjgwMCwieSI6ODB9XSwiZ29hbCI6eyJ4IjoxMTgwLCJ5Ijo2MH19"}
+];
+
+window.openLevelsMenu=()=>{
+
+document.getElementById("mainMenu").style.display="none";
+
+const levels=[
+
+{
+name:"Aurora",
+stars:1,
+code:"eyJibG9ja3MiOlt7IngiOjUwLCJ5IjozMDAsImNvbG9yIjpudWxsfSx7IngiOjIwMCwieSI6MjQwLCJjb2xvciI6IiM4MDAwODAifSx7IngiOjQwMCwieSI6MTIwLCJjb2xvciI6IiMyNmFlMDAifSx7IngiOjg4MCwieSI6NDAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6NjAwLCJ5Ijo0MCwiY29sb3IiOiIjZmZiZTA0In0seyJ4Ijo2MDAsInkiOjQwLCJjb2xvciI6IiNmZmJlMDQifSx7IngiOjYwMCwieSI6NDAsImNvbG9yIjoiI2ZmYmUwNCJ9LHsieCI6NjAwLCJ5Ijo0MCwiY29sb3IiOiIjZmZiZTA0In0seyJ4Ijo1NjAsInkiOjQwLCJjb2xvciI6IiNmZmJlMDQifSx7IngiOjgwMCwieSI6LTQwLCJjb2xvciI6IiNlNTAwZjQifSx7IngiOjc2MCwieSI6LTQwLCJjb2xvciI6IiNlNTAwZjQifV0sInNwaWtlcyI6W3sieCI6MjgwLCJ5IjoyMDB9XSwidXBzcGlrZXMiOlt7IngiOjQ4MCwieSI6MTYwfSx7IngiOjY4MCwieSI6ODB9LHsieCI6MTI4MCwieSI6MjgwfSx7IngiOjk2MCwieSI6ODB9XSwiZmFrZWJsb2NrcyI6W3sieCI6NzYwLCJ5IjotNDAsImNvbG9yIjoiIzgwMDA4MCJ9XSwiZmFrZXNwaWtlcyI6W10sImludmlzYmxvY2tzIjpbeyJ4Ijo4ODAsInkiOjQwfV0sImludmlzc3Bpa2VzIjpbXSwicG9ydGFscyI6W3sieCI6MzYwLCJ5IjoyODB9XSwiZ3BvcnRhbHMiOltdLCJnbG93cyI6W3sieCI6MjgwLCJ5IjoyMDAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6MjQwLCJ5IjoyMDAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6MTYwLCJ5IjoxNjAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6ODAwLCJ5IjoyODAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6NDgwLCJ5IjoxNjAsImNvbG9yIjoiIzAwMGFhOSJ9LHsieCI6NDAwLCJ5IjoxNjAsImNvbG9yIjoiIzAwMGFhOSJ9LHsieCI6NDQwLCJ5IjoxNjAsImNvbG9yIjoiIzAwMGFhOSJ9LHsieCI6NjQwLCJ5Ijo4MCwiY29sb3IiOiIjNTRmZjQ0In0seyJ4Ijo2MDAsInkiOjQwLCJjb2xvciI6IiM1NGZmNDQifSx7IngiOjYwMCwieSI6NDAsImNvbG9yIjoiIzU0ZmY0NCJ9LHsieCI6ODgwLCJ5Ijo4MCwiY29sb3IiOiIjMDA2OTdlIn0seyJ4Ijo5MjAsInkiOjQwLCJjb2xvciI6IiMwMDY5N2UifSx7IngiOjg4MCwieSI6NDAsImNvbG9yIjoiIzAwNjk3ZSJ9LHsieCI6ODAwLCJ5IjotNDAsImNvbG9yIjoiIzAwMDAwMCJ9LHsieCI6ODAwLCJ5IjotNDAsImNvbG9yIjoiIzAwMDAwMCJ9LHsieCI6ODAwLCJ5IjotNDAsImNvbG9yIjoiIzAwMDAwMCJ9LHsieCI6ODAwLCJ5IjotNDAsImNvbG9yIjoiIzAwMDAwMCJ9LHsieCI6ODAwLCJ5IjotNDAsImNvbG9yIjoiIzAwMDAwMCJ9LHsieCI6ODAwLCJ5IjowLCJjb2xvciI6IiMwMDAwMDAifSx7IngiOjgwMCwieSI6MCwiY29sb3IiOiIjMDAwMDAwIn0seyJ4Ijo4MDAsInkiOi00MCwiY29sb3IiOiIjMDAwMDAwIn0seyJ4Ijo4MDAsInkiOi00MCwiY29sb3IiOiIjMDA5NmZmIn0seyJ4Ijo4MDAsInkiOi00MCwiY29sb3IiOiIjMDA5NmZmIn0seyJ4Ijo4MDAsInkiOi04MCwiY29sb3IiOiIjMDA5NmZmIn0seyJ4Ijo3NjAsInkiOi04MCwiY29sb3IiOiIjMDA5NmZmIn0seyJ4Ijo3NjAsInkiOjAsImNvbG9yIjoiIzAwOTZmZiJ9XSwicHVsc2VsaWdodHMiOltdLCJnb2FsIjp7IngiOjEwNDAsInkiOjQwfX0="
+},
+
+{
+name:"Shadow Temple",
+stars:5,
+code:"eyJibG9ja3MiOlt7IngiOjQwLCJ5IjozMDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6ODAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4IjoxMjAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4IjoxNjAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4IjoyMDAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4IjoyNDAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4IjoyODAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4IjozMjAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4IjozNjAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4Ijo0MDAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4Ijo2MDAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo2NDAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo2ODAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo3MjAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo3NjAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo4MDAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo4NDAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo4ODAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo5MjAsInkiOjIyMCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo5NjAsInkiOjIyMCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4IjoxMDAwLCJ5IjoyMjAsImNvbG9yIjoiIzAwYzNmZiJ9LHsieCI6MTA0MCwieSI6MjIwLCJjb2xvciI6IiMwMGMzZmYifSx7IngiOjEwODAsInkiOjIyMCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4IjoxMTIwLCJ5IjoyMjAsImNvbG9yIjoiIzAwYzNmZiJ9LHsieCI6MTE2MCwieSI6MzAwLCJjb2xvciI6IiMwMGMzZmYifSx7IngiOjEyMDAsInkiOjMwMCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4IjoxMjQwLCJ5IjozMDAsImNvbG9yIjoiIzAwYzNmZiJ9LHsieCI6MTI4MCwieSI6MzAwLCJjb2xvciI6IiMwMGMzZmYifSx7IngiOjEzMjAsInkiOjMwMCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4IjoxMzYwLCJ5IjozMDAsImNvbG9yIjoiIzAwYzNmZiJ9LHsieCI6MTYwMCwieSI6ODAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTY0MCwieSI6MTIwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjE2ODAsInkiOjgwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjE3MjAsInkiOjEyMCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoxNzYwLCJ5Ijo4MCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoxODAwLCJ5IjoxMjAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTg0MCwieSI6ODAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTg4MCwieSI6MTIwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjE5MjAsInkiOjgwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjE5NjAsInkiOjEyMCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoyMDAwLCJ5Ijo4MCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoyMDQwLCJ5IjoxMjAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjA4MCwieSI6ODAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjEyMCwieSI6MTIwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjIxNjAsInkiOjgwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjIyMDAsInkiOjEyMCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoyMjQwLCJ5Ijo4MCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoyMjgwLCJ5IjoxMjAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjMyMCwieSI6ODAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjM2MCwieSI6MTIwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjI0MDAsInkiOjgwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjI0NDAsInkiOjEyMCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoyNDgwLCJ5Ijo4MCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoyNTIwLCJ5IjoxMjAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjcyMCwieSI6MzAwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjI3NjAsInkiOjMwMCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjoyODAwLCJ5IjoyNjAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6Mjg0MCwieSI6MjYwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjI4ODAsInkiOjMwMCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjoyOTIwLCJ5IjozMDAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6Mjk2MCwieSI6MjYwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjMwMDAsInkiOjI2MCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozMDQwLCJ5IjozMDAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzA4MCwieSI6MzAwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjMxMjAsInkiOjI2MCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozMTYwLCJ5IjoyNjAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzIwMCwieSI6MzAwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjMyNDAsInkiOjMwMCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozMjgwLCJ5IjoyNjAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzMyMCwieSI6MjYwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjMzNjAsInkiOjMwMCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozNDAwLCJ5IjozMDAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzQ0MCwieSI6MjYwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjM0ODAsInkiOjI2MCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozNTIwLCJ5IjozMDAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzU2MCwieSI6MzAwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjM2MDAsInkiOjI2MCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozNjQwLCJ5IjoyNjAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzY4MCwieSI6MzAwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjM3MjAsInkiOjMwMCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozNzYwLCJ5IjoyNjAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzgwMCwieSI6MjYwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjM4NDAsInkiOjMwMCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozODgwLCJ5IjozMDAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzkyMCwieSI6MjYwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjM5NjAsInkiOjI2MCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4Ijo0MDAwLCJ5IjozMDAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6NDA0MCwieSI6MzAwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjQwODAsInkiOjI2MCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4Ijo0MTIwLCJ5IjoyNjAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6NDE2MCwieSI6MzAwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjQyMDAsInkiOjMwMCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4Ijo0MjQwLCJ5IjoyNjAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6NDI4MCwieSI6MjYwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjQ3MjAsInkiOjEyMCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo0NzYwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo0ODAwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo0ODQwLCJ5IjoxMjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDg4MCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDkyMCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDk2MCwieSI6MTIwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjUwMDAsInkiOjgwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjUwNDAsInkiOjgwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjUwODAsInkiOjEyMCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo1MTIwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo1MTYwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo1MjAwLCJ5IjoxMjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTI0MCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTI4MCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTM2MCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTQwMCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTQ0MCwieSI6MTIwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjU0ODAsInkiOjgwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjU1MjAsInkiOjgwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjU1NjAsInkiOjEyMCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo1NjAwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo1NjQwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo1NjgwLCJ5IjoxMjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTcyMCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTc2MCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTgwMCwieSI6MTIwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjU4NDAsInkiOjgwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjU4ODAsInkiOjgwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjU5MjAsInkiOjEyMCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo1OTYwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo2MDAwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo2MDQwLCJ5IjoxMjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NjA4MCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NjMyMCwieSI6MzAwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjYzNjAsInkiOjMwMCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NDAwLCJ5IjozMDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjQ0MCwieSI6MzAwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY0ODAsInkiOjMwMCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NTIwLCJ5IjozMDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjU2MCwieSI6MzAwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY2MDAsInkiOjMwMCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NjQwLCJ5IjozMDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjY4MCwieSI6MzAwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY3MjAsInkiOjMwMCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NzYwLCJ5IjozMDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjgwMCwieSI6MzAwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY4NDAsInkiOjMwMCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2ODgwLCJ5IjozMDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjkyMCwieSI6MzAwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY5NjAsInkiOjMwMCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo3MDAwLCJ5IjozMDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NTMyMCwieSI6MTIwLCJjb2xvciI6IiM4MDAwODAifSx7IngiOjUzMjAsInkiOjEyMCwiY29sb3IiOiIjMDFlZjg4In1dLCJzcGlrZXMiOlt7IngiOjMyMCwieSI6MjYwfSx7IngiOjM2MCwieSI6MjYwfSx7IngiOjkyMCwieSI6MjIwfSx7IngiOjk2MCwieSI6MjIwfSx7IngiOjEyMDAsInkiOjE4MH0seyJ4IjoxMjQwLCJ5IjoxODB9LHsieCI6MjcyMCwieSI6MjYwfSx7IngiOjI5NjAsInkiOjIyMH0seyJ4IjozMjAwLCJ5IjoyNjB9LHsieCI6MzQ0MCwieSI6MjIwfSx7IngiOjM2ODAsInkiOjI2MH0seyJ4IjozOTIwLCJ5IjoyMjB9LHsieCI6NDE2MCwieSI6MjYwfSx7IngiOjY2MDAsInkiOjI2MH0seyJ4Ijo2NjQwLCJ5IjoyNjB9XSwidXBzcGlrZXMiOlt7IngiOjE4NDAsInkiOjEyMH0seyJ4IjoxODgwLCJ5IjoxMjB9LHsieCI6NTIwMCwieSI6MTIwfSx7IngiOjUyNDAsInkiOjEyMH1dLCJmYWtlYmxvY2tzIjpbeyJ4IjoyMTYwLCJ5Ijo4MCwiY29sb3IiOiIjNDQ0In0seyJ4Ijo0MjAwLCJ5IjozMDAsImNvbG9yIjoiIzY2NiJ9LHsieCI6NDI0MCwieSI6MzAwLCJjb2xvciI6IiM2NjYifV0sImZha2VzcGlrZXMiOlt7IngiOjIyNDAsInkiOjQwfV0sImludmlzYmxvY2tzIjpbXSwiaW52aXNzcGlrZXMiOlt7IngiOjQzNjAsInkiOjI2MH1dLCJwb3J0YWxzIjpbeyJ4IjoxNDgwLCJ5IjoyMjB9LHsieCI6NDYwMCwieSI6MjYwfV0sImdwb3J0YWxzIjpbeyJ4IjoyNjAwLCJ5IjoxMjB9LHsieCI6NjIwMCwieSI6MTIwfV0sImdsb3dzIjpbeyJ4Ijo0MCwieSI6MjQwLCJjb2xvciI6IiM3YTAwZmYifSx7IngiOjgwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MTIwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MTYwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MjAwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MjQwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MjgwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MzIwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MzYwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6NDAwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MTYwMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTY0MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTY4MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTcyMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTc2MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTgwMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTg0MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTg4MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTkyMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTk2MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjAwMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjA0MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjA4MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjEyMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjE2MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjIwMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjI0MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjI4MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjMyMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjM2MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjQwMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjQ0MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjQ4MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjUyMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6NDcyMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDc2MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDgwMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDg0MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDg4MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDkyMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDk2MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTAwMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTA0MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTA4MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTEyMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTE2MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTIwMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTI0MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTI4MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTMyMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTM2MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTQwMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTQ0MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTQ4MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTUyMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTU2MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTYwMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTY0MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTY4MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTcyMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTc2MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTgwMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTg0MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTg4MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTkyMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTk2MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NjAwMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NjA0MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NjA4MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NjMyMCwieSI6MjQwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjYzNjAsInkiOjI0MCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NDAwLCJ5IjoyNDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjQ0MCwieSI6MjQwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY0ODAsInkiOjI0MCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NTIwLCJ5IjoyNDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjU2MCwieSI6MjQwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY2MDAsInkiOjI0MCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NjQwLCJ5IjoyNDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjY4MCwieSI6MjQwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY3MjAsInkiOjI0MCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NzYwLCJ5IjoyNDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjgwMCwieSI6MjQwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY4NDAsInkiOjI0MCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2ODgwLCJ5IjoyNDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjkyMCwieSI6MjQwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY5NjAsInkiOjI0MCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo3MDAwLCJ5IjoyNDAsImNvbG9yIjoiI2ZmZmZmZiJ9XSwicHVsc2VsaWdodHMiOltdLCJjaGFpbnMiOltdLCJiZ2RlY29zIjpbXSwiZ29hbCI6eyJ4Ijo3MjAwLCJ5IjoyNjB9fQ=="
+}
+
+];
+
+let html = levels.map((l,i)=>`
+
+<div style="
+background:#1b1b36;
+padding:18px;
+border-radius:20px;
+margin-bottom:16px;
+border:2px solid rgba(255,255,255,0.08)
+">
+
+<div style="
+font-size:32px;
+font-weight:900;
+color:white
+">
+${l.name}
+</div>
+
+<div style="
+color:#ffd54a;
+font-weight:900;
+margin:8px 0
+">
+${l.stars}⭐
+</div>
+
+<button onclick="window.playBuiltIn(${i})">
+Play
+</button>
+
+</div>
+
+`).join("");
+
+let old=document.getElementById("builtinMenu");
+if(old) old.remove();
+
+const wrap=document.createElement("div");
+
+wrap.id="builtinMenu";
+
+wrap.style.cssText=`
+position:fixed;
+inset:0;
+background:#090916;
+padding:120px 24px;
+overflow:auto;
+z-index:3000;
+`;
+
+wrap.innerHTML=html;
+
+document.body.appendChild(wrap);
+
+document.getElementById("backBtn").style.display="block";
+
+/* SAVE LEVELS GLOBALLY */
+window.mainLevels=levels;
+
+};
+
+window.playBuiltIn=(i)=>{
+
+builtInMode=true;
+playingOnlineLevel=true;
+editingLevelId=null;
+
+document.getElementById("mainMenu").style.display="none";
+
+const bm=document.getElementById("builtinMenu");
+
+if(bm) bm.remove();
+
+document.getElementById("topBar").style.display="flex";
+
+document.getElementById("backBtn").style.display="block";
+
+game.innerHTML="";
+
+game.appendChild(p);
+
+/* RESET PLAYER */
+
+player.x=100;
+player.y=200;
+
+player.vx=0;
+player.vy=0;
+
+camera.x=0;
+camera.y=0;
+
+gravity=1;
+rotation=0;
+
+keys={};
+
+/* LOAD LEVEL */
+
+loadLevel(
+window.mainLevels[i].code
+);
+
+/* FORCE PLAY MODE */
+
+mode="play";
+setMode("play");
+/* LOCK EDIT BUTTON */
+
+document.getElementById("editBtn").style.display="none";
+
+/* HIDE EDITOR */
+
+document.getElementById("editorBar").style.display="none";
+
+};
+window.openCreator=()=>{
+
+document.getElementById("mainMenu").style.display="none";
+document.getElementById("topBar").style.display="flex";
+document.getElementById("backBtn").style.display="block";
+
+game.innerHTML="";
+game.appendChild(p);
+
+playingOnlineLevel=false;
+
+player.x=100;
+player.y=200;
+player.vx=0;
+player.vy=0;
+
+camera.x=0;
+camera.y=0;
+
+gravity=1;
+rotation=0;
+
+keys={};
+
+/* RESET EVERYTHING */
+[
+glows,
+chains,
+bgdecos,
+pulselights,
+blocks,
+spikes,
+upspikes,
+fakeblocks,
+fakespikes,
+invisblocks,
+invisspikes,
+portals,
+gportals
+].forEach(arr=>{
+
+arr.forEach(o=>o.el.remove());
+
+});
+
+blocks=[];
+spikes=[];
+fakeblocks=[];
+fakespikes=[];
+invisblocks=[];
+invisspikes=[];
+portals=[];
+gportals=[];
+glows=[];
+chains=[];
+bgdecos=[];
+pulselights=[];
+upspikes=[];
+goal=null;
+
+/* RECREATE SPAWN PLATFORM */
+addBlock(50,300,"#800080");
+
+setMode("edit");
+
+renderEditorPage();
+updateEditorUI();
+
+};
+
+window.openOnline=()=>{
+
+document.getElementById("mainMenu").style.display="none";
+document.getElementById("topBar").style.display="flex";
+document.getElementById("backBtn").style.display="block";
+
+game.innerHTML="";
+game.appendChild(p);
+
+player.x=100;
+player.y=200;
+
+camera.x=0;
+camera.y=0;
+
+gravity=1;
+rotation=0;
+
+keys={};
+
+loadFeed();
+
+};
+
+window.backToMenu=()=>{
+
+document.getElementById("mainMenu").style.display="flex";
+document.getElementById("topBar").style.display="none";
+document.getElementById("backBtn").style.display="none";
+
+const bm=document.getElementById("builtinMenu");
+if(bm) bm.remove();
+
+game.innerHTML="";
+game.appendChild(p);
+
+camera.x=0;
+camera.y=0;
+
+player.x=100;
+player.y=200;
+player.vx=0;
+player.vy=0;
+
+gravity=1;
+rotation=0;
+
+keys={};
+
+mode="play";
+playingOnlineLevel=false;
+
+};
+
 /* GAME */
 const game=document.getElementById("game");
 
@@ -1012,7 +1424,6 @@ document.getElementById(t+"Btn")
 ?.classList.add("toolActive");
 
 };
-
 function updateEditorUI(){
 
 const editorBar=document.getElementById("editorBar");
@@ -1124,15 +1535,14 @@ el
 
 }
 
-/* SAVE */
 window.saveLevel=()=>{
 
-const data={
+const code=btoa(JSON.stringify({
 
 blocks:blocks.map(b=>({
 x:b.x,
 y:b.y,
-color:b.color
+color:b.color||null
 })),
 
 spikes:spikes.map(s=>({
@@ -1148,7 +1558,7 @@ y:s.y
 fakeblocks:fakeblocks.map(b=>({
 x:b.x,
 y:b.y,
-color:b.color
+color:b.color||null
 })),
 
 fakespikes:fakespikes.map(s=>({
@@ -1176,29 +1586,43 @@ x:g.x,
 y:g.y
 })),
 
-glows:glows.map(g=>({
+glows:(glows||[]).map(g=>({
 x:g.x,
 y:g.y,
-color:g.color
+color:g.color||"#fff"
 })),
 
-pulselights:pulselights.map(p=>({
+pulselights:(pulselights||[]).map(p=>({
 x:p.x,
 y:p.y,
-color:p.color
+color:p.color||"#fff"
 })),
 
-goal:goal ? {
+chains:(chains||[]).map(c=>({
+x:c.x,
+y:c.y
+})),
+
+bgdecos:(bgdecos||[]).map(b=>({
+x:b.x,
+y:b.y,
+type:b.type||0
+})),
+
+goal:goal?{
 x:goal.x,
 y:goal.y
-} : null
+}:null
 
-};
+}));
 
-prompt(
-"COPY",
-btoa(JSON.stringify(data))
-);
+navigator.clipboard.writeText(code);
+
+console.log(code);
+
+alert("Level code copied!");
+
+return code;
 
 };
 
@@ -1206,6 +1630,20 @@ btoa(JSON.stringify(data))
 window.loadLevel=(code)=>{
 
 const d=JSON.parse(atob(code));
+
+camera.x=0;
+camera.y=0;
+
+player.x=100;
+player.y=200;
+
+player.vx=0;
+player.vy=0;
+
+gravity=1;
+rotation=0;
+
+keys={};
 
 [
 glows,
@@ -1236,9 +1674,13 @@ blocks=[];
 spikes=[];
 fakeblocks=[];
 fakespikes=[];
+invisblocks=[];
+invisspikes=[];
 portals=[];
 gportals=[];
 glows=[];
+chains=[];
+bgdecos=[];
 pulselights=[];
 upspikes=[];
 goal=null;
@@ -1269,6 +1711,7 @@ addGoal(d.goal.x,d.goal.y);
 
 /* UPLOAD */
 window.uploadLevel = async()=>{
+if(playingOnlineLevel){ return alert('Built-in levels cannot be uploaded or edited'); }
 
 if(!currentUser){
 return alert("Login first");
@@ -1894,25 +2337,38 @@ const renameBtn=div.querySelector(".renameBtn");
 
 play.onclick=()=>{
 
+document.getElementById("mainMenu").style.display="none";
+document.getElementById("topBar").style.display="flex";
+document.getElementById("backBtn").style.display="block";
+
+game.innerHTML="";
+game.appendChild(p);
+
 editingLevelId=l.id;
 
 currentLevelVerified = !!l.verified;
 currentLevelBeaten = false;
 
-loadLevel(l.code);
+player.x=100;
+player.y=200;
+player.vx=0;
+player.vy=0;
 
-killPlayer();
+camera.x=0;
+camera.y=0;
+
+gravity=1;
+rotation=0;
 
 keys={};
 
-rotation=0;
+loadLevel(l.code);
 
 mode="play";
 playingOnlineLevel=true;
 
 updateEditorUI();
 
-/* hide edit button everywhere */
 document.getElementById("editBtn").style.display="none";
 
 try{
@@ -1920,7 +2376,6 @@ w.close();
 }catch(e){}
 
 };
-
 /* LIKE */
 like.onclick=async()=>{
 
@@ -2266,7 +2721,7 @@ type:"dislike"
 /* EDIT MODE */
 game.onclick=e=>{
 
-if(mode!=="edit") return;
+if(mode!=="edit" || builtInMode) return;
 
 const r=game.getBoundingClientRect();
 
