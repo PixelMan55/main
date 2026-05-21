@@ -582,6 +582,35 @@ position:relative;
 overflow:hidden;
 }
 
+.canvas-container {
+  position: relative;
+  width: 100%;
+  max-width: 800px; /* Adjust to your desired size */
+  height: 450px;    /* Adjust to your desired aspect ratio */
+  margin: 0 auto;
+}
+
+/* Make both elements fill the container perfectly */
+.canvas-container canvas,
+.canvas-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Layering Control */
+#myCanvas {
+  z-index: 2;          /* Puts canvas on top */
+  pointer-events: none; /* Allows user to click "through" the canvas to interact with the iframe */
+}
+
+#myIframe {
+  z-index: 1;          /* Puts iframe in the background */
+}
+
 .previewHeader{
 display:flex;
 justify-content:space-between;
@@ -910,7 +939,11 @@ onclick="closePreview('platformPreview')">
 
 <div class="previewGame">
 
-<iframe src="pixelman55.github.io/main/prev1.html"></iframe>
+<div class="canvas-container previewgame">
+  <canvas id="myCanvas"></canvas>
+  
+  <iframe id="myIframe" src="https://pixelman55.github.io/main/prev1.html"></iframe>
+</div>
 
 </div>
 
@@ -940,34 +973,10 @@ onclick="closePreview('fightPreview')">
 
 <div class="previewGame stickArena">
 
-<div class="healthBar healthLeft">
-<div class="healthFill"></div>
-</div>
-
-<div class="healthBar healthRight">
-<div class="healthFill"></div>
-</div>
-
-<div class="stickman player">
-
-<div class="stickHead"></div>
-<div class="stickBody"></div>
-<div class="stickArm"></div>
-<div class="stickLeg1"></div>
-<div class="stickLeg2"></div>
-
-</div>
-
-<div class="stickman enemy">
-
-<div class="stickHead"></div>
-<div class="stickBody"></div>
-<div class="stickArm"></div>
-<div class="stickLeg1"></div>
-<div class="stickLeg2"></div>
-
-</div>
-
+<div class="canvas-container previewgame">
+  <canvas id="myCanvas"></canvas>
+  
+  <iframe id="myIframe" src="https://pixelman55.github.io/main/prev2.html"></iframe>
 </div>
 
 </div>
