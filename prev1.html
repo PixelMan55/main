@@ -1,0 +1,2298 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Pixel Platforms Editor</title>
+
+<style>
+body{
+margin:0;
+overflow:hidden;
+background:#0b0b22;
+font-family:Arial;
+}
+
+#game{
+width:100vw;
+height:100vh;
+position:relative;
+overflow:hidden;
+}
+
+#topBar{
+position:fixed;
+
+top:18px;
+left:50%;
+
+transform:translateX(-50%);
+
+display:flex;
+gap:12px;
+align-items:center;
+justify-content:center;
+
+padding:16px 22px;
+
+background:
+linear-gradient(
+180deg,
+rgba(25,25,55,0.96),
+rgba(10,10,25,0.93)
+);
+
+border:2px solid rgba(255,255,255,0.08);
+
+border-radius:26px;
+
+backdrop-filter:blur(18px);
+
+box-shadow:
+0 20px 50px rgba(0,0,0,0.5),
+0 0 60px rgba(0,140,255,0.12);
+
+z-index:1000;
+}
+
+#editorBar{
+position:fixed;
+
+left:0;
+right:0;
+bottom:0;
+
+display:flex;
+gap:12px;
+
+align-items:center;
+
+padding:16px 22px;
+
+overflow-x:auto;
+
+background:
+linear-gradient(
+180deg,
+rgba(22,22,45,0.96),
+rgba(10,10,20,0.98)
+);
+
+border-top:2px solid rgba(255,255,255,0.08);
+
+backdrop-filter:blur(16px);
+
+box-shadow:
+0 -10px 35px rgba(0,0,0,0.45);
+
+z-index:1000;
+}
+
+#editorBar::-webkit-scrollbar{
+height:10px;
+}
+
+#editorBar::-webkit-scrollbar-thumb{
+background:#555;
+border-radius:999px;
+}
+
+#editorBar::-webkit-scrollbar-track{
+background:transparent;
+}
+
+button{
+
+position:relative;
+
+padding:12px 18px;
+
+border:none;
+
+border-radius:16px;
+
+background:
+linear-gradient(
+180deg,
+#34345f,
+#1b1b36
+);
+
+color:white;
+
+font-weight:900;
+font-size:14px;
+letter-spacing:0.4px;
+
+cursor:pointer;
+
+transition:
+transform 0.12s,
+filter 0.12s,
+box-shadow 0.12s,
+border 0.12s;
+
+border:2px solid rgba(255,255,255,0.05);
+
+box-shadow:
+0 6px 14px rgba(0,0,0,0.35),
+inset 0 1px 0 rgba(255,255,255,0.08);
+
+overflow:hidden;
+}
+
+button::before{
+content:"";
+
+position:absolute;
+top:0;
+left:0;
+right:0;
+
+height:45%;
+
+background:
+linear-gradient(
+180deg,
+rgba(255,255,255,0.18),
+transparent
+);
+
+pointer-events:none;
+}
+
+button:hover{
+
+transform:
+translateY(-3px)
+scale(1.04);
+
+filter:brightness(1.08);
+
+box-shadow:
+0 10px 25px rgba(0,0,0,0.45),
+0 0 24px rgba(0,140,255,0.18);
+
+}
+
+.modeActive{
+
+background:
+linear-gradient(
+180deg,
+#5ec8ff,
+#0077ff
+)!important;
+
+border:2px solid rgba(255,255,255,0.25);
+
+box-shadow:
+0 0 28px rgba(0,140,255,0.8),
+0 10px 25px rgba(0,0,0,0.45);
+
+transform:
+translateY(-2px)
+scale(1.06);
+
+}
+.toolActive{
+
+background:
+linear-gradient(
+180deg,
+#ffca63,
+#ff7b00
+)!important;
+
+border:2px solid rgba(255,255,255,0.2);
+
+box-shadow:
+0 0 28px rgba(255,140,0,0.8),
+0 10px 25px rgba(0,0,0,0.45);
+
+transform:
+translateY(-2px)
+scale(1.06);
+
+}
+
+.editorOnly{
+display:none;
+}
+
+.player{
+position:absolute;
+
+width:30px;
+height:30px;
+
+background:
+cyan;
+
+border-radius:8px;
+
+transition:transform 0.08s linear;
+}
+
+.block{
+position:absolute;
+
+width:120px;
+height:20px;
+
+background:
+purple;
+
+border-radius:8px;
+}
+
+.spike{
+position:absolute;
+
+width:30px;
+height:30px;
+
+background:
+linear-gradient(
+180deg,
+#ff7070,
+#d11414
+);
+
+clip-path:polygon(50% 0,0 100%,100% 100%);
+
+filter:
+drop-shadow(0 0 10px rgba(255,0,0,0.5));
+}
+
+.fakeblock{
+position:absolute;
+width:120px;
+height:20px;
+background:purple;
+border-radius:6px;
+}
+
+.fakespike{
+position:absolute;
+width:30px;
+height:30px;
+background:red;
+clip-path:polygon(50% 0,0 100%,100% 100%);
+}
+
+.invisblock{
+position:absolute;
+width:120px;
+height:20px;
+background:gray;
+border-radius:6px;
+opacity:0.5;
+}
+
+.invisspike{
+position:absolute;
+width:30px;
+height:30px;
+background:gray;
+clip-path:polygon(50% 0,0 100%,100% 100%);
+opacity:0.5;
+}
+
+.portal{
+position:absolute;
+
+width:34px;
+height:60px;
+
+background:
+linear-gradient(
+180deg,
+#6de8ff,
+#007dff
+);
+
+border-radius:14px;
+
+box-shadow:
+0 0 25px rgba(0,191,255,0.75);
+
+border:2px solid rgba(255,255,255,0.2);
+}
+
+.gportal{
+position:absolute;
+
+width:34px;
+height:60px;
+
+background:
+linear-gradient(
+180deg,
+#ffd76a,
+#ff8c00
+);
+
+border-radius:14px;
+
+box-shadow:
+0 0 25px rgba(255,170,0,0.75);
+
+border:2px solid rgba(255,255,255,0.2);
+}
+
+.goal{
+position:absolute;
+
+width:44px;
+height:90px;
+
+border-radius:14px;
+
+background:
+linear-gradient(
+180deg,
+#7dff90,
+#00b84a
+);
+
+box-shadow:
+0 0 35px rgba(0,255,100,0.7);
+
+border:2px solid rgba(255,255,255,0.15);
+}
+
+#userDisplay{
+position:fixed;
+top:10px;
+right:10px;
+color:white;
+background:#111;
+padding:6px 10px;
+border-radius:6px;
+z-index:1000;
+}
+
+#popup{
+position:fixed;
+inset:0;
+display:none;
+justify-content:center;
+align-items:center;
+background:rgba(0,0,0,0.85);
+z-index:10000;
+}
+
+#popup.show{
+display:flex;
+}
+
+.hidden{
+display:none!important;
+}
+
+
+#panel{
+background:#111;
+padding:20px;
+border-radius:10px;
+display:flex;
+flex-direction:column;
+gap:8px;
+min-width:200px;
+}
+
+input{
+padding:8px;
+border:none;
+border-radius:6px;
+background:#222;
+color:white;
+}
+</style>
+</head>
+
+<body>
+
+<div id="topBar" class="hidden">
+
+<button
+id="playBtn"
+class="modeBtn modeActive"
+onclick="setMode('play')">
+▶ Play
+</button>
+
+<button
+id="editBtn"
+class="modeBtn"
+onclick="setMode('edit')">
+🛠 Edit
+</button>
+
+<button onclick="loadFeed()">
+🌎 Feed
+</button>
+
+<button onclick="searchLevels()">
+🔎 Search
+</button>
+
+<button onclick="openPopup()">
+👤 Login
+</button>
+
+<button onclick="uploadLevel()" id="uplBtn">
+☁ Upload
+</button>
+
+</div>
+
+<div id="editorBar" class="editorOnly">
+
+<button
+id="blockBtn"
+class="toolBtn"
+onclick="setTool('block')">
+🟪 Block
+</button>
+
+<button
+id="spikeBtn"
+class="toolBtn"
+onclick="setTool('spike')">
+🔺 Spike
+</button>
+
+<button
+id="fakeblockBtn"
+class="toolBtn"
+onclick="setTool('fakeblock')">
+🟫 Fake Block
+</button>
+
+<button
+id="fakespikeBtn"
+class="toolBtn"
+onclick="setTool('fakespike')">
+🔻 Fake Spike
+</button>
+
+<button
+id="invisblockBtn"
+class="toolBtn"
+onclick="setTool('invisblock')">
+⬜ Invis Block
+</button>
+
+<button
+id="invisspikeBtn"
+class="toolBtn"
+onclick="setTool('invisspike')">
+⚪ Invis Spike
+</button>
+
+<button
+id="portalBtn"
+class="toolBtn"
+onclick="setTool('portal')">
+🌀 Up Portal
+</button>
+
+<button
+id="gportalBtn"
+class="toolBtn"
+onclick="setTool('gportal')">
+🌗 Down Portal
+</button>
+
+<button
+id="goalBtn"
+class="toolBtn"
+onclick="setTool('goal')">
+🏁 Goal
+</button>
+
+<button
+id="deleteBtn"
+class="toolBtn"
+onclick="setTool('delete')">
+🗑 Delete
+</button>
+
+<button onclick="saveLevel()">
+💾 Save
+</button>
+
+<button onclick="loadLevel(prompt('Paste code'))">
+📂 Load
+</button>
+
+</div>
+<div id="userDisplay" class="hidden">Not logged in</div>
+
+<div id="popup">
+<div id="panel">
+<input id="email" placeholder="email">
+<input id="pass" type="password" placeholder="password">
+<input id="usernameInput" placeholder="username (signup only)">
+<button onclick="login()">Login</button>
+<button onclick="signup()">Sign Up</button>
+<button onclick="closePopup()">Close</button>
+</div>
+</div>
+
+<div id="game"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+
+import {
+getAuth,
+signInWithEmailAndPassword,
+createUserWithEmailAndPassword,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+
+import {
+getFirestore,
+collection,
+addDoc,
+getDocs,
+query,
+orderBy,
+limit,
+updateDoc,
+doc,
+increment,
+where,
+setDoc,
+getDoc,
+deleteDoc
+} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+/* FIREBASE */
+const app = initializeApp({
+apiKey:"AIzaSyDk5qh-pydPe6vfBG7KFhl50zderbGggW4",
+authDomain:"gdeditor-b9a32.firebaseapp.com",
+projectId:"gdeditor-b9a32"
+});
+
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* USER */
+let currentUser = null;
+let username = "";
+let editingLevelId = null;
+let playingOnlineLevel=false;
+let currentLevelVerified = false;
+let currentLevelBeaten = false;
+
+onAuthStateChanged(auth, async(u)=>{
+
+currentUser = u;
+
+const display = document.getElementById("userDisplay");
+
+if(!u){
+username="";
+display.innerText="Not logged in";
+return;
+}
+
+try{
+
+const snap = await getDoc(doc(db,"users",u.uid));
+
+if(snap.exists()){
+username = snap.data().username || "";
+display.innerText = username;
+}else{
+display.innerText = "No profile";
+}
+
+}catch(e){
+console.error(e);
+display.innerText = "Error";
+}
+
+});
+
+/* POPUP */
+const popup=document.getElementById("popup");
+
+window.openPopup=()=>{
+popup.classList.add("show");
+};
+
+window.closePopup=()=>{
+popup.classList.remove("show");
+};
+
+/* AUTH */
+window.login=async()=>{
+
+try{
+
+await signInWithEmailAndPassword(
+auth,
+email.value,
+pass.value
+);
+
+closePopup();
+
+}catch(e){
+alert(e.message);
+}
+
+};
+
+window.signup=async()=>{
+
+try{
+
+const name=usernameInput.value.trim();
+
+if(!name) return alert("Enter username");
+
+const user = await createUserWithEmailAndPassword(
+auth,
+email.value,
+pass.value
+);
+
+await setDoc(doc(db,"users",user.user.uid),{
+username:name
+});
+
+username=name;
+
+alert("Account created!");
+
+closePopup();
+
+}catch(e){
+alert(e.message);
+}
+
+};
+
+/* GAME */
+const game=document.getElementById("game");
+
+let mode="play";
+let tool="block";
+let gravity=1;
+
+let camera={
+x:0,
+y:0
+};
+
+let keys={};
+
+let player={
+x:100,
+y:200,
+vx:0,
+vy:0,
+grounded:false,
+canJump:true
+};
+
+let rotation=0;
+
+const p=document.createElement("div");
+p.className="player";
+game.appendChild(p);
+
+/* WORLD */
+let blocks=[];
+let spikes=[];
+let fakeblocks=[];
+let fakespikes=[];
+let invisblocks=[];
+let invisspikes=[];
+let portals=[];
+let gportals=[];
+let goal=null;
+
+/* INPUT */
+addEventListener("keydown",e=>{
+
+keys[e.key]=true;
+
+if(
+(e.key===" " || e.key==="ArrowUp")
+&& player.canJump
+&& player.grounded
+){
+
+player.vy = -10 * gravity;
+
+player.canJump=false;
+
+player.grounded=false;
+
+}
+
+});
+
+addEventListener("keyup",e=>{
+
+keys[e.key]=false;
+
+if(e.key===" " || e.key==="ArrowUp"){
+player.canJump=true;
+}
+
+});
+
+/* UI */
+window.setMode=(m)=>{
+
+if(m==="edit"){
+
+playingOnlineLevel=false;
+
+}
+
+mode=m;
+
+/* mode glow */
+document.querySelectorAll(".modeBtn").forEach(b=>{
+b.classList.remove("modeActive");
+});
+
+document.getElementById(m+"Btn")
+?.classList.add("modeActive");
+
+/* editor ui */
+updateEditorUI();
+
+};
+window.setTool=(t)=>{
+
+tool=t;
+
+document.querySelectorAll(".toolBtn").forEach(b=>{
+b.classList.remove("toolActive");
+});
+
+document.getElementById(t+"Btn")
+?.classList.add("toolActive");
+
+};
+
+function updateEditorUI(){
+
+const editorBar=document.getElementById("editorBar");
+
+editorBar.style.display =
+(mode==="edit" && !playingOnlineLevel)
+? "flex"
+: "none";
+
+const editBtn=document.getElementById("editBtn");
+const uplBtn=document.getElementById("uplBtn");
+
+if(playingOnlineLevel){
+
+editBtn.style.display="none";
+uplBtn.style.display="none";
+}else{
+
+editBtn.style.display="";
+uplBtn.style.display="";
+}
+
+}
+
+/* OBJECTS */
+function make(cls,x,y,arr){
+
+let el=document.createElement("div");
+
+el.className=cls;
+
+game.appendChild(el);
+
+arr.push({
+x,
+y,
+el
+});
+
+}
+
+const addBlock=(x,y)=>make("block",x,y,blocks);
+const addSpike=(x,y)=>make("spike",x,y,spikes);
+const addFakeBlock=(x,y)=>make("fakeblock",x,y,fakeblocks);
+const addFakeSpike=(x,y)=>make("fakespike",x,y,fakespikes);
+const addInvisBlock=(x,y)=>make("invisblock",x,y,invisblocks);
+const addInvisSpike=(x,y)=>make("invisspike",x,y,invisspikes);
+const addPortal=(x,y)=>make("portal",x,y,portals);
+const addGPortal=(x,y)=>make("gportal",x,y,gportals);
+
+function addGoal(x,y){
+
+if(goal){
+goal.el.remove();
+}
+
+let el=document.createElement("div");
+
+el.className="goal";
+
+game.appendChild(el);
+
+goal={
+x,
+y,
+el
+};
+
+}
+
+/* SAVE */
+window.saveLevel=()=>{
+
+const data={
+
+blocks:blocks.map(b=>({
+x:b.x,
+y:b.y
+})),
+
+spikes:spikes.map(s=>({
+x:s.x,
+y:s.y
+})),
+
+fakeblocks:fakeblocks.map(b=>({
+x:b.x,
+y:b.y
+})),
+
+fakespikes:fakespikes.map(s=>({
+x:s.x,
+y:s.y
+})),
+
+portals:portals.map(p=>({
+x:p.x,
+y:p.y
+})),
+
+gportals:gportals.map(g=>({
+x:g.x,
+y:g.y
+})),
+
+goal:goal ? {
+x:goal.x,
+y:goal.y
+} : null
+
+};
+
+prompt(
+"COPY",
+btoa(JSON.stringify(data))
+);
+
+};
+/* LOAD */
+window.loadLevel=(code)=>{
+
+const d=JSON.parse(atob(code));
+
+camera.x=0;
+camera.y=0;
+
+player.x=100;
+player.y=200;
+
+player.vx=0;
+player.vy=0;
+
+gravity=1;
+rotation=0;
+
+keys={};
+
+[
+glows,
+chains,
+bgdecos,
+pulselights,
+
+blocks,
+spikes,
+upspikes,
+fakeblocks,
+fakespikes,
+invisblocks,
+invisspikes,
+portals,
+gportals
+].forEach(arr=>{
+
+arr.forEach(o=>o.el.remove());
+
+});
+
+if(goal){
+goal.el.remove();
+}
+
+blocks=[];
+spikes=[];
+fakeblocks=[];
+fakespikes=[];
+invisblocks=[];
+invisspikes=[];
+portals=[];
+gportals=[];
+glows=[];
+chains=[];
+bgdecos=[];
+pulselights=[];
+upspikes=[];
+goal=null;
+
+(d.blocks||[]).forEach(b=>addBlock(b.x,b.y,b.color));
+(d.spikes||[]).forEach(s=>addSpike(s.x,s.y));
+(d.fakeblocks||[]).forEach(b=>addFakeBlock(b.x,b.y,b.color));
+(d.fakespikes||[]).forEach(s=>addFakeSpike(s.x,s.y));
+(d.invisblocks||[]).forEach(b=>addInvisBlock(b.x,b.y));
+(d.invisspikes||[]).forEach(s=>addInvisSpike(s.x,s.y));
+(d.upspikes||[]).forEach(s=>addUpSpike(s.x,s.y));
+(d.portals||[]).forEach(p=>addPortal(p.x,p.y));
+(d.gportals||[]).forEach(g=>addGPortal(g.x,g.y));
+
+(d.glows||[]).forEach(g=>
+addGlow(g.x,g.y,g.color)
+);
+
+(d.pulselights||[]).forEach(p=>
+addPulse(p.x,p.y,p.color)
+);
+
+if(d.goal){
+addGoal(d.goal.x,d.goal.y);
+}
+
+};
+
+/* UPLOAD */
+window.uploadLevel = async()=>{
+
+if(!currentUser){
+return alert("Login first");
+}
+
+if(!username){
+return alert("Username not loaded yet.");
+}
+
+const code = btoa(JSON.stringify({
+
+blocks:blocks.map(b=>({
+x:b.x,
+y:b.y
+})),
+
+spikes:spikes.map(s=>({
+x:s.x,
+y:s.y
+})),
+
+fakeblocks:fakeblocks.map(b=>({
+x:b.x,
+y:b.y
+})),
+
+fakespikes:fakespikes.map(s=>({
+x:s.x,
+y:s.y
+})),
+
+portals:portals.map(p=>({
+x:p.x,
+y:p.y
+})),
+
+gportals:gportals.map(g=>({
+x:g.x,
+y:g.y
+})),
+
+goal:goal ? {
+x:goal.x,
+y:goal.y
+} : null
+
+}));
+
+/* EDIT */
+if(editingLevelId){
+
+try{
+
+await updateDoc(
+doc(db,"levels",editingLevelId),
+{
+code,
+updatedAt:Date.now(),
+verified:false
+}
+);
+
+alert("Level updated! Verification reset.");
+
+editingLevelId=null;
+currentLevelVerified=false;
+
+return;
+
+}catch(e){
+
+console.error(e);
+
+editingLevelId=null;
+
+alert("Edit failed.");
+}
+
+}
+
+/* NEW UPLOAD */
+const name=prompt("Level name?");
+
+if(!name) return;
+
+if(!currentLevelVerified){
+
+let yes = confirm(
+"This level is not verified, you sure you want to upload?"
+);
+
+if(!yes) return;
+
+}
+
+await addDoc(collection(db,"levels"),{
+
+name,
+code,
+
+creator:username,
+creatorId:currentUser.uid,
+
+createdAt:Date.now(),
+
+likes:0,
+rating:0,
+ratingCount:0,
+featured:false,
+
+verified:currentLevelVerified
+
+});
+
+editingLevelId=null;
+
+alert("Uploaded!");
+
+};
+
+/* FEED */
+window.loadFeed=async()=>{
+
+const q=query(
+collection(db,"levels"),
+orderBy("likes","desc"),
+limit(20)
+);
+
+const snap=await getDocs(q);
+
+let levels=[];
+
+snap.forEach(d=>{
+
+levels.push({
+id:d.id,
+...d.data()
+});
+
+});
+
+showFeed(levels);
+
+};
+
+/* SEARCH */
+window.searchLevels=async()=>{
+
+let name=prompt("Level name");
+
+const q=query(
+collection(db,"levels"),
+where("name","==",name)
+);
+
+const snap=await getDocs(q);
+
+let levels=[];
+
+snap.forEach(d=>{
+
+levels.push({
+id:d.id,
+...d.data()
+});
+
+});
+
+showFeed(levels);
+
+};
+
+/* FEED UI */
+function showFeed(levels){
+
+let w=window.open("about:blank","_blank");
+
+w.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+<title>Level Feed</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:
+radial-gradient(circle at top,#1a1a40,#090916 70%);
+color:white;
+overflow-x:hidden;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{
+width:12px;
+}
+
+::-webkit-scrollbar-track{
+background:#111;
+}
+
+::-webkit-scrollbar-thumb{
+background:#444;
+border-radius:10px;
+}
+
+/* TOP BAR */
+#topbar{
+position:sticky;
+top:0;
+z-index:100;
+padding:20px;
+background:rgba(0,0,0,0.5);
+backdrop-filter:blur(10px);
+border-bottom:1px solid rgba(255,255,255,0.08);
+box-shadow:0 0 20px rgba(0,0,0,0.4);
+}
+
+#title{
+font-size:40px;
+font-weight:900;
+background:linear-gradient(90deg,#4da3ff,#9d6bff,#ffcc4d);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+letter-spacing:1px;
+}
+
+/* GRID */
+#list{
+display:grid;
+grid-template-columns:
+repeat(auto-fill,minmax(420px,1fr));grid-template-columns:
+repeat(auto-fill,minmax(420px,1fr));
+gap:22px;
+padding:30px;
+}
+
+.card{
+position:relative;
+
+background:
+linear-gradient(
+180deg,
+rgba(45,45,85,0.98),
+rgba(18,18,40,0.98)
+);
+
+border-radius:28px;
+
+padding:26px;
+
+overflow:hidden;
+
+border:2px solid rgba(255,255,255,0.08);
+
+box-shadow:
+0 20px 40px rgba(0,0,0,0.45),
+0 0 40px rgba(0,140,255,0.08),
+inset 0 1px 0 rgba(255,255,255,0.08);
+
+transition:
+transform 0.16s,
+box-shadow 0.16s,
+border 0.16s;
+}
+.card:hover{
+
+transform:
+translateY(-10px)
+scale(1.025);
+
+box-shadow:
+0 30px 60px rgba(0,0,0,0.55),
+0 0 60px rgba(0,140,255,0.18);
+
+}
+
+/* SHINY TOP */
+.card::before{
+content:"";
+position:absolute;
+top:0;
+left:0;
+right:0;
+height:90px;
+
+background:linear-gradient(
+180deg,
+rgba(255,255,255,0.08),
+transparent
+);
+
+pointer-events:none;
+}
+
+/* FEATURED */
+.featured{
+border:2px solid gold;
+
+box-shadow:
+0 0 25px rgba(255,215,0,0.45),
+0 10px 25px rgba(0,0,0,0.45);
+}
+
+/* RATED */
+.rated{
+border:2px solid deepskyblue;
+
+box-shadow:
+0 0 20px rgba(0,191,255,0.35),
+0 10px 25px rgba(0,0,0,0.45);
+}
+
+.levelTitle{
+
+font-size:34px;
+
+font-weight:900;
+
+margin-bottom:12px;
+
+line-height:1;
+
+background:
+linear-gradient(
+90deg,
+#ffffff,
+#8dc7ff,
+#d6b3ff
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+
+text-shadow:
+0 0 18px rgba(255,255,255,0.15);
+
+}
+
+/* CREATOR */
+.creator{
+color:#b8b8d8;
+font-size:15px;
+margin-bottom:16px;
+}
+
+/* STATS */
+.stats{
+display:flex;
+gap:12px;
+flex-wrap:wrap;
+margin-bottom:18px;
+}
+
+.stat{
+padding:8px 12px;
+border-radius:999px;
+
+background:rgba(255,255,255,0.06);
+
+font-size:14px;
+font-weight:bold;
+
+border:1px solid rgba(255,255,255,0.06);
+}
+
+/* BUTTON AREA */
+.btnRow{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+}
+
+/* BUTTONS */
+button{
+border:none;
+border-radius:14px;
+
+padding:10px 16px;
+
+font-weight:900;
+font-size:14px;
+
+cursor:pointer;
+
+transition:
+transform 0.12s,
+filter 0.12s,
+box-shadow 0.12s;
+
+color:white;
+
+box-shadow:
+0 5px 12px rgba(0,0,0,0.35);
+}
+
+button:hover{
+transform:
+translateY(-2px)
+scale(1.05);
+
+filter:brightness(1.1);
+}
+
+button:active{
+transform:scale(0.95);
+}
+
+/* BTN COLORS */
+.playBtn{
+background:linear-gradient(180deg,#38d66b,#1d8f44);
+}
+
+.likeBtn{
+background:linear-gradient(180deg,#4da3ff,#2465c0);
+}
+
+.dislikeBtn{
+background:linear-gradient(180deg,#ff6a6a,#c72f2f);
+}
+
+.rateBtn{
+background:linear-gradient(180deg,#ffd84d,#d6a000);
+color:black;
+}
+
+.editBtn{
+background:linear-gradient(180deg,#c26cff,#6e2dc2);
+}
+
+.deleteBtn{
+background:linear-gradient(180deg,#ff6666,#b61e1e);
+}
+
+/* FEATURED BADGE */
+.badge{
+position:absolute;
+top:16px;
+right:16px;
+
+padding:8px 12px;
+
+border-radius:999px;
+
+font-size:12px;
+font-weight:900;
+letter-spacing:1px;
+}
+
+.featuredBadge{
+background:linear-gradient(180deg,#ffe16b,#dca700);
+color:black;
+
+box-shadow:
+0 0 12px rgba(255,215,0,0.5);
+}
+
+.ratedBadge{
+background:linear-gradient(180deg,#5fc4ff,#1f73d4);
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="topbar">
+<div id="title">ONLINE LEVEL FEED</div>
+</div>
+
+<div id="list"></div>
+
+</body>
+</html>
+`);
+
+let list=w.document.getElementById("list");
+
+levels.forEach(l=>{
+
+let avg = l.ratingCount > 0
+? Math.round(l.rating)
+: "Unrated";
+
+/* CARD */
+let div=w.document.createElement("div");
+
+let classes="card";
+
+if(l.featured){
+classes+=" featured";
+}
+else if(l.ratingCount>0){
+classes+=" rated";
+}
+
+div.className=classes;
+
+/* BADGES */
+let badge="";
+
+if(l.featured){
+badge=`<div class="badge featuredBadge">FEATURED</div>`;
+}
+else if(l.ratingCount>0){
+badge=`<div class="badge ratedBadge">RATED</div>`;
+}
+
+/* HTML */
+div.innerHTML=`
+
+${badge}
+
+<div class="levelTitle">${l.name}</div>
+
+<div class="creator">
+By ${l.creator}
+</div>
+
+<div class="stats">
+
+<div class="stat">
+👍 ${l.likes}
+</div>
+
+<div class="stat">
+⭐ ${avg}
+</div>
+
+<div class="stat">
+✅ ${l.verified ? "Yes" : "No"}
+</div>
+
+</div>
+
+<div class="btnRow">
+
+<button class="playBtn">
+▶ Play
+</button>
+
+<button class="likeBtn">
+👍 Like
+</button>
+
+<button class="dislikeBtn">
+👎 Dislike
+</button>
+
+${currentUser?.email==="alexsmall313@gmail.com"
+? `
+<button class="rateBtn">
+⭐ Rate
+</button>
+`
+: ""
+}
+
+${l.creatorId===currentUser?.uid
+? `
+<button class="editBtn">
+✏ Edit
+</button>
+
+<button class="renameBtn">
+📝 Rename
+</button>
+
+<button class="deleteBtn">
+🗑 Delete
+</button>
+`
+: ""
+}
+
+</div>
+`;
+
+/* BUTTONS */
+const play=div.querySelector(".playBtn");
+const like=div.querySelector(".likeBtn");
+const dislike=div.querySelector(".dislikeBtn");
+const rate=div.querySelector(".rateBtn");
+const edit=div.querySelector(".editBtn");
+const del=div.querySelector(".deleteBtn");
+const renameBtn=div.querySelector(".renameBtn");
+
+play.onclick=()=>{
+
+editingLevelId=l.id;
+
+currentLevelVerified = !!l.verified;
+currentLevelBeaten = false;
+
+loadLevel(l.code);
+
+killPlayer();
+
+keys={};
+
+rotation=0;
+
+mode="play";
+playingOnlineLevel=true;
+
+updateEditorUI();
+
+/* hide edit button everywhere */
+document.getElementById("editBtn").style.display="none";
+
+try{
+w.close();
+}catch(e){}
+
+};
+
+/* LIKE */
+like.onclick=async()=>{
+
+if(!currentUser){
+return alert("Login first");
+}
+
+const voteRef=doc(
+db,
+"levels",
+l.id,
+"votes",
+currentUser.uid
+);
+
+const existing=await getDoc(voteRef);
+
+if(existing.exists()){
+
+if(existing.data().type==="like"){
+return;
+}
+
+/* switch dislike -> like */
+await updateDoc(
+doc(db,"levels",l.id),
+{
+likes:increment(2)
+}
+);
+
+}else{
+
+await updateDoc(
+doc(db,"levels",l.id),
+{
+likes:increment(1)
+}
+);
+
+}
+
+await setDoc(voteRef,{
+type:"like"
+});
+
+};
+
+/* DISLIKE */
+dislike.onclick=async()=>{
+
+await dislikeLevel(l.id);
+
+};
+
+/* RATE */
+if(rate){
+
+rate.onclick=()=>{
+
+let input=w.prompt("Rate 1-10");
+
+if(input===null) return;
+
+let r=Number(input);
+
+if(Number.isNaN(r)||r<1||r>10){
+return w.alert("Invalid");
+}
+
+let featured=w.confirm("Feature level?");
+
+window.rateLevelFromChild(
+l.id,
+r,
+featured
+);
+
+};
+
+}
+
+/* EDIT */
+if(edit){
+
+edit.onclick=()=>{
+
+editingLevelId=l.id;
+currentLevelVerified = !!l.verified;
+
+loadLevel(l.code);
+
+killPlayer()
+
+keys={};
+
+rotation=0;
+
+mode="edit";
+playingOnlineLevel=false;
+
+updateEditorUI();
+
+/* restore edit button */
+document.getElementById("editBtn").style.display="";
+
+try{
+w.close();
+}catch(e){}
+
+};
+}
+
+/* RENAME */
+if(renameBtn){
+
+renameBtn.onclick=async()=>{
+
+let newName = w.prompt(
+"New level name?",
+l.name
+);
+
+if(!newName) return;
+
+await updateDoc(
+doc(db,"levels",l.id),
+{
+name:newName
+}
+);
+
+div.querySelector(".levelTitle").innerText=newName;
+
+l.name=newName;
+
+};
+
+}
+
+/* DELETE */
+if(del){
+
+del.onclick=async()=>{
+
+let yes=w.confirm("Delete level?");
+
+if(!yes) return;
+
+await deleteDoc(
+doc(db,"levels",l.id)
+);
+
+div.remove();
+
+};
+
+}
+
+list.appendChild(div);
+
+});
+
+}
+window.rateLevelFromChild = async(id,r,featured)=>{
+
+if(currentUser?.email!=="alexsmall313@gmail.com"){
+return alert("No permission");
+}
+
+const ref = doc(db,"levels",id);
+
+await updateDoc(ref,{
+rating:r,
+ratingCount:1,
+featured
+});
+
+alert("Rated!");
+};
+
+window.dislikeLevel=async(id)=>{
+
+if(!currentUser){
+return alert("Login first");
+}
+
+const voteRef=doc(
+db,
+"levels",
+id,
+"votes",
+currentUser.uid
+);
+
+const existing=await getDoc(voteRef);
+
+if(existing.exists()){
+
+if(existing.data().type==="dislike"){
+return;
+}
+
+/* switch like -> dislike */
+await updateDoc(
+doc(db,"levels",id),
+{
+likes:increment(-2)
+}
+);
+
+}else{
+
+await updateDoc(
+doc(db,"levels",id),
+{
+likes:increment(-1)
+}
+);
+
+}
+
+await setDoc(voteRef,{
+type:"dislike"
+});
+
+};
+
+/* EDIT MODE */
+game.onclick=e=>{
+
+if(mode!=="edit") return;
+
+const r=game.getBoundingClientRect();
+
+let x=Math.round(
+(e.clientX-r.left+camera.x)/40
+)*40;
+
+let y=Math.round(
+(e.clientY-r.top+camera.y)/40
+)*40;
+
+/* DELETE */
+if(tool==="delete"){
+
+const delCheck=(arr,w,h)=>{
+
+return arr.filter(o=>{
+
+let hit=
+Math.abs(o.x-x)<w &&
+Math.abs(o.y-y)<h;
+
+if(hit){
+o.el.remove();
+}
+
+return !hit;
+
+});
+
+};
+
+blocks=delCheck(blocks,60,30);
+spikes=delCheck(spikes,30,30);
+fakeblocks=delCheck(fakeblocks,60,30);
+fakespikes=delCheck(fakespikes,30,30);
+invisblocks=delCheck(fakeblocks,60,30);
+invisspikes=delCheck(invisspikes,30,30);
+portals=delCheck(portals,30,40);
+gportals=delCheck(gportals,30,40);
+
+if(
+goal &&
+Math.abs(goal.x-x)<40 &&
+Math.abs(goal.y-y)<60
+){
+goal.el.remove();
+goal=null;
+}
+
+return;
+
+}
+
+/* PLACE */
+if(tool==="block") addBlock(x,y);
+if(tool==="spike") addSpike(x,y);
+if(tool==="fakeblock") addFakeBlock(x,y);
+if(tool==="fakespike") addFakeSpike(x,y);
+if(tool==="invisblock")addInvisBlock(x,y);
+if(tool==="invisspike")addInvisSpike(x,y);
+if(tool==="portal") addPortal(x,y);
+if(tool==="gportal") addGPortal(x,y);
+if(tool==="goal") addGoal(x,y);
+
+};
+
+/* UPDATE */
+function update(){
+
+if(mode==="play"){
+
+camera.x+=(player.x-200-camera.x)*0.08;
+camera.y+=(player.y-200-camera.y)*0.08;
+
+}
+
+/* EDITOR CAMERA MOVEMENT */
+if(mode==="edit"){
+
+const speed = 10;
+
+if(keys["a"] || keys["ArrowLeft"]){
+camera.x -= speed;
+}
+
+if(keys["d"] || keys["ArrowRight"]){
+camera.x += speed;
+}
+
+if(keys["w"] || keys["ArrowUp"]){
+camera.y -= speed;
+}
+
+if(keys["s"] || keys["ArrowDown"]){
+camera.y += speed;
+}
+
+}
+
+if(mode==="play"){
+
+if(keys["a"]||keys["ArrowLeft"]){
+player.vx=-4;
+}
+else if(keys["d"]||keys["ArrowRight"]){
+player.vx=4;
+}
+else{
+player.vx*=0.8;
+}
+
+player.vy += 0.6 * gravity;
+
+player.x+=player.vx;
+player.y+=player.vy;
+
+if(
+player.y > window.innerHeight + 2000 ||
+player.y < -2000
+){
+
+killPlayer();
+
+keys={};
+
+rotation=0;
+
+gravity=1;
+
+}
+
+/* COLLISION */
+player.grounded=false;
+
+blocks.forEach(b=>{
+
+if(
+player.x < b.x + 120 &&
+player.x + 30 > b.x &&
+player.y < b.y + 20 &&
+player.y + 30 > b.y
+){
+
+/* normal gravity */
+if(gravity === 1 && player.vy >= 0){
+
+player.y = b.y - 30;
+
+player.vy = 0;
+
+player.grounded = true;
+
+}
+
+/* upside down gravity */
+if(gravity === -1 && player.vy <= 0){
+
+player.y = b.y + 20;
+
+player.vy = 0;
+
+player.grounded = true;
+
+}
+
+}
+
+});
+/* ROTATION */
+if(!player.grounded){
+
+rotation += 8 * gravity;
+
+}else{
+
+/* snap to cube */
+rotation = Math.round(rotation/90)*90;
+
+}
+
+/* SPIKES */
+spikes.forEach(s=>{
+
+if(
+Math.abs(player.x-s.x)<25 &&
+Math.abs(player.y-s.y)<25
+){
+
+killPlayer(s);
+
+player.vx=0;
+player.vy=0;
+
+keys={};
+
+rotation=0;
+
+}
+
+});
+
+portals.forEach(s=>{
+
+if(
+Math.abs(player.x-s.x)<25 &&
+Math.abs(player.y-s.y)<35
+){
+
+gravity=-1;
+
+}
+
+});
+
+gportals.forEach(s=>{
+
+if(
+Math.abs(player.x-s.x)<25 &&
+Math.abs(player.y-s.y)<35
+){
+
+gravity=1;
+
+}
+
+});
+
+invisspikes.forEach(s=>{
+
+if(
+Math.abs(player.x-s.x)<25 &&
+Math.abs(player.y-s.y)<25
+){
+
+killPlayer(s);
+
+}
+
+});
+
+invisblocks.forEach(b=>{
+
+if(
+player.x < b.x + 120 &&
+player.x + 30 > b.x &&
+player.y < b.y + 20 &&
+player.y + 30 > b.y
+){
+
+/* normal gravity */
+if(gravity === 1 && player.vy >= 0){
+
+player.y = b.y - 30;
+
+player.vy = 0;
+
+player.grounded = true;
+rotation=0;
+}
+
+/* upside down gravity */
+if(gravity === -1 && player.vy <= 0){
+
+player.y = b.y + 20;
+
+player.vy = 0;
+
+player.grounded = true;
+rotation=0;
+}
+
+}
+
+});
+
+invisblocks.forEach(b=>{
+b.el.style.opacity =
+mode==="edit"
+? "0.5"
+: "0";
+});
+
+invisspikes.forEach(s=>{
+s.el.style.opacity =
+mode==="edit"
+? "0.5"
+: "0";
+});
+
+/* GOAL */
+if(goal){
+
+if(
+
+player.x < goal.x+40 &&
+player.x+30 > goal.x &&
+player.y < goal.y+80 &&
+player.y+30 > goal.y
+
+){
+
+alert("Level Complete!");
+
+currentLevelBeaten = true;
+
+/* local verification */
+if(!currentLevelVerified){
+
+currentLevelVerified = true;
+
+}
+
+/* existing uploaded level */
+if(editingLevelId){
+
+updateDoc(
+doc(db,"levels",editingLevelId),
+{
+verified:true
+}
+);
+
+}
+
+player.x=100;
+player.y=200;
+player.vx=0;
+player.vy=0;
+
+player.grounded=false;
+player.canJump=true;
+
+keys={};
+
+rotation=0;
+
+gravity=1;
+
+}
+
+}
+
+}
+
+/* RENDER */
+p.style.left=(player.x-camera.x)+"px";
+p.style.top=(player.y-camera.y)+"px";
+
+p.style.transform=
+`rotate(${rotation}deg) scaleY(${gravity})`;
+
+[
+blocks,
+spikes,
+fakeblocks,
+fakespikes,
+invisblocks,
+invisspikes,
+portals,
+gportals
+].forEach(arr=>{
+
+arr.forEach(o=>{
+
+o.el.style.left=(o.x-camera.x)+"px";
+o.el.style.top=(o.y-camera.y)+"px";
+
+});
+
+});
+
+if(goal){
+
+goal.el.style.left=(goal.x-camera.x)+"px";
+goal.el.style.top=(goal.y-camera.y)+"px";
+
+}
+
+requestAnimationFrame(update);
+
+}
+
+function killPlayer(){
+
+/* death effect */
+const death=document.createElement("div");
+
+death.style.position="absolute";
+death.style.left=player.x+"px";
+death.style.top=player.y+"px";
+
+death.style.width="30px";
+death.style.height="30px";
+
+death.style.borderRadius="8px";
+
+death.style.background="cyan";
+
+death.style.pointerEvents="none";
+
+death.style.boxShadow="0 0 40px cyan";
+
+death.style.zIndex="999";
+
+game.appendChild(death);
+
+let size=1;
+let opacity=1;
+
+const effect=setInterval(()=>{
+
+size+=0.15;
+opacity-=0.06;
+
+death.style.transform=
+`translate(${-15*(size-1)}px,${-15*(size-1)}px) scale(${size})`;
+
+death.style.opacity=opacity;
+
+if(opacity<=0){
+
+clearInterval(effect);
+
+death.remove();
+
+}
+
+},16);
+
+/* respawn */
+player.x=100;
+player.y=200;
+
+player.vx=0;
+player.vy=0;
+
+player.grounded=false;
+player.canJump=true;
+
+gravity=1;
+
+rotation=0;
+
+}
+
+addBlock(50,300);
+addBlock(275,300);
+addSpike(320,260);
+addGoal(400,200);
+updateEditorUI();
+update();
+
+</script>
+</body>
+</html>
