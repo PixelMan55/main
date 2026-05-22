@@ -1,0 +1,1602 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Color Chain Online</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial;
+}
+
+body{
+background:#101322;
+height:100vh;
+overflow:hidden;
+color:white;
+}
+
+.auth{
+position:fixed;
+inset:0;
+display:flex;
+justify-content:center;
+align-items:center;
+background:#0c0e18;
+}
+
+.box{
+width:400px;
+background:#1b1f37;
+padding:28px;
+border-radius:24px;
+}
+
+.title{
+font-size:42px;
+font-weight:900;
+text-align:center;
+margin-bottom:20px;
+}
+
+input{
+width:100%;
+padding:14px;
+margin-bottom:10px;
+border:none;
+border-radius:12px;
+background:#2a3156;
+color:white;
+}
+
+button{
+border:none;
+padding:14px;
+border-radius:12px;
+background:#6286ff;
+color:white;
+font-weight:bold;
+cursor:pointer;
+}
+
+.full{
+width:100%;
+margin-top:10px;
+}
+
+.game{
+display:none;
+height:100vh;
+flex-direction:column;
+}
+
+.top{
+height:70px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 20px;
+background:#1a1f37;
+}
+
+.boardWrap{
+flex:1;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+.board{
+display:grid;
+grid-template-columns:repeat(6,82px);
+grid-template-rows:repeat(8,82px);
+gap:8px;
+padding:18px;
+background:#1b1f37;
+border-radius:22px;
+}
+
+.cell{
+width:82px;
+height:82px;
+background:#2a3156;
+border-radius:16px;
+position:relative;
+cursor:pointer;
+transition:0.12s;
+}
+
+.cell:hover{
+transform:scale(1.04);
+}
+
+.red{
+box-shadow:0 0 18px rgba(255,80,80,0.8);
+}
+
+.blue{
+box-shadow:0 0 18px rgba(80,140,255,0.8);
+}
+
+.orbs{
+position:absolute;
+inset:0;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-wrap:wrap;
+gap:6px;
+padding:8px;
+}
+
+.orb{
+width:16px;
+height:16px;
+border-radius:50%;
+}
+
+.redOrb{
+background:#ff5c5c;
+}
+
+.blueOrb{
+background:#5ca1ff;
+}
+
+.bottom{
+height:82px;
+display:flex;
+justify-content:center;
+align-items:center;
+gap:14px;
+background:#1a1f37;
+}
+
+.win{
+position:fixed;
+inset:0;
+display:none;
+justify-content:center;
+align-items:center;
+background:rgba(0,0,0,0.75);
+}
+
+.winBox{
+width:380px;
+background:#1d2240;
+padding:30px;
+border-radius:24px;
+text-align:center;
+}
+
+.info{
+font-size:14px;
+opacity:0.8;
+}
+
+.popupBg{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.75);
+backdrop-filter:blur(8px);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:1000;
+}
+
+.popupCard{
+width:460px;
+background:linear-gradient(180deg,#232949,#1a1f37);
+border-radius:28px;
+padding:28px;
+box-shadow:0 0 40px rgba(0,0,0,0.5);
+}
+
+.popupTitle{
+font-size:34px;
+font-weight:900;
+margin-bottom:6px;
+}
+
+.popupSub{
+opacity:0.7;
+margin-bottom:22px;
+font-size:14px;
+}
+
+.popupInput{
+width:100%;
+height:58px;
+border:none;
+outline:none;
+padding:0 18px;
+font-size:18px;
+background:#2b335d;
+color:white;
+border-radius:18px;
+margin-bottom:20px;
+}
+
+.privacyRow{
+display:flex;
+gap:14px;
+margin-bottom:26px;
+}
+
+.privacyBtn{
+flex:1;
+height:60px;
+border:none;
+border-radius:18px;
+background:#2b335d;
+color:white;
+font-size:18px;
+font-weight:700;
+cursor:pointer;
+}
+
+.activePrivacy{
+background:linear-gradient(135deg,#6286ff,#7c5cff);
+box-shadow:0 0 24px rgba(98,134,255,0.55);
+}
+
+.popupBtns{
+display:flex;
+gap:12px;
+}
+
+.cancelBtn,.createBtn{
+height:56px;
+border:none;
+border-radius:18px;
+font-size:18px;
+font-weight:800;
+cursor:pointer;
+}
+
+.cancelBtn{
+flex:1;
+background:#2a3156;
+color:white;
+}
+
+.createBtn{
+flex:2;
+background:linear-gradient(135deg,#6286ff,#7c5cff);
+color:white;
+}
+
+.roomBrowser{
+width:720px;
+max-height:78vh;
+overflow-y:auto;
+}
+
+.roomCard{
+background:#2a3156;
+border-radius:22px;
+padding:18px;
+margin-top:14px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+}
+
+.roomLeft{
+display:flex;
+flex-direction:column;
+gap:4px;
+}
+
+.roomTitle{
+font-size:22px;
+font-weight:800;
+}
+
+.roomHost{
+opacity:0.75;
+}
+
+.roomRating{
+font-size:14px;
+color:#8fb0ff;
+}
+
+.joinBtn{
+width:140px;
+height:52px;
+border:none;
+border-radius:16px;
+background:linear-gradient(135deg,#6286ff,#7c5cff);
+color:white;
+font-size:17px;
+font-weight:800;
+cursor:pointer;
+}
+
+.topJoinBtns{
+display:flex;
+gap:12px;
+margin-bottom:20px;
+}
+
+.bigTopBtn{
+flex:1;
+height:58px;
+border:none;
+border-radius:18px;
+background:#2a3156;
+color:white;
+font-size:17px;
+font-weight:800;
+cursor:pointer;
+}
+
+.closePopupBtn{
+position:absolute;
+top:18px;
+right:18px;
+width:42px;
+height:42px;
+border:none;
+border-radius:12px;
+background:#2a3156;
+color:white;
+font-size:22px;
+font-weight:900;
+cursor:pointer;
+transition:0.15s;
+}
+
+.closePopupBtn:hover{
+transform:scale(1.08);
+background:#39457c;
+}
+
+body{
+background:
+radial-gradient(circle at top,#20284a,#0f1323 60%);
+overflow-x:hidden;
+}
+
+.bgEffects{
+position:fixed;
+inset:0;
+pointer-events:none;
+z-index:-1;
+overflow:hidden;
+}
+
+.glow{
+position:absolute;
+width:700px;
+height:700px;
+border-radius:50%;
+filter:blur(120px);
+opacity:0.22;
+animation:floatGlow 8s ease-in-out infinite;
+}
+
+.redGlow{
+background:#ff3d5f;
+left:-180px;
+top:-180px;
+}
+
+.blueGlow{
+background:#4b7dff;
+right:-180px;
+bottom:-180px;
+animation-delay:4s;
+}
+
+.gridOverlay{
+position:absolute;
+inset:0;
+background:
+linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),
+linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
+background-size:40px 40px;
+mask-image:radial-gradient(circle at center,black,transparent 85%);
+}
+
+@keyframes floatGlow{
+0%{
+transform:translateY(0px) scale(1);
+}
+50%{
+transform:translateY(-30px) scale(1.06);
+}
+100%{
+transform:translateY(0px) scale(1);
+}
+}
+
+#board{
+padding:18px;
+border-radius:34px;
+background:
+linear-gradient(180deg,#1f2646,#161b31);
+box-shadow:
+0 0 60px rgba(0,0,0,0.45),
+0 0 120px rgba(80,120,255,0.15);
+border:2px solid rgba(255,255,255,0.06);
+backdrop-filter:blur(12px);
+}
+
+.cell{
+position:relative;
+background:
+linear-gradient(180deg,#2d3660,#242c4e);
+border:none !important;
+border-radius:20px;
+transition:
+transform 0.12s,
+background 0.15s,
+box-shadow 0.15s;
+overflow:hidden;
+}
+
+.cell:hover{
+transform:translateY(-2px) scale(1.04);
+}
+
+.cell::before{
+content:"";
+position:absolute;
+inset:0;
+background:
+linear-gradient(
+135deg,
+rgba(255,255,255,0.08),
+transparent 40%
+);
+pointer-events:none;
+}
+
+.redCell{
+background:
+linear-gradient(180deg,#ff5a5a,#db3131);
+box-shadow:
+0 0 22px rgba(255,70,70,0.65),
+inset 0 4px 12px rgba(255,255,255,0.22);
+}
+
+.blueCell{
+background:
+linear-gradient(180deg,#5c8cff,#3462ff);
+box-shadow:
+0 0 22px rgba(80,120,255,0.65),
+inset 0 4px 12px rgba(255,255,255,0.22);
+}
+
+.dotNumber{
+font-size:34px;
+font-weight:900;
+text-shadow:0 4px 10px rgba(0,0,0,0.4);
+}
+
+.topBar{
+background:
+linear-gradient(180deg,#20284a,#171d36);
+border-radius:26px;
+padding:18px 24px;
+box-shadow:
+0 0 40px rgba(0,0,0,0.35);
+border:1px solid rgba(255,255,255,0.05);
+backdrop-filter:blur(10px);
+}
+
+.playerCard{
+background:
+linear-gradient(180deg,#28315b,#20284a);
+border-radius:24px;
+padding:18px;
+min-width:230px;
+box-shadow:
+0 0 25px rgba(0,0,0,0.28);
+transition:0.15s;
+}
+
+.playerCard:hover{
+transform:translateY(-2px);
+}
+
+.playerName{
+font-size:24px;
+font-weight:900;
+margin-bottom:4px;
+}
+
+.playerRating{
+font-size:15px;
+opacity:0.75;
+}
+
+.turnText{
+font-size:24px;
+font-weight:900;
+text-align:center;
+margin-top:18px;
+letter-spacing:1px;
+text-shadow:0 0 18px rgba(255,255,255,0.2);
+}
+
+.mainBtn{
+height:60px;
+padding:0 28px;
+border:none;
+border-radius:20px;
+background:
+linear-gradient(135deg,#6286ff,#7f5dff);
+color:white;
+font-size:18px;
+font-weight:900;
+cursor:pointer;
+transition:0.15s;
+box-shadow:
+0 0 28px rgba(98,134,255,0.45);
+}
+
+.mainBtn:hover{
+transform:translateY(-3px) scale(1.03);
+box-shadow:
+0 0 50px rgba(98,134,255,0.7);
+}
+
+.winScreen{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.82);
+backdrop-filter:blur(12px);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:2000;
+}
+
+.winCard{
+width:540px;
+background:
+linear-gradient(180deg,#252d52,#1b213c);
+border-radius:34px;
+padding:34px;
+text-align:center;
+box-shadow:
+0 0 80px rgba(0,0,0,0.65);
+animation:winPop 0.22s;
+}
+
+.bigWinner{
+font-size:58px;
+font-weight:900;
+margin-bottom:18px;
+text-shadow:
+0 0 28px rgba(255,255,255,0.3);
+}
+
+#board{
+animation:boardIn 0.35s;
+}
+
+@keyframes boardIn{
+from{
+opacity:0;
+transform:translateY(25px) scale(0.96);
+}
+}
+
+.ratingChange{
+font-size:42px;
+font-weight:900;
+margin-bottom:18px;
+color:#7ea2ff;
+}
+
+.winSub{
+opacity:0.7;
+margin-bottom:28px;
+font-size:17px;
+}
+
+.playAgainBtn{
+width:100%;
+height:70px;
+border:none;
+border-radius:24px;
+background:
+linear-gradient(135deg,#6286ff,#845dff);
+color:white;
+font-size:24px;
+font-weight:900;
+cursor:pointer;
+box-shadow:
+0 0 40px rgba(98,134,255,0.45);
+}
+
+@keyframes winPop{
+from{
+opacity:0;
+transform:scale(0.9);
+}
+}
+
+</style>
+</head>
+<body>
+
+<div class="bgEffects">
+
+<div class="glow redGlow"></div>
+<div class="glow blueGlow"></div>
+
+<div class="gridOverlay"></div>
+
+</div>
+
+<div class="auth" id="auth">
+<div class="box">
+<div class="title">COLOR CHAIN</div>
+
+<input id="username" placeholder="Username">
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+
+<button class="full" onclick="signUp()">Sign Up</button>
+<button class="full" onclick="signIn()">Sign In</button>
+</div>
+</div>
+
+<div class="game" id="game">
+
+<div class="top">
+<div id="me">You</div>
+<div id="opponent">Waiting...</div>
+<div id="roomText">No Room</div>
+<div id="turnText">Turn: RED</div>
+</div>
+
+<div class="boardWrap">
+<div class="board" id="board"></div>
+</div>
+
+<!-- CREATE ROOM POPUP -->
+<div class="popupBg" id="createPopupBg">
+
+<div class="popupCard">
+
+<div class="popupTitle">
+Create Room
+</div>
+
+<div class="popupSub">
+Host a public or private match
+</div>
+
+<input
+id="roomName"
+class="popupInput"
+placeholder="Room Name"
+maxlength="20"
+>
+
+<div class="privacyRow">
+
+<button
+class="privacyBtn activePrivacy"
+id="publicBtn"
+onclick="setPrivacy('public')"
+>
+🌍 Public
+</button>
+
+<button
+class="privacyBtn"
+id="privateBtn"
+onclick="setPrivacy('private')"
+>
+🔒 Private
+</button>
+
+</div>
+
+<div class="popupBtns">
+
+<button
+class="cancelBtn"
+onclick="closeCreatePopup()"
+>
+Cancel
+</button>
+
+<button
+class="createBtn"
+onclick="confirmCreateRoom()"
+>
+Create Room
+</button>
+
+</div>
+
+</div>
+</div>
+
+<!-- JOIN ROOM POPUP -->
+<div class="popupBg" id="joinPopupBg">
+
+<div class="popupCard roomBrowser">
+
+<div class="popupTitle">
+Join Room
+</div>
+
+<button
+class="closePopupBtn"
+onclick="closeJoinPopup()"
+>
+✕
+</button>
+
+<div class="topJoinBtns">
+
+<button
+class="bigTopBtn"
+onclick="joinRandomRoom()"
+>
+🎲 Join Random
+</button>
+
+<button
+class="bigTopBtn"
+onclick="openCodePopup()"
+>
+🔑 Enter Code
+</button>
+
+</div>
+
+<div id="roomList"></div>
+
+</div>
+</div>
+
+<!-- ROOM CODE POPUP -->
+<div class="popupBg" id="codePopupBg">
+
+<div class="popupCard">
+
+<div class="popupTitle">
+Enter Room Code
+</div>
+
+<div class="popupSub">
+Join a private room
+</div>
+
+<input
+id="roomCodeInput"
+class="popupInput"
+placeholder="Room Code"
+>
+
+<div class="popupBtns">
+
+<button
+class="cancelBtn"
+onclick="closeCodePopup()"
+>
+Cancel
+</button>
+
+<button
+class="createBtn"
+onclick="joinByCode()"
+>
+Join Room
+</button>
+
+</div>
+
+</div>
+</div>
+
+<div class="bottom">
+<button onclick="openCreatePopup()">Create Room</button>
+<button onclick="openJoinMenu()">Join Room</button>
+</div>
+
+</div>
+
+<div class="win" id="winScreen">
+<div class="winBox">
+<h1 id="winText">RED WINS</h1>
+<br>
+<button onclick="location.reload()">Play Again</button>
+</div>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+
+import {
+getAuth,
+createUserWithEmailAndPassword,
+signInWithEmailAndPassword,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+import {
+getFirestore,
+doc,
+setDoc,
+getDoc,
+updateDoc,
+collection,
+addDoc,
+getDocs,
+onSnapshot,
+deleteDoc
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyB5ZJxLpU_e5N_MUDLIZaZSB-kutZuut7g",
+authDomain: "colorchain-a2ed9.firebaseapp.com",
+projectId: "colorchain-a2ed9",
+storageBucket: "colorchain-a2ed9.firebasestorage.app",
+messagingSenderId: "488361709336",
+appId: "1:488361709336:web:99e1566838db66f944586d"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const rows = 8;
+const cols = 6;
+
+let board = {};
+let currentRoom = null;
+let playerColor = null;
+let myUsername = "Player";
+let gameEnded = false;
+let myRating = 1000;
+let selectedPrivacy = "public";
+
+const boardEl = document.getElementById("board");
+
+window.openCreatePopup = ()=>{
+document.getElementById("createPopupBg")
+.style.display = "flex";
+};
+
+window.closeJoinPopup = ()=>{
+
+document.getElementById("joinPopupBg")
+.style.display = "none";
+
+};
+
+window.closeCreatePopup = ()=>{
+document.getElementById("createPopupBg")
+.style.display = "none";
+};
+
+window.closeCodePopup = ()=>{
+
+document.getElementById("codePopupBg")
+.style.display = "none";
+
+};
+
+window.setPrivacy = (type)=>{
+
+selectedPrivacy = type;
+
+const pub = document.getElementById("publicBtn");
+const pri = document.getElementById("privateBtn");
+
+pub.classList.remove("activePrivacy");
+pri.classList.remove("activePrivacy");
+
+if(type === "public"){
+pub.classList.add("activePrivacy");
+}else{
+pri.classList.add("activePrivacy");
+}
+
+};
+
+function createBoardData(){
+const data = {};
+
+for(let r=0;r<rows;r++){
+for(let c=0;c<cols;c++){
+
+data[`${r}_${c}`] = {
+owner:null,
+count:0
+};
+
+}
+}
+
+return data;
+}
+
+function getCell(r,c){
+return board[`${r}_${c}`];
+}
+
+function renderBoard(){
+boardEl.innerHTML = "";
+
+for(let r=0;r<rows;r++){
+for(let c=0;c<cols;c++){
+
+const data = getCell(r,c);
+
+const cell = document.createElement("div");
+cell.className = "cell";
+
+if(data.owner){
+cell.classList.add(data.owner);
+}
+
+const orbs = document.createElement("div");
+orbs.className = "orbs";
+
+for(let i=0;i<data.count;i++){
+const orb = document.createElement("div");
+orb.className = `orb ${data.owner}Orb`;
+orbs.appendChild(orb);
+}
+
+cell.appendChild(orbs);
+cell.onclick = ()=>playMove(r,c);
+
+boardEl.appendChild(cell);
+}
+}
+}
+
+function getLimit(r,c){
+
+/*
+User wants ALL tiles to explode only at 4.
+No special corner/edge rules.
+*/
+
+return 4;
+}
+
+function explode(r,c,color){
+
+navigator.vibrate?.(30);
+
+document.getElementById("board")
+.animate([
+{transform:"translateX(-4px)"},
+{transform:"translateX(4px)"},
+{transform:"translateX(0px)"}
+],{
+duration:120
+});
+
+const current = getCell(r,c);
+
+if(current.count < getLimit(r,c)) return;
+
+current.owner = null;
+current.count = 0;
+
+const dirs = [
+[1,0],
+[-1,0],
+[0,1],
+[0,-1]
+];
+
+for(const d of dirs){
+
+const nr = r + d[0];
+const nc = c + d[1];
+
+if(nr>=0&&nc>=0&&nr<rows&&nc<cols){
+
+const near = getCell(nr,nc);
+
+near.owner = color;
+near.count++;
+
+if(near.count >= getLimit(nr,nc)){
+explode(nr,nc,color)
+}
+
+}
+}
+}
+
+async function updateRating(winnerColor){
+
+const roomRef = doc(db,"rooms",currentRoom);
+const snap = await getDoc(roomRef);
+
+if(!snap.exists()) return;
+
+const room = snap.data();
+
+const red = room.players.red;
+const blue = room.players.blue;
+
+if(!red || !blue) return;
+
+const redRef = doc(db,"users",red.uid);
+const blueRef = doc(db,"users",blue.uid);
+
+const redSnap = await getDoc(redRef);
+const blueSnap = await getDoc(blueRef);
+
+const redData = redSnap.data();
+const blueData = blueSnap.data();
+
+let redRating = redData.elo || 1000;
+let blueRating = blueData.elo || 1000;
+
+const expectedRed =
+1 / (1 + Math.pow(10,(blueRating-redRating)/400));
+
+const expectedBlue =
+1 / (1 + Math.pow(10,(redRating-blueRating)/400));
+
+const K = 32;
+
+const redScore = winnerColor === "red" ? 1 : 0;
+const blueScore = winnerColor === "blue" ? 1 : 0;
+
+redRating =
+Math.round(
+redRating + K * (redScore - expectedRed)
+);
+
+blueRating =
+Math.round(
+blueRating + K * (blueScore - expectedBlue)
+);
+
+await updateDoc(redRef,{
+elo:redRating,
+wins:(redData.wins||0)+(winnerColor==="red"?1:0),
+losses:(redData.losses||0)+(winnerColor==="blue"?1:0)
+});
+
+await updateDoc(blueRef,{
+elo:blueRating,
+wins:(blueData.wins||0)+(winnerColor==="blue"?1:0),
+losses:(blueData.losses||0)+(winnerColor==="red"?1:0)
+});
+
+}
+
+async function syncRoom(nextTurn,winner=null){
+
+await updateDoc(doc(db,"rooms",currentRoom),{
+board,
+turn:nextTurn,
+winner
+});
+}
+
+let moveCount = 0;
+
+function calculateWinner(){
+
+/*
+Prevent instant wins/glitches.
+A player cannot win until BOTH
+players have placed at least once.
+*/
+
+if(moveCount < 2) return null;
+
+let red = 0;
+let blue = 0;
+
+for(const key in board){
+
+if(board[key].owner === "red") red++;
+if(board[key].owner === "blue") blue++;
+
+}
+
+if(red > 0 && blue === 0)
+return "RED WINS";
+
+if(blue > 0 && red === 0)
+return "BLUE WINS";
+
+return null;
+}
+
+async function playMove(r,c){
+
+if(gameEnded) return;
+if(!currentRoom) return;
+
+const roomRef = doc(db,"rooms",currentRoom);
+const snap = await getDoc(roomRef);
+
+if(!snap.exists()) return;
+
+const room = snap.data();
+
+if(room.winner) return;
+if(room.turn !== playerColor) return;
+
+const current = getCell(r,c);
+
+if(current.owner && current.owner !== playerColor)
+return;
+
+current.owner = playerColor;
+current.count++;
+
+moveCount++;
+
+if(current.count >= getLimit(r,c)){
+explode(r,c,playerColor);
+}
+
+const winner = calculateWinner();
+
+if(winner){
+
+gameEnded = true;
+
+await updateRating(
+winner.includes("RED")
+? "red"
+: "blue"
+);
+
+await syncRoom(null,winner);
+
+showWinner(winner);
+
+return;
+}
+
+const nextTurn =
+playerColor === "red"
+? "blue"
+: "red";
+
+await syncRoom(nextTurn,null);
+}
+
+function showWinner(text){
+if(gameEnded) return;
+
+gameEnded = true;
+
+document.getElementById("winScreen").style.display = "flex";
+document.getElementById("winText").textContent = text;
+}
+
+window.openCodePopup = ()=>{
+
+document.getElementById("codePopupBg")
+.style.display = "flex";
+
+};
+
+window.joinByCode = async ()=>{
+
+const code =
+document.getElementById("roomCodeInput")
+.value.trim();
+
+if(!code){
+alert("Enter a room code");
+return;
+}
+
+await joinSpecificRoom(code);
+
+closeCodePopup();
+
+};
+
+window.signUp = async ()=>{
+
+try{
+
+const username = document.getElementById("username").value.trim();
+const email = document.getElementById("email").value.trim();
+const password = document.getElementById("password").value;
+
+const cred = await createUserWithEmailAndPassword(auth,email,password);
+
+await setDoc(doc(db,"users",cred.user.uid),{
+username,
+elo:1000,
+wins:0,
+losses:0
+});
+
+}catch(err){
+alert(err.message);
+}
+};
+
+window.signIn = async ()=>{
+
+try{
+
+const email = document.getElementById("email").value.trim();
+const password = document.getElementById("password").value;
+
+await signInWithEmailAndPassword(auth,email,password);
+
+}catch(err){
+alert(err.message);
+}
+};
+
+onAuthStateChanged(auth,async user=>{
+
+if(!user) return;
+
+const snap = await getDoc(doc(db,"users",user.uid));
+
+if(snap.exists()){
+myUsername = snap.data().username;
+myRating = snap.data().elo || 1000;
+}
+
+board = createBoardData();
+renderBoard();
+
+document.getElementById("auth").style.display = "none";
+document.getElementById("game").style.display = "flex";
+document.getElementById("me").innerHTML =
+playerColor === "red"
+? `🔴 ${myUsername} (RED) • Rating: ${myRating}`
+: `🔵 ${myUsername} (BLUE) • Rating: ${myRating}`;
+});
+
+window.confirmCreateRoom = async ()=>{
+
+const roomName =
+document.getElementById("roomName")
+.value.trim() || `${myUsername}'s Room`;
+
+const room = await addDoc(collection(db,"rooms"),{
+
+name:roomName,
+privacy:selectedPrivacy,
+createdAt:Date.now(),
+hostRating:myRating,
+
+board:createBoardData(),
+turn:"red",
+winner:null,
+
+players:{
+red:{
+uid:auth.currentUser.uid,
+username:myUsername,
+rating:myRating
+},
+blue:null
+}
+
+});
+
+currentRoom = room.id;
+playerColor = "red";
+
+closeCreatePopup();
+listenRoom();
+
+alert(`Room Code: ${room.id}`);
+
+};
+
+window.openJoinMenu = async ()=>{
+
+document.getElementById("joinPopupBg")
+.style.display = "flex";
+
+const roomList =
+document.getElementById("roomList");
+
+roomList.innerHTML = "";
+
+const snaps =
+await getDocs(collection(db,"rooms"));
+
+let rooms = [];
+
+snaps.forEach(s=>{
+
+const d = s.data();
+
+if(
+d.privacy === "public" &&
+!d.players.blue &&
+!d.winner
+){
+rooms.push({
+id:s.id,
+...d
+});
+}
+
+});
+
+rooms.sort((a,b)=>{
+
+const diffA =
+Math.abs((a.hostRating||1000)-myRating);
+
+const diffB =
+Math.abs((b.hostRating||1000)-myRating);
+
+return diffA - diffB;
+
+});
+
+rooms.forEach(room=>{
+
+const div = document.createElement("div");
+
+div.className = "roomCard";
+
+div.innerHTML = `
+
+<div class="roomLeft">
+
+<div class="roomTitle">
+${room.name}
+</div>
+
+<div class="roomHost">
+🔴 ${room.players.red.username}
+</div>
+
+<div class="roomRating">
+Rating: ${room.hostRating}
+</div>
+
+<div class="roomRating">
+You will play as BLUE
+</div>
+
+</div>
+
+<button
+class="joinBtn"
+onclick="joinSpecificRoom('${room.id}')"
+>
+JOIN
+</button>
+`;
+
+roomList.appendChild(div);
+
+});
+
+};
+
+window.joinSpecificRoom = async (roomId)=>{
+
+const roomRef = doc(db,"rooms",roomId);
+
+const snap = await getDoc(roomRef);
+
+if(!snap.exists()){
+alert("Room not found");
+return;
+}
+
+const data = snap.data();
+
+if(data.players.blue){
+alert("Room is full");
+return;
+}
+
+if(data.winner){
+alert("Game already ended");
+return;
+}
+
+await updateDoc(roomRef,{
+
+"players.blue":{
+uid:auth.currentUser.uid,
+username:myUsername,
+rating:myRating
+}
+
+});
+
+currentRoom = roomId;
+playerColor = "blue";
+
+document.getElementById("joinPopupBg")
+.style.display = "none";
+
+listenRoom();
+
+};
+
+window.joinRandomRoom = async ()=>{
+
+const snaps =
+await getDocs(collection(db,"rooms"));
+
+let bestRoom = null;
+let bestDiff = 999999;
+
+snaps.forEach(s=>{
+
+const d = s.data();
+
+if(
+d.privacy === "public" &&
+!d.players.blue &&
+!d.winner
+){
+
+const diff =
+Math.abs((d.hostRating||1000)-myRating);
+
+if(diff < bestDiff){
+
+bestDiff = diff;
+
+bestRoom = {
+id:s.id,
+...d
+};
+
+}
+
+}
+
+});
+
+if(bestRoom){
+
+joinSpecificRoom(bestRoom.id);
+
+}else{
+
+alert("No public rooms found");
+
+}
+
+};
+
+window.joinRoom = async ()=>{
+
+const snaps = await getDocs(collection(db,"rooms"));
+
+for(const s of snaps.docs){
+
+const data = s.data();
+
+if(!data.players.blue && !data.winner){
+
+await updateDoc(doc(db,"rooms",s.id),{
+"players.blue":{
+uid:auth.currentUser.uid,
+username:myUsername
+}
+});
+
+currentRoom = s.id;
+playerColor = "blue";
+
+listenRoom();
+
+alert("Joined Room");
+
+break;
+}
+}
+};
+
+function listenRoom(){
+
+onSnapshot(doc(db,"rooms",currentRoom),async snap=>{
+
+if(!snap.exists()){
+alert("Room Closed");
+location.reload();
+return;
+}
+
+const data = snap.data();
+
+board = data.board;
+renderBoard();
+
+if(playerColor === "red"){
+
+if(data.players.blue){
+document.getElementById("opponent").textContent =
+"VS " + data.players.blue.username;
+}
+
+}else{
+
+if(data.players.red){
+document.getElementById("opponent").textContent =
+"VS " + data.players.red.username;
+}
+}
+
+if(data.winner){
+
+gameEnded = true;
+
+showWinner(data.winner);
+
+
+}
+
+document.getElementById("roomText").textContent = currentRoom;
+
+document.getElementById("turnText").textContent =
+data.turn
+? "Turn: " + data.turn.toUpperCase()
+: "GAME OVER";
+
+});
+}
+
+window.addEventListener("beforeunload",async ()=>{
+
+if(!currentRoom) return;
+
+try{
+
+const roomRef = doc(db,"rooms",currentRoom);
+const snap = await getDoc(roomRef);
+
+if(!snap.exists()) return;
+
+const data = snap.data();
+
+if(playerColor === "red"){
+data.players.red = null;
+}else{
+data.players.blue = null;
+}
+
+if(!data.players.red && !data.players.blue){
+await deleteDoc(roomRef);
+}else{
+await updateDoc(roomRef,{players:data.players});
+}
+
+}catch(err){}
+
+});
+
+board = createBoardData();
+renderBoard();
+
+</script>
+
+</body>
+</html>
