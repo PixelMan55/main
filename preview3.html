@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Color Chain Preview</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:
+radial-gradient(circle at top,#222b52,#101423 65%);
+overflow:hidden;
+color:white;
+}
+
+/* BACKGROUND */
+
+.bg{
+position:fixed;
+inset:0;
+overflow:hidden;
+pointer-events:none;
+}
+
+.glow{
+position:absolute;
+width:700px;
+height:700px;
+border-radius:50%;
+filter:blur(120px);
+opacity:0.22;
+animation:floatGlow 8s ease-in-out infinite;
+}
+
+.redGlow{
+background:#ff4f68;
+top:-220px;
+left:-220px;
+}
+
+.blueGlow{
+background:#4d7fff;
+bottom:-220px;
+right:-220px;
+animation-delay:4s;
+}
+
+.grid{
+position:absolute;
+inset:0;
+background:
+linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),
+linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
+background-size:40px 40px;
+mask-image:radial-gradient(circle at center,black,transparent 85%);
+}
+
+@keyframes floatGlow{
+0%{
+transform:translateY(0px) scale(1);
+}
+50%{
+transform:translateY(-30px) scale(1.05);
+}
+100%{
+transform:translateY(0px) scale(1);
+}
+}
+
+/* CARD */
+
+.previewCard{
+width:760px;
+background:
+linear-gradient(180deg,#232a4d,#171d34);
+border-radius:34px;
+padding:28px;
+box-shadow:
+0 0 60px rgba(0,0,0,0.55),
+0 0 120px rgba(80,120,255,0.18);
+border:2px solid rgba(255,255,255,0.05);
+position:relative;
+overflow:hidden;
+animation:cardIn 0.35s;
+}
+
+.previewCard::before{
+content:"";
+position:absolute;
+inset:0;
+background:
+linear-gradient(
+135deg,
+rgba(255,255,255,0.05),
+transparent 40%
+);
+pointer-events:none;
+}
+
+@keyframes cardIn{
+from{
+opacity:0;
+transform:translateY(25px) scale(0.95);
+}
+}
+
+/* HEADER */
+
+.header{
+display:flex;
+align-items:center;
+gap:20px;
+margin-bottom:28px;
+}
+
+.logo{
+width:120px;
+height:120px;
+object-fit:cover;
+border-radius:24px;
+box-shadow:
+0 0 30px rgba(80,120,255,0.35);
+}
+
+.title{
+font-size:48px;
+font-weight:900;
+background:
+linear-gradient(90deg,#ff6464,#7da5ff);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+margin-bottom:6px;
+}
+
+.subtitle{
+font-size:15px;
+opacity:0.75;
+}
+
+/* BOARD */
+
+#board{
+display:grid;
+grid-template-columns:repeat(6,1fr);
+gap:10px;
+padding:20px;
+border-radius:30px;
+background:
+linear-gradient(180deg,#1e2545,#151b30);
+box-shadow:
+inset 0 0 40px rgba(0,0,0,0.3);
+}
+
+.cell{
+aspect-ratio:1;
+border-radius:20px;
+background:
+linear-gradient(180deg,#2d3761,#242d50);
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:34px;
+font-weight:900;
+cursor:pointer;
+transition:
+transform 0.12s,
+box-shadow 0.15s,
+background 0.15s;
+user-select:none;
+position:relative;
+overflow:hidden;
+}
+
+.cell:hover{
+transform:translateY(-2px) scale(1.04);
+}
+
+.cell::before{
+content:"";
+position:absolute;
+inset:0;
+background:
+linear-gradient(
+135deg,
+rgba(255,255,255,0.08),
+transparent 40%
+);
+pointer-events:none;
+}
+
+.red{
+background:
+linear-gradient(180deg,#ff6060,#d92f2f);
+box-shadow:
+0 0 20px rgba(255,70,70,0.6),
+inset 0 4px 10px rgba(255,255,255,0.2);
+}
+
+.blue{
+background:
+linear-gradient(180deg,#5e8eff,#3866ff);
+box-shadow:
+0 0 20px rgba(80,120,255,0.6),
+inset 0 4px 10px rgba(255,255,255,0.2);
+}
+
+/* FOOTER */
+
+.footer{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-top:24px;
+}
+
+.previewText{
+font-size:15px;
+opacity:0.75;
+}
+
+.playBtn{
+width:240px;
+height:66px;
+border:none;
+border-radius:22px;
+background:
+linear-gradient(135deg,#6286ff,#845dff);
+color:white;
+font-size:22px;
+font-weight:900;
+cursor:pointer;
+transition:0.15s;
+box-shadow:
+0 0 40px rgba(98,134,255,0.45);
+}
+
+.playBtn:hover{
+transform:translateY(-3px) scale(1.03);
+box-shadow:
+0 0 60px rgba(98,134,255,0.7);
+}
+
+/* EXPLOSION */
+
+.explode{
+animation:explode 0.2s;
+}
+
+@keyframes explode{
+0%{
+transform:scale(1);
+}
+50%{
+transform:scale(1.22);
+}
+100%{
+transform:scale(1);
+}
+}
+
+</style>
+</head>
+<body>
+
+<div class="bg">
+
+<div class="glow redGlow"></div>
+<div class="glow blueGlow"></div>
+
+<div class="grid"></div>
+
+</div>
+
+<div class="previewCard">
+
+<div class="header">
+
+<img
+src="logo3.png"
+class="logo"
+>
+
+<div>
+
+<div class="title">
+COLOR CHAIN
+</div>
+
+<div class="subtitle">
+Mini playable preview version
+</div>
+
+</div>
+
+</div>
+
+<div id="board"></div>
+
+<div class="footer">
+
+<div class="previewText">
+Simple preview build • Full online version available
+</div>
+
+<button
+class="playBtn"
+onclick="location.href='https://pixelman55.github.io/main/colorChain.html'"
+>
+PLAY FULL GAME
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+const SIZE = 6;
+
+const board = [];
+
+for(let i=0;i<SIZE*SIZE;i++){
+
+board.push({
+owner:null,
+count:0
+});
+
+}
+
+const boardDiv =
+document.getElementById("board");
+
+function renderBoard(){
+
+boardDiv.innerHTML = "";
+
+board.forEach((tile,index)=>{
+
+const cell =
+document.createElement("div");
+
+cell.className = "cell";
+
+if(tile.owner === "red"){
+cell.classList.add("red");
+}
+
+if(tile.owner === "blue"){
+cell.classList.add("blue");
+}
+
+cell.textContent =
+tile.count > 0
+? tile.count
+: "";
+
+cell.onclick = ()=>{
+playMove(index);
+};
+
+boardDiv.appendChild(cell);
+
+});
+
+}
+
+function playMove(index){
+
+const tile = board[index];
+
+tile.owner =
+Math.random() > 0.5
+? "red"
+: "blue";
+
+tile.count++;
+
+if(tile.count >= 4){
+
+explode(index);
+
+}
+
+renderBoard();
+
+}
+
+function explode(index){
+
+const cell =
+boardDiv.children[index];
+
+if(cell){
+
+cell.classList.add("explode");
+
+setTimeout(()=>{
+cell.classList.remove("explode");
+},200);
+
+}
+
+const owner =
+board[index].owner || "red";
+
+board[index].count = 0;
+board[index].owner = null;
+
+const dirs = [-SIZE,SIZE,-1,1];
+
+for(const d of dirs){
+
+const n = index + d;
+
+if(n >= 0 && n < board.length){
+
+board[n].owner = owner;
+board[n].count++;
+
+}
+
+}
+
+navigator.vibrate?.(30);
+
+}
+
+renderBoard();
+
+</script>
+
+</body>
+</html>
