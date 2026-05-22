@@ -1614,7 +1614,7 @@ Compete in explosive online strategy battles where every move can trigger massiv
     ▶ PLAY NOW
   </a>
 
-  <button class="preview-btn" onclick="openPreview('fightPreview')">
+  <button class="preview-btn" onclick="openPreview('chainPreview')">
     👀 PREVIEW
   </button>
 
@@ -2108,6 +2108,40 @@ onclick="closePreview('platformPreview')">
 
 </div>
 
+<!-- PIXEL PLATFORMS PREVIEW -->
+
+<div class="previewPopup" id="chainPreview">
+
+<div class="previewBox">
+
+<div class="previewHeader">
+
+<div class="previewTitle">
+Preview: Color Chain
+</div>
+
+<button
+class="backPreview"
+onclick="closePreview('chainPreview')">
+⬅ Back
+</button>
+
+</div>
+
+<div class="previewGame">
+
+<div class="canvas-container previewgame">
+  <canvas class="myCanvas"></canvas>
+  
+  <iframe class="myIframe" src="https://pixelman55.github.io/main/prev3.html"></iframe>
+</div>
+
+</div>
+
+</div>
+
+</div>
+  
 <!-- STICKMAN PREVIEW -->
 
 <div class="previewPopup" id="fightPreview">
@@ -2139,6 +2173,8 @@ onclick="closePreview('fightPreview')">
 </div>
 
 </div>
+</div>
+
 
 <script>
 
