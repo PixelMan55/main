@@ -3384,6 +3384,14 @@ player.vx*=0.8;
 
 player.vy += 0.6 * gravity;
 
+  /* JUMPING LOGIC */
+if ((keys[" "] || keys["ArrowUp"]) && player.grounded) {
+    // If gravity is normal, jump UP (negative Y velocity)
+    // If gravity is upside down, jump DOWN (positive Y velocity)
+    player.vy = -12 * gravity; 
+    player.grounded = false; 
+}
+
 player.x+=player.vx;
 player.y+=player.vy;
 
