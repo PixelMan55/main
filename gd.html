@@ -857,7 +857,59 @@ left:18px;
 z-index:4000;
 display:none;
 }
+/* Hide by default on desktop */
+#mobile-controls {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 0;
+  width: 100%;
+  z-index: 9999;
+  pointer-events: none; /* Allows clicks to pass through empty spaces */
+}
 
+/* Show only on mobile/touch screens */
+@media (max-width: 768px), (pointer: coarse) {
+  #mobile-controls {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 30px;
+    box-sizing: border-box;
+  }
+}
+
+.dpad, .actions {
+  display: flex;
+  gap: 15px;
+  pointer-events: auto; /* Re-enable clicks for the buttons */
+}
+
+.control-btn {
+  width: 70px;
+  height: 70px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  user-select: none;
+  outline: none;
+  -webkit-user-select: none;
+  touch-action: manipulation; /* Prevents double-tap zoom lag */
+}
+
+.control-btn:active {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+#btn-jump {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  font-size: 16px;
+}
+  
 </style>
 </head>
 
@@ -890,7 +942,15 @@ display:none;
 
 <button id="backBtn" onclick="backToMenu()">⬅ Back</button>
 
-
+<div id="mobile-controls">
+  <div class="dpad">
+    <button id="btn-left" class="control-btn">◀</button>
+    <button id="btn-right" class="control-btn">▶</button>
+  </div>
+  <div class="actions">
+    <button id="btn-jump" class="control-btn">JUMP</button>
+  </div>
+</div>
 <div id="topBar" style="display:none;">
 
 <button
@@ -3683,6 +3743,35 @@ gravity=1;
 rotation=0;
 
 }
+
+  // Function to map a button to your existing keys system
+function bindMobileButton(buttonId, simulatedKey) {
+  const btn = document.getElementById(buttonId);
+  if (!btn) return;
+
+  // When user touches the button
+  btn.addEventListener("touchstart", (e) => {
+    e.preventDefault(); // Prevents mouse click emulation
+    keys[simulatedKey] = true;
+  });
+
+  // When user lifts their finger off the button
+  btn.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    keys[simulatedKey] = false;
+  });
+
+  // Safety net: if finger drags off the button, release the key
+  btn.addEventListener("touchcancel", (e) => {
+    e.preventDefault();
+    keys[simulatedKey] = false;
+  });
+}
+
+// Bind your buttons to the keys your update logic already listens for
+bindMobileButton("btn-left", "ArrowLeft");
+bindMobileButton("btn-right", "ArrowRight");
+bindMobileButton("btn-jump", "ArrowUp"); // Assuming ArrowUp or Space is your jump key
 
 addBlock(50,300);
 updateEditorUI();
