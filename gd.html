@@ -3388,7 +3388,7 @@ player.vy += 0.6 * gravity;
 if ((keys[" "] || keys["ArrowUp"]) && player.grounded) {
     // If gravity is normal, jump UP (negative Y velocity)
     // If gravity is upside down, jump DOWN (positive Y velocity)
-    player.vy = -10 * gravity; 
+    player.vy = -9 * gravity; 
     player.grounded = false; 
 }
 
