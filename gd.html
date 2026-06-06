@@ -3384,14 +3384,6 @@ player.vx*=0.8;
 
 player.vy += 0.6 * gravity;
 
-  /* JUMPING LOGIC */
-if ((keys[" "] || keys["ArrowUp"]) && player.grounded) {
-    // If gravity is normal, jump UP (negative Y velocity)
-    // If gravity is upside down, jump DOWN (positive Y velocity)
-    player.vy = -9 * gravity; 
-    player.grounded = false; 
-}
-
 player.x+=player.vx;
 player.y+=player.vy;
 
@@ -3752,7 +3744,7 @@ rotation=0;
 
 }
 
-  // Function to map a button to your existing keys system
+// Function to map a button to your existing keys system
 function bindMobileButton(buttonId, simulatedKey) {
   const btn = document.getElementById(buttonId);
   if (!btn) return;
@@ -3761,12 +3753,23 @@ function bindMobileButton(buttonId, simulatedKey) {
   btn.addEventListener("touchstart", (e) => {
     e.preventDefault(); // Prevents mouse click emulation
     keys[simulatedKey] = true;
+
+    // IF THIS IS THE JUMP BUTTON, FORCE A REAL KEYDOWN EVENT FOR YOUR OTHER CODE
+    if (simulatedKey === " ") {
+      const jumpEvent = new KeyboardEvent("keydown", { key: " " });
+      window.dispatchEvent(jumpEvent);
+    }
   });
 
   // When user lifts their finger off the button
   btn.addEventListener("touchend", (e) => {
     e.preventDefault();
     keys[simulatedKey] = false;
+    
+    if (simulatedKey === " ") {
+      const oupEvent = new KeyboardEvent("keyup", { key: " " });
+      window.dispatchEvent(oupEvent);
+    }
   });
 
   // Safety net: if finger drags off the button, release the key
