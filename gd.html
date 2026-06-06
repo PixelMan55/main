@@ -857,15 +857,18 @@ left:18px;
 z-index:4000;
 display:none;
 }
-/* Hide by default on desktop */
+/* Mobile Controls Overlay */
 #mobile-controls {
   display: none;
   position: fixed;
-  bottom: 20px;
+  bottom: 0;
   left: 0;
   width: 100%;
+  height: 160px; /* Tall safety zone for thumbs */
   z-index: 9999;
-  pointer-events: none; /* Allows clicks to pass through empty spaces */
+  pointer-events: none;
+  box-sizing: border-box;
+  padding: 0 20px 25px 20px; /* Pushes buttons slightly away from screen edges */
 }
 
 /* Show only on mobile/touch screens */
@@ -873,41 +876,62 @@ display:none;
   #mobile-controls {
     display: flex;
     justify-content: space-between;
-    padding: 0 30px;
-    box-sizing: border-box;
+    align-items: flex-end; /* Aligns buttons nicely at the bottom */
   }
 }
 
 .dpad, .actions {
   display: flex;
-  gap: 15px;
-  pointer-events: auto; /* Re-enable clicks for the buttons */
+  gap: 20px; /* More breathing room between left and right arrows */
+  pointer-events: auto;
 }
 
+/* SLEEK GLOWING BUTTON STYLE */
 .control-btn {
-  width: 70px;
-  height: 70px;
-  background-color: rgba(255, 255, 255, 0.3);
-  border: 2px solid #fff;
-  border-radius: 50%;
-  color: white;
-  font-size: 24px;
+  width: 85px;  /* Noticeably larger for easy tapping */
+  height: 85px;
+  background: rgba(255, 255, 255, 0.07); /* Semi-transparent glass effect */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 20px; /* Modern rounded square look */
+  color: #ffffff;
+  font-size: 28px;
   font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 
+              inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  
+  /* Critical for mobile performance */
   user-select: none;
-  outline: none;
   -webkit-user-select: none;
-  touch-action: manipulation; /* Prevents double-tap zoom lag */
+  touch-action: manipulation;
+  transition: background 0.1s, transform 0.05s, border-color 0.1s;
 }
 
-.control-btn:active {
-  background-color: rgba(255, 255, 255, 0.6);
-}
-
+/* GIGANTIC JUMP BUTTON */
 #btn-jump {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  font-size: 16px;
+  width: 110px; /* Extra large target since timing is everything */
+  height: 110px;
+  background: rgba(0, 255, 255, 0.1); /* Subtle neon cyan tint */
+  border-color: rgba(0, 255, 255, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.2),
+              inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+
+/* ACTIVE TAPPED STATES (Glow effect) */
+.control-btn:active {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: scale(0.92); /* Shrinks slightly under the thumb for physical feedback */
+}
+
+#btn-jump:active {
+  background: rgba(0, 255, 255, 0.3);
+  border-color: #00ffff;
+  box-shadow: 0 0 25px #00ffff, 
+              inset 0 1px 5px rgba(255, 255, 255, 0.6);
 }
   
 </style>
