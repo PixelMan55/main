@@ -3016,6 +3016,101 @@ card.remove();
 });
 }
 
+
+/* EDIT MODE */
+game.onclick=e=>{
+
+if(mode!=="edit" || builtInMode) return;
+
+const r=game.getBoundingClientRect();
+
+let x=Math.round(
+(e.clientX-r.left+camera.x)/40
+)*40;
+
+let y=Math.round(
+(e.clientY-r.top+camera.y)/40
+)*40;
+
+/* DELETE */
+if(tool==="delete"){
+
+const delCheck=(arr,w,h)=>{
+
+return arr.filter(o=>{
+
+let hit=
+Math.abs(o.x-x)<w &&
+Math.abs(o.y-y)<h;
+
+if(hit){
+o.el.remove();
+}
+
+return !hit;
+
+});
+
+};
+
+blocks=delCheck(blocks,60,30);
+spikes=delCheck(spikes,30,30);
+upspikes=delCheck(upspikes,30,30);
+pulselights=delCheck(pulselights,70,70);
+fakeblocks=delCheck(fakeblocks,60,30);
+fakespikes=delCheck(fakespikes,30,30);
+invisblocks=delCheck(invisblocks,60,30);
+invisspikes=delCheck(invisspikes,30,30);
+portals=delCheck(portals,30,40);
+gportals=delCheck(gportals,30,40);
+
+if(
+goal &&
+Math.abs(goal.x-x)<40 &&
+Math.abs(goal.y-y)<60
+){
+goal.el.remove();
+goal=null;
+}
+
+return;
+
+}
+
+/* PLACE */
+const color =
+document.getElementById("colorPicker").value;
+
+if(tool==="block")
+addBlock(x,y,color);
+
+if(tool==="fakeblock")
+addFakeBlock(x,y,color);
+
+if(tool==="glow")
+addGlow(x,y,color);
+
+if(tool==="chain")
+addChain(x,y);
+
+if(tool==="bgdeco")
+addBGDeco(x,y);
+
+if(tool==="upspike")
+addUpSpike(x,y);
+
+if(tool==="pulse")
+addPulse(x,y,color);
+if(tool==="spike") addSpike(x,y);
+if(tool==="fakespike") addFakeSpike(x,y);
+if(tool==="invisblock")addInvisBlock(x,y);
+if(tool==="invisspike")addInvisSpike(x,y);
+if(tool==="portal") addPortal(x,y);
+if(tool==="gportal") addGPortal(x,y);
+if(tool==="goal") addGoal(x,y);
+
+};
+
 /* UPDATE */
 function update(){
 
