@@ -435,7 +435,8 @@ STEPS.push({
     req(s=>'Must not use a disposable email domain', v=>{ const d=(v.split('@')[1]||'').toLowerCase(); return !DISPOSABLE_DOMAINS.includes(d);}),
     req(s=>`The part before "@" must contain the first 3 letters of your username ("${(G.username||'').slice(0,3).toLowerCase()}")`,
       v=>{ const pre=(v.split('@')[0]||'').toLowerCase(); const frag=(G.username||'').slice(0,3).toLowerCase(); return frag.length>0 && pre.includes(frag); }),
-  ]
+  ],
+  onComplete(v){ G.email=v; }
 });
 
 /* 4: SECURITY QUESTION */
@@ -791,9 +792,225 @@ STEPS.push({
   ]
 });
 
-/* 31: RE-ENTER USERNAME */
+/* 31: PROGRAMMING LANGUAGE */
 STEPS.push({
-  title:'Section 31 — Confirm Username',
+  title:'Section 31 — Preferred Programming Language',
+  flavor:'For the Bureau\'s internal aptitude index. There is no wrong answer, except the ones listed below.',
+  input:'select', key:'lang',
+  options:['','JavaScript','Python','Java','C++','Rust','Go','Ruby','PHP','Swift','Kotlin'],
+  reqs:[
+    req(s=>'Must select a language', v=>!!v),
+    req(s=>'Must not be JavaScript (the Bureau has trust issues)', v=>v!=='JavaScript'),
+    req(s=>'Must not be PHP (the Bureau is still recovering from 2003)', v=>v!=='PHP'),
+  ]
+});
+
+/* 32: SECRET CODE WORD */
+STEPS.push({
+  title:'Section 32 — Secret Code Word',
+  flavor:'Must be the same forwards and backwards. The Bureau values symmetry.',
+  input:'text', key:'codeword',
+  reqs:[
+    req(s=>'Must be at least 3 letters', v=>v.replace(/[^a-zA-Z]/g,'').length>=3),
+    req(s=>'Must be a palindrome (reads the same backwards)', v=>{
+      const c=v.toLowerCase().replace(/[^a-z]/g,'');
+      return c.length>0 && c===c.split('').reverse().join('');
+    }),
+  ]
+});
+
+/* 33: NUMBER OF PETS */
+STEPS.push({
+  title:'Section 33 — Number of Pets Owned',
+  flavor:'Living, deceased, or hypothetical. The Bureau does not discriminate.',
+  input:'text', key:'numpets', inputmode:'numeric',
+  reqs:[
+    req(s=>'Must be a whole number between 0 and 20', v=>/^\d{1,2}$/.test(v) && Number(v)<=20),
+    req(s=>'Must not be exactly 1 (the Bureau finds one pet indecisive)', v=>v.trim()!=='1'),
+  ]
+});
+
+/* 34: PIZZA TOPPING */
+STEPS.push({
+  title:'Section 34 — Preferred Pizza Topping',
+  flavor:'A matter of public record, apparently.',
+  input:'text', key:'topping',
+  reqs:[
+    req(s=>'Must be at least 3 letters', v=>v.replace(/[^a-zA-Z]/g,'').length>=3),
+    req(s=>'Must not contain numbers', v=>!/\d/.test(v)),
+    req(s=>'Must not be "pepperoni" (the Bureau has heard enough about pepperoni)', v=>v.toLowerCase().trim()!=='pepperoni'),
+  ]
+});
+
+/* 35: TWO-SENTENCE BIOGRAPHY */
+STEPS.push({
+  title:'Section 35 — Brief Personal Biography',
+  flavor:'Exactly two sentences. The Bureau does not have time for a third.',
+  input:'textarea', key:'bio',
+  reqs:[
+    req(s=>'Must contain exactly 2 sentences (ending in periods)', v=>{
+      const sentences = v.split('.').map(x=>x.trim()).filter(Boolean);
+      return sentences.length===2 && v.trim().split('.').filter(Boolean).length===2;
+    }),
+    req(s=>'Must contain between 8 and 40 words total', v=>{
+      const words = v.trim().split(/\s+/).filter(Boolean).length;
+      return words>=8 && words<=40;
+    }),
+  ]
+});
+
+/* 36: FAVORITE SEASON */
+STEPS.push({
+  title:'Section 36 — Favorite Season',
+  flavor:'It is currently summer. The Bureau is curious whether you\'ll be honest about that.',
+  input:'select', key:'season',
+  options:['','Spring','Summer','Autumn','Winter'],
+  reqs:[
+    req(s=>'Must select a season', v=>!!v),
+    req(s=>'Must not be "Summer" — the Bureau wants variety, not flattery', v=>v!=='Summer'),
+  ]
+});
+
+/* 37: PATIENCE LEVEL */
+STEPS.push({
+  title:'Section 37 — Self-Reported Patience Level',
+  flavor:'On a scale of 0 to 10. Be honest. The Bureau will not believe you regardless.',
+  input:'range', key:'patience', min:0, max:10,
+  reqs:[
+    req(s=>'Must be set above 6', v=>Number(v)>6),
+    req(s=>'Must be an odd number', v=>Number(v)%2===1),
+  ]
+});
+
+/* 38: RIDDLE ONE */
+STEPS.push({
+  title:'Section 38 — Riddle Verification',
+  flavor:'"What has keys but no locks, space but no room, and you can enter but not go inside?"',
+  input:'text', key:'riddle1',
+  reqs:[
+    req(s=>'Answer the riddle correctly', v=>v.trim().toLowerCase()==='keyboard'),
+  ]
+});
+
+/* 39: OPERATING SYSTEM */
+STEPS.push({
+  title:'Section 39 — Operating System',
+  flavor:'The Bureau\'s servers only trust certain operating systems. This has no bearing on whether you may proceed, but they\'d still like to know.',
+  input:'select', key:'os',
+  options:['','Windows','macOS','Linux','ChromeOS','Other'],
+  reqs:[
+    req(s=>'Must select an option', v=>!!v),
+    req(s=>'Must not select "Other" — the Bureau does not accept ambiguity', v=>v!=='Other'),
+  ]
+});
+
+/* 40: MOOD EMOJI */
+STEPS.push({
+  title:'Section 40 — Current Mood',
+  flavor:'Express yourself using exactly one emoji. Words are not permitted here.',
+  input:'text', key:'mood', noPaste:true, placeholder:'😐',
+  reqs:[
+    req(s=>'Must contain at least one emoji character', v=>/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(v)),
+    req(s=>'Must be 1 to 3 characters long', v=>v.length>=1 && v.length<=3),
+  ]
+});
+
+/* 41: BACKUP EMAIL */
+STEPS.push({
+  title:'Section 41 — Backup Email Address',
+  flavor:'In case the Bureau loses your first email, which is likely.',
+  input:'text', key:'email2',
+  reqs:[
+    req(s=>'Must be a valid email address', v=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)),
+    req(s=>'Domain must differ from your primary email\'s domain', v=>{
+      const d1=(G.email||'').split('@')[1]?.toLowerCase();
+      const d2=(v.split('@')[1]||'').toLowerCase();
+      return d1 && d2 && d1!==d2;
+    }),
+  ]
+});
+
+/* 42: BINARY LUCKY NUMBER */
+STEPS.push({
+  title:'Section 42 — Binary Conversion',
+  flavor:`Enter your lucky number from Section 11 (${G.lucky||'—'}) in binary.`,
+  input:'text', key:'binary', inputmode:'numeric', placeholder:'e.g. 1011',
+  reqs:[
+    req(s=>'Must contain only 0s and 1s', v=>/^[01]+$/.test(v)),
+    req(s=>'Must equal your lucky number when converted from binary', v=>/^[01]+$/.test(v) && parseInt(v,2)===Number(G.lucky)),
+  ]
+});
+
+/* 43: FAVORITE SOUND */
+STEPS.push({
+  title:'Section 43 — Favorite Sound',
+  flavor:'For acoustic record-keeping. The Bureau enjoys ambiance.',
+  input:'text', key:'sound',
+  reqs:[
+    req(s=>'Must be at least 3 letters', v=>v.replace(/[^a-zA-Z]/g,'').length>=3),
+    req(s=>'Must not be "silence" (the Bureau finds this passive-aggressive)', v=>v.toLowerCase().trim()!=='silence'),
+  ]
+});
+
+/* 44: HONESTY CHECKBOX */
+STEPS.push({
+  title:'Section 44 — Honesty Declaration',
+  flavor:'A brief moment of self-reflection before the final stretch.',
+  input:'checkboxOnly', key:'honesty',
+  label:'I have answered at least one question in this form truthfully.',
+  init(s){ s.checked=false; },
+  reqs:[
+    req(s=>'Checkbox must be checked', (v,s)=>!!s.checked),
+  ]
+});
+
+/* 45: TIME SPENT */
+STEPS.push({
+  title:'Section 45 — Time Spent on This Form',
+  flavor:'Self-reported, in minutes. The Bureau will not verify this and does not care that you know that.',
+  input:'range', key:'timespent', min:0, max:60,
+  reqs:[
+    req(s=>'Must be set above 10 minutes', v=>Number(v)>10),
+    req(s=>'Must be an even number', v=>Number(v)%2===0),
+  ]
+});
+
+/* 46: RIDDLE TWO */
+STEPS.push({
+  title:'Section 46 — Final Riddle',
+  flavor:'"I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?"',
+  input:'text', key:'riddle2',
+  reqs:[
+    req(s=>'Answer the riddle correctly', v=>v.trim().toLowerCase()==='a map' || v.trim().toLowerCase()==='map'),
+  ]
+});
+
+/* 47: COLOR MIXING */
+STEPS.push({
+  title:'Section 47 — Color Preference, Revisited',
+  flavor:'The Bureau would like a second color, for cross-referencing purposes.',
+  input:'color', key:'color2',
+  reqs:[
+    req(s=>'Must select a color', v=>!!v),
+    req(s=>'Blue value must exceed red value', v=>{ const {r,b}=hexToRgb(v); return b>r;}),
+    req(s=>'Must differ from your first color choice', v=>v.toLowerCase()!==(G.color||'').toLowerCase()),
+  ],
+  onComplete(v){ G.color2=v; }
+});
+
+/* 48: FINAL SIGNATURE */
+STEPS.push({
+  title:'Section 48 — Final Signature',
+  flavor:'Type the closing phrase exactly as written, including punctuation.',
+  input:'text', key:'signature',
+  reqs:[
+    req(s=>'Must match exactly: "Filed under duress."', v=>v.trim()==='Filed under duress.'),
+  ]
+});
+
+/* 49: RE-ENTER USERNAME */
+STEPS.push({
+  title:'Section 49 — Confirm Username',
   flavor:'Re-type your username from Section 1. Copying and pasting is not permitted — the Bureau wants to see you mean it.',
   input:'text', key:'usernameConfirm', noPaste:true,
   reqs:[
@@ -801,9 +1018,9 @@ STEPS.push({
   ]
 });
 
-/* 32: RE-ENTER PASSWORD */
+/* 50: RE-ENTER PASSWORD */
 STEPS.push({
-  title:'Section 32 — Confirm Password',
+  title:'Section 50 — Confirm Password',
   flavor:'Re-type your password from Section 2. No pasting. The Bureau already explained why.',
   input:'password', key:'passwordConfirm', noPaste:true,
   reqs:[
