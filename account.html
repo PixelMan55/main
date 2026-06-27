@@ -834,8 +834,10 @@ function buildProgress(){
 }
 
 function renderStep(){
+  clearTimeout(timers.captcha);
   if(cur>=STEPS.length){ renderDone(); return; }
   const step = STEPS[cur];
+  const stepIndex = cur;
   if(!step._state){ step._state={}; step.init && step.init(step._state); step._startTime=Date.now(); }
   const s = step._state;
   $('#stepCount').textContent = 'STEP '+(cur+1)+' OF '+STEPS.length;
@@ -870,7 +872,7 @@ function renderStep(){
   html += `<div class="footer-row"><span class="tally">FILE ${G.fileId} · §${cur+1}</span><button class="btn primary" id="nextBtn">Submit Section →</button></div>`;
 
   stepBody.innerHTML = html;
-  wireInput(step,s);
+  wireInput(step,s,stepIndex);
 
   if(step.extraButtons){
     step.extraButtons.forEach((b,i)=>{
@@ -896,14 +898,15 @@ function renderStep(){
 
   if(step.input==='captcha'){
     const tick = ()=>{
+      if(cur!==stepIndex) return; // user has moved on — stop ticking this step
       const elapsed = (Date.now()-step._startTime)/1000;
       step.onTick(s,elapsed);
+      if(elapsed>90) step._expiredHandled = true;
       renderReqListOnly(step,s);
       if(!step._expiredHandled){
         timers.captcha = setTimeout(tick, 1000);
       }
     };
-    clearTimeout(timers.captcha);
     timers.captcha = setTimeout(tick,1000);
   }
 }
@@ -992,12 +995,14 @@ function renderInput(step,s){
   }
 }
 
-function wireInput(step,s){
+function wireInput(step,s,stepIndex){
   const refresh = ()=>{
+    if(cur!==stepIndex) return; // step is no longer on screen — ignore stale callback
     // re-render just to update reqs & button, not full reflow (keeps focus)
     renderReqListOnly(step,s);
   };
   const refreshWithValueChange = ()=>{
+    if(cur!==stepIndex) return;
     if(step.onValueChange) step.onValueChange(getValue(step), s, refresh);
     refresh();
   };
