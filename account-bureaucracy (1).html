@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FORM 27-B — ACCOUNT REGISTRATION</title>
+<style>
+:root{
+  --paper:#efe8d6;
+  --paper-dark:#e2d8bd;
+  --ink:#2b3a2f;
+  --ink-soft:#4c5b4f;
+  --teal:#16221c;
+  --teal-2:#1f2e25;
+  --red:#a83228;
+  --yellow:#c8932c;
+  --green:#3c6b3f;
+  --line:#c9bd9c;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--teal);
+  background-image:
+    radial-gradient(ellipse at top, #24332a 0%, var(--teal) 60%);
+  min-height:100vh;
+  font-family:'Courier New', Consolas, monospace;
+  color:var(--ink);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+.kiosk{
+  width:100%;
+  max-width:640px;
+}
+.letterhead{
+  text-align:center;
+  color:#d8cfae;
+  margin-bottom:14px;
+}
+.letterhead .seal{
+  font-size:11px;
+  letter-spacing:4px;
+  opacity:.55;
+  text-transform:uppercase;
+}
+.letterhead h1{
+  font-size:18px;
+  letter-spacing:3px;
+  margin:6px 0 2px;
+  text-transform:uppercase;
+}
+.letterhead .sub{
+  font-size:11px;
+  opacity:.6;
+  letter-spacing:1px;
+}
+.sheet{
+  position:relative;
+  background:var(--paper);
+  background-image:
+    repeating-linear-gradient(to bottom, transparent 0 27px, var(--line) 27px 28px);
+  background-position: 0 64px;
+  border:1px solid #6e6648;
+  box-shadow:
+    0 0 0 1px #948c66 inset,
+    0 18px 40px rgba(0,0,0,.55),
+    0 2px 0 #948c66;
+  padding:26px 28px 24px;
+  min-height:430px;
+  overflow:hidden;
+}
+.sheet::before{
+  content:"";
+  position:absolute; inset:0;
+  background-image: repeating-linear-gradient(90deg, transparent 0 39px, rgba(0,0,0,.025) 39px 40px);
+  pointer-events:none;
+}
+.formhead{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  border-bottom:2px solid var(--ink);
+  padding-bottom:6px;
+  margin-bottom:16px;
+  font-size:11px;
+  letter-spacing:1px;
+}
+.formhead b{font-size:12px;}
+.progress{
+  display:flex;
+  gap:3px;
+  margin-bottom:18px;
+}
+.progress i{
+  flex:1;
+  height:4px;
+  background:#c9bfa0;
+  border-radius:1px;
+}
+.progress i.done{background:var(--green);}
+.progress i.now{background:var(--yellow);}
+
+.step-title{
+  font-size:19px;
+  font-weight:bold;
+  letter-spacing:.5px;
+  margin:0 0 4px;
+}
+.step-flavor{
+  font-size:12px;
+  color:var(--ink-soft);
+  margin:0 0 16px;
+  font-style:italic;
+}
+.field-row{
+  margin-bottom:16px;
+}
+input[type=text],input[type=password],input[type=date],select,textarea{
+  width:100%;
+  font-family:inherit;
+  font-size:16px;
+  padding:10px 11px;
+  border:1px solid var(--ink);
+  border-radius:2px;
+  background:#fbf8ee;
+  color:var(--ink);
+  letter-spacing:.5px;
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--yellow);}
+input[type=range]{width:100%;}
+textarea{resize:vertical;min-height:54px;}
+
+.req-list{list-style:none;margin:0;padding:0;font-size:12.5px;}
+.req-list li{
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+  padding:5px 0;
+  border-bottom:1px dotted var(--line);
+  opacity:0;
+  transform:translateY(4px);
+  animation: reveal .35s ease forwards;
+}
+@keyframes reveal{to{opacity:1;transform:none;}}
+.req-list li .mark{
+  flex:0 0 auto;
+  width:15px;
+  font-weight:bold;
+}
+.req-list li.pass{color:var(--green);}
+.req-list li.pass .mark::before{content:"✓";}
+.req-list li.fail{color:var(--red);}
+.req-list li.fail .mark::before{content:"✕";}
+.req-list li.pending{color:#9c9374;}
+.req-list li.pending .mark::before{content:"…";}
+
+.helpers{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
+.btn{
+  font-family:inherit;
+  font-size:12px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:8px 14px;
+  border:1px solid var(--ink);
+  background:var(--paper-dark);
+  color:var(--ink);
+  border-radius:2px;
+  cursor:pointer;
+}
+.btn:hover{background:#d8cca0;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn.primary{
+  background:var(--ink);
+  color:var(--paper);
+  border-color:var(--ink);
+}
+.btn.primary:disabled{background:#7a8478;}
+.btn.primary:not(:disabled):hover{background:#3a4d3d;}
+
+.footer-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:18px;
+  position:relative;
+}
+.tally{
+  font-size:11px;
+  color:var(--ink-soft);
+  letter-spacing:.5px;
+}
+
+.stamp{
+  position:absolute;
+  top:36%;
+  left:50%;
+  transform:translate(-50%,-50%) rotate(-18deg) scale(.5);
+  font-size:38px;
+  font-weight:900;
+  letter-spacing:2px;
+  padding:8px 18px;
+  border:6px solid currentColor;
+  border-radius:8px;
+  text-transform:uppercase;
+  opacity:0;
+  pointer-events:none;
+  transition: opacity .6s ease;
+}
+.stamp.show{
+  animation: slam .45s cubic-bezier(.2,1.3,.4,1) forwards;
+}
+.stamp.fadeout{
+  opacity:0 !important;
+}
+@keyframes slam{
+  0%{opacity:0; transform:translate(-50%,-50%) rotate(-18deg) scale(2.2);}
+  60%{opacity:1; transform:translate(-50%,-50%) rotate(-12deg) scale(.92);}
+  100%{opacity:.88; transform:translate(-50%,-50%) rotate(-12deg) scale(1);}
+}
+.stamp.approve{color:var(--green);}
+.stamp.reject{color:var(--red);}
+
+.captcha-box canvas{
+  border:1px solid var(--ink);
+  background:#dcd2ab;
+  cursor:pointer;
+  display:block;
+  margin-bottom:8px;
+}
+.checkbox-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:13px;
+  margin-bottom:10px;
+}
+.coinflip{
+  font-size:12px;
+  margin-top:6px;
+  color:var(--ink-soft);
+}
+.done-screen{
+  text-align:center;
+  padding:30px 10px;
+}
+.done-screen h2{margin-bottom:6px;}
+.done-screen p{color:var(--ink-soft); font-size:13px;}
+.shake{animation:shakeKf .35s;}
+@keyframes shakeKf{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-6px);}
+  40%{transform:translateX(6px);}
+  60%{transform:translateX(-4px);}
+  80%{transform:translateX(4px);}
+}
+.fineprint{
+  font-size:10px;
+  color:#9c9374;
+  text-align:center;
+  margin-top:10px;
+  letter-spacing:.5px;
+}
+</style>
+</head>
+<body>
+<div class="kiosk">
+  <div class="letterhead">
+    <div class="seal">DEPT. OF DIGITAL IDENTITY · BUREAU OF ACCOUNT REGISTRATION</div>
+    <h1>Form 27‑B / New Account Application</h1>
+    <div class="sub">Please complete all 32 sections in order. Sections may not be revisited.</div>
+  </div>
+  <div class="sheet" id="sheet">
+    <div class="formhead">
+      <b id="appId">APPLICANT FILE #—</b>
+      <span id="stepCount">STEP 0 OF 32</span>
+    </div>
+    <div class="progress" id="progress"></div>
+    <div id="stepBody"></div>
+    <div class="stamp" id="stamp"></div>
+  </div>
+  <div class="fineprint">No part of this form may be copied, pasted, photographed, or appealed.</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBhA-QbHGTeiea_LOcSFXWYzo1Mt0YSJh8",
+  authDomain: "accountgame-af382.firebaseapp.com",
+  projectId: "accountgame-af382",
+  storageBucket: "accountgame-af382.firebasestorage.app",
+  messagingSenderId: "1082208328031",
+  appId: "1:1082208328031:web:fdf8e550933a83eab07eea",
+  measurementId: "G-CN8REWHRN0"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+async function isUsernameTaken(username){
+  if(!username) return false;
+  try{
+    const ref = doc(db, "usernames", username.toLowerCase());
+    const snap = await getDoc(ref);
+    return snap.exists();
+  }catch(e){
+    console.error('Username check failed', e);
+    return false; // fail open so the Bureau doesn't grind to a halt
+  }
+}
+
+async function reserveUsername(username){
+  try{
+    const ref = doc(db, "usernames", username.toLowerCase());
+    await setDoc(ref, { username, reservedAt: Date.now() });
+  }catch(e){
+    console.error('Username reservation failed', e);
+  }
+}
+
+/* ---------------- helpers ---------------- */
+const $ = (s,el=document)=>el.querySelector(s);
+const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick = arr=>arr[rand(0,arr.length-1)];
+const digitSum = s => (s.match(/\d/g)||[]).reduce((a,d)=>a+Number(d),0);
+const isPrime = n=>{ if(n<2) return false; for(let i=2;i*i<=n;i++) if(n%i===0) return false; return true;};
+function blockPaste(el){
+  ['paste','copy','cut','drop'].forEach(ev=>el.addEventListener(ev,e=>e.preventDefault()));
+  el.addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&['c','v','x'].includes(e.key.toLowerCase())) e.preventDefault();
+  });
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+}
+
+const TAKEN_USERNAMES = ['admin','user','test','rootlord','official_2026','citizen0001','formfiller'];
+const TAKEN_PASSWORDS = ['Pass123','Welcome1','Qwerty12','Letme1n','Bureau26'];
+const DISPOSABLE_DOMAINS = ['mailinator.com','tempmail.com','10minutemail.com','guerrillamail.com'];
+const REAL_DESSERTS = ['cake','pie','pudding','cobbler','mousse','tiramisu','flan','gelato','sorbet','brownie','cheesecake','custard','strudel','baklava','macaron','trifle','sundae','tart','crepe','churro'];
+const POPULAR_PETS = ['max','bella','charlie','luna','buddy','daisy','rocky','molly'];
+
+let G = {
+  username:'',
+  password:'',
+  fileId: 'A-'+rand(10000,99999)
+};
+
+/* ---------------- requirement factory ---------------- */
+function req(desc, test){ return {desc, test}; }
+
+/* ================= STEP DEFINITIONS ================= */
+const STEPS = [];
+
+/* 1: USERNAME */
+STEPS.push({
+  title:'Section 1 — Choose a Username',
+  flavor:'This will identify you in all future correspondence with the Bureau.',
+  input:'text', key:'username',
+  init(s){ s.salt = pick(['gov','dept','bureau','27b']); s.checkedValue=null; s.checking=false; s.taken=false; },
+  reqs:[
+    req(s=>'Between 5 and 15 characters', v=>v.length>=5 && v.length<=15),
+    req(s=>'Must contain at least one number', v=>/\d/.test(v)),
+    req(s=>'Must contain at least one uppercase letter', v=>/[A-Z]/.test(v)),
+    req(s=>'Must not contain the word "admin"', v=>!/admin/i.test(v)),
+    req(s=>'Must include the current year (2026)', v=>/2026/.test(v)),
+    req(s=> s.checking ? 'Checking availability with the Bureau database…' : 'Must not already be taken by another applicant',
+      (v,s)=> v.length>0 && !s.checking && s.checkedValue===v && !s.taken),
+  ],
+  onValueChange(v,s,refresh){
+    if(!v){ s.checkedValue=null; s.checking=false; s.taken=false; refresh(); return; }
+    s.checking = true;
+    refresh();
+    clearTimeout(s._unameTimer);
+    s._unameTimer = setTimeout(async ()=>{
+      const localTaken = TAKEN_USERNAMES.includes(v.toLowerCase());
+      const remoteTaken = localTaken ? true : await isUsernameTaken(v);
+      s.taken = remoteTaken;
+      s.checkedValue = v;
+      s.checking = false;
+      refresh();
+    }, 450);
+  },
+  onComplete(v){ G.username=v; reserveUsername(v); }
+});
+
+/* 2: PASSWORD (the example, plus extras) */
+STEPS.push({
+  title:'Section 2 — Choose a Password',
+  flavor:'For your protection, this password must be memorable to absolutely no one.',
+  input:'password', key:'password',
+  init(s){
+    s.target = rand(9,25);
+    s.coin = null; s.coinSeed = 0;
+  },
+  reqs:[
+    req(s=>'Must be 4 to 7 characters long', v=>v.length>=4 && v.length<=7),
+    req(s=>`The digits in your password must add up to exactly ${s.target}`, (v,s)=>digitSum(v)===s.target),
+    req(s=>'Must contain at least one special character (!@#$%^&*)', v=>/[!@#$%^&*]/.test(v)),
+    req(s=>'Must not contain your username', (v,s)=> !G.username || !v.toLowerCase().includes(G.username.toLowerCase())),
+    req(s=>'Must not be a commonly-used password', v=>v && !TAKEN_PASSWORDS.includes(v)),
+    req(s=>'Must pass the 50/50 Bureau Acceptance Lottery', (v,s)=>{
+      const key = v+':'+s.coinSeed;
+      if(s.coin===null || s.coinKey!==key){ s.coin = (hashStr(key)%2===0); s.coinKey = key; }
+      return v.length>0 && s.coin;
+    }, true),
+  ],
+  extraButtons:[
+    {label:'Re-roll the lottery', onClick(s,rerender){ s.coinSeed++; rerender(); }}
+  ],
+  onComplete(v){ G.password=v; }
+});
+
+function hashStr(str){
+  let h=0;
+  for(let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) >>> 0; }
+  return h;
+}
+
+/* 3: EMAIL */
+STEPS.push({
+  title:'Section 3 — Email Address',
+  flavor:'Correspondence regarding your application will be sent here, eventually.',
+  input:'text', key:'email',
+  reqs:[
+    req(s=>'Must be a valid email address', v=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)),
+    req(s=>'Domain must end in .com or .net', v=>/\.(com|net)$/i.test(v)),
+    req(s=>'Must not use a disposable email domain', v=>{ const d=(v.split('@')[1]||'').toLowerCase(); return !DISPOSABLE_DOMAINS.includes(d);}),
+    req(s=>`The part before "@" must contain the first 3 letters of your username ("${(G.username||'').slice(0,3).toLowerCase()}")`,
+      v=>{ const pre=(v.split('@')[0]||'').toLowerCase(); const frag=(G.username||'').slice(0,3).toLowerCase(); return frag.length>0 && pre.includes(frag); }),
+  ]
+});
+
+/* 4: SECURITY QUESTION */
+STEPS.push({
+  title:'Section 4 — Security Question',
+  flavor:'In the event you forget your password, this answer will be used to humiliate you.',
+  input:'text', key:'secq', placeholder:'Mother\'s maiden name',
+  reqs:[
+    req(s=>'Must be longer than 3 letters', v=>v.replace(/[^a-zA-Z]/g,'').length>3),
+    req(s=>'Must not contain spaces', v=>!/\s/.test(v)),
+    req(s=>'Must not be your username', v=>v.toLowerCase()!==(G.username||'').toLowerCase()),
+    req(s=>'Must end in a vowel', v=>/[aeiouAEIOU]$/.test(v)),
+  ],
+  onComplete(v){ G.secq=v; }
+});
+
+/* 5: FAVORITE DESSERT (useless) */
+STEPS.push({
+  title:'Section 5 — Favorite Dessert',
+  flavor:'This information serves no purpose. The Bureau simply wants to know.',
+  input:'text', key:'dessert',
+  reqs:[
+    req(s=>'Must be a real dessert', v=>REAL_DESSERTS.includes(v.toLowerCase().trim())),
+    req(s=>'Must not be "cake" — everyone says cake', v=>v.toLowerCase().trim()!=='cake'),
+    req(s=>'Must have more than 4 letters', v=>v.replace(/[^a-zA-Z]/g,'').length>4),
+  ]
+});
+
+/* 6: BIRTHDAY */
+STEPS.push({
+  title:'Section 6 — Date of Birth',
+  flavor:'Required to verify you are old enough to fill out paperwork.',
+  input:'date', key:'dob',
+  reqs:[
+    req(s=>'Must be a valid date', v=>!!v),
+    req(s=>'You must be at least 13 years old', v=>{ if(!v) return false; const d=new Date(v); const age=(Date.now()-d.getTime())/(3.15576e10); return age>=13;}),
+    req(s=>'The digits of the date must sum to an even number', v=>{ if(!v) return false; return digitSum(v.replace(/-/g,''))%2===0;}),
+    req(s=>'Must not be April 1st (no fooling the Bureau)', v=>{ if(!v) return false; const d=new Date(v); return !(d.getUTCMonth()===3 && d.getUTCDate()===1);}),
+  ]
+});
+
+/* 7: FAVORITE COLOR */
+STEPS.push({
+  title:'Section 7 — Favorite Color',
+  flavor:'Pick a CSS-recognized color. The Bureau only recognizes the web standard.',
+  input:'color', key:'color',
+  reqs:[
+    req(s=>'Must select a color', v=>!!v),
+    req(s=>'Red value must be greater than blue value', v=>{ const {r,b}=hexToRgb(v); return r>b;}),
+    req(s=>'Must not be pure white or pure black', v=>v.toLowerCase()!=='#ffffff' && v.toLowerCase()!=='#000000'),
+    req(s=>'Green value must be an even number', v=>{ const {g}=hexToRgb(v); return g%2===0;}),
+  ]
+});
+function hexToRgb(hex){
+  hex = hex.replace('#','');
+  return {r:parseInt(hex.substring(0,2),16)||0, g:parseInt(hex.substring(2,4),16)||0, b:parseInt(hex.substring(4,6),16)||0};
+}
+
+/* 8: 4 DIGIT PIN */
+STEPS.push({
+  title:'Section 8 — Backup PIN',
+  flavor:'A four-digit number for situations the Bureau has not yet imagined.',
+  input:'text', key:'pin', inputmode:'numeric', placeholder:'0000',
+  reqs:[
+    req(s=>'Must be exactly 4 digits', v=>/^\d{4}$/.test(v)),
+    req(s=>'No digit may repeat', v=>/^\d{4}$/.test(v) && new Set(v.split('')).size===4),
+    req(s=>'The sum of the digits must be a prime number', v=>/^\d{4}$/.test(v) && isPrime(digitSum(v))),
+    req(s=>'Must not be ascending or descending (e.g. 1234, 4321)', v=>{
+      if(!/^\d{4}$/.test(v)) return false;
+      const d=v.split('').map(Number);
+      const asc = d.every((x,i)=>i===0||x===d[i-1]+1);
+      const desc = d.every((x,i)=>i===0||x===d[i-1]-1);
+      return !asc && !desc;
+    }),
+  ]
+});
+
+/* 9: PET NAME */
+STEPS.push({
+  title:'Section 9 — Name of a Pet (real or hypothetical)',
+  flavor:'For sentimental record-keeping purposes only.',
+  input:'text', key:'pet',
+  reqs:[
+    req(s=>'Must be at least 3 letters', v=>v.replace(/[^a-zA-Z]/g,'').length>=3),
+    req(s=>'Must contain a double letter (e.g. "oo", "ll")', v=>/([a-zA-Z])\1/.test(v)),
+    req(s=>'Must not be one of the 8 most popular pet names', v=>!POPULAR_PETS.includes(v.toLowerCase().trim())),
+  ]
+});
+
+/* 10: HOMETOWN */
+STEPS.push({
+  title:'Section 10 — Hometown',
+  flavor:'The Bureau is curious, not nosy.',
+  input:'text', key:'hometown',
+  reqs:[
+    req(s=>'Must be at least 2 words OR end in a vowel', v=>v.trim().split(/\s+/).length>=2 || /[aeiouAEIOU]$/.test(v.trim())),
+    req(s=>'Must not contain numbers', v=>!/\d/.test(v)),
+    req(s=>'First letter must be capitalized', v=>v.length>0 && v[0]===v[0].toUpperCase() && /[A-Za-z]/.test(v[0])),
+  ]
+});
+
+/* 11: LUCKY NUMBER */
+STEPS.push({
+  title:'Section 11 — Lucky Number',
+  flavor:'Statistically meaningless. Bureaucratically mandatory.',
+  input:'text', key:'lucky', inputmode:'numeric',
+  reqs:[
+    req(s=>'Must be a whole number between 1 and 999', v=>/^\d{1,3}$/.test(v) && Number(v)>=1 && Number(v)<=999),
+    req(s=>'Must not be 7 (overused) or 13 (overdramatic)', v=>!['7','13'].includes(v.trim())),
+    req(s=>'Digit sum must match the last digit of the current year (6)', v=>/^\d{1,3}$/.test(v) && digitSum(v)%10===6),
+  ],
+  onComplete(v){ G.lucky=v; }
+});
+
+/* 12: CAPTCHA */
+STEPS.push({
+  title:'Section 12 — Prove You Are Not a Filing Robot',
+  flavor:'Standard Bureau procedure. Robots have applied before. It went poorly.',
+  input:'captcha', key:'captcha',
+  init(s){ s.code = genCaptcha(); s.checked=false; },
+  reqs:[
+    req(s=>'Type the distorted code exactly as shown', (v,s)=>v.trim().toUpperCase()===s.code),
+    req(s=>'Confirm the checkbox below: "I am not a filing robot"', (v,s)=>!!s.checked),
+    req(s=>'Solve it in under 90 seconds', (v,s)=>!s.expired),
+  ],
+  onTick(s,elapsed){ if(elapsed>90) s.expired=true; }
+});
+function genCaptcha(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let out=''; for(let i=0;i<5;i++) out+=chars[rand(0,chars.length-1)];
+  return out;
+}
+
+/* 13: MOVIE */
+STEPS.push({
+  title:'Section 13 — Favorite Film',
+  flavor:'For the Bureau\'s internal taste assessment.',
+  input:'text', key:'movie',
+  reqs:[
+    req(s=>'Must be at least 2 characters', v=>v.trim().length>=2),
+    req(s=>'Title must not contain the word "the" more than once', v=>(v.toLowerCase().match(/\bthe\b/g)||[]).length<=1),
+    req(s=>'Must not be in all capital letters', v=>v!==v.toUpperCase() || v.toLowerCase()===v.toUpperCase()),
+  ]
+});
+
+/* 14: SHOE SIZE */
+STEPS.push({
+  title:'Section 14 — Shoe Size',
+  flavor:'Necessary for an audit the Bureau will not elaborate on.',
+  input:'text', key:'shoe', inputmode:'decimal',
+  reqs:[
+    req(s=>'Must be a number between 1 and 20', v=>{ const n=parseFloat(v); return !isNaN(n)&&n>=1&&n<=20;}),
+    req(s=>'May only have at most one decimal place (e.g. 9.5)', v=>/^\d{1,2}(\.\d)?$/.test(v.trim())),
+  ]
+});
+
+/* 15: MOTTO */
+STEPS.push({
+  title:'Section 15 — Personal Motto',
+  flavor:'Will be engraved on nothing.',
+  input:'text', key:'motto',
+  reqs:[
+    req(s=>'Must be between 10 and 60 characters', v=>v.length>=10 && v.length<=60),
+    req(s=>'Must contain at least one comma', v=>v.includes(',')),
+    req(s=>'Must not contain the word "no"', v=>!/\bno\b/i.test(v)),
+  ]
+});
+
+/* 16: STAR SIGN */
+STEPS.push({
+  title:'Section 16 — Astrological Sign',
+  flavor:'Used for record completeness, not divination. Probably.',
+  input:'select', key:'sign',
+  options:['','Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'],
+  reqs:[
+    req(s=>'Must select a sign', v=>!!v),
+    req(s=>'Must not be Gemini (too many forms already)', v=>v!=='Gemini'),
+  ]
+});
+
+/* 17: SECRET HANDSHAKE */
+STEPS.push({
+  title:'Section 17 — Secret Handshake (Typed)',
+  flavor:'Type the sequence using only the characters: clap, snap, tap.',
+  input:'text', key:'handshake', placeholder:'e.g. clap snap tap clap',
+  reqs:[
+    req(s=>'Must contain exactly 4 words', v=>v.trim().split(/\s+/).filter(Boolean).length===4),
+    req(s=>'Each word must be one of: clap, snap, tap', v=>v.trim().split(/\s+/).every(w=>['clap','snap','tap'].includes(w.toLowerCase()))),
+    req(s=>'Must not be the same word four times', v=>{ const w=v.trim().toLowerCase().split(/\s+/); return new Set(w).size>1;}),
+  ]
+});
+
+/* 18: TIMEZONE */
+STEPS.push({
+  title:'Section 18 — Timezone',
+  flavor:'The Bureau operates on its own clock, but yours is still required.',
+  input:'select', key:'tz',
+  options:['','UTC-8','UTC-7','UTC-6','UTC-5','UTC-4','UTC-1','UTC+0','UTC+1','UTC+5:30','UTC+8','UTC+9'],
+  reqs:[
+    req(s=>'Must select a timezone', v=>!!v),
+    req(s=>'Must not be UTC+0 (the Bureau finds it suspicious)', v=>v!=='UTC+0'),
+  ]
+});
+
+/* 19: COFFEE OR TEA */
+STEPS.push({
+  title:'Section 19 — Beverage Allegiance',
+  flavor:'There is a correct answer. The Bureau will not reveal it directly.',
+  input:'select', key:'drink',
+  options:['','Coffee','Tea','Neither','Both'],
+  reqs:[
+    req(s=>'Must make a choice', v=>!!v),
+    req(s=>'Must not select "Neither" (this is not permitted)', v=>v!=='Neither'),
+    req(s=>'Must match the parity of your lucky number', (v,s)=>{
+      const n = Number((G.lucky||'0'));
+      const even = n%2===0;
+      if(even) return v==='Tea' || v==='Both';
+      return v==='Coffee' || v==='Both';
+    }),
+  ],
+  onComplete(v){ G.drink=v; }
+});
+
+/* 20: HAIKU */
+STEPS.push({
+  title:'Section 20 — Haiku About Filling Out This Form',
+  flavor:'Three lines. Five syllables. Seven syllables. Five syllables. The Bureau will not actually verify syllables, but will judge line count strictly.',
+  input:'textarea', key:'haiku',
+  reqs:[
+    req(s=>'Must contain exactly 3 lines', v=>v.split('\n').filter(l=>l.trim().length>0).length===3),
+    req(s=>'Must not mention "bureau" (overused in submissions)', v=>!/bureau/i.test(v)),
+    req(s=>'Each line must contain at least one word', v=>v.split('\n').filter(l=>l.trim().length>0).every(l=>l.trim().split(/\s+/).length>=1)),
+  ]
+});
+
+/* 21: VOLUME SLIDER */
+STEPS.push({
+  title:'Section 21 — Notification Volume',
+  flavor:'Drag the slider to your preferred Bureau alert volume.',
+  input:'range', key:'volume', min:0, max:100,
+  init(s){ s.target = rand(60,75); },
+  reqs:[
+    req(s=>`Slider must be set to exactly ${s.target}`, (v,s)=>Number(v)===s.target),
+  ]
+});
+
+/* 22: TERMS CHECKBOX */
+STEPS.push({
+  title:'Section 22 — Terms of Engagement',
+  flavor:'Please review the terms before proceeding. The Bureau is watching the scroll bar.',
+  input:'terms', key:'terms',
+  init(s){ s.scrolled=false; s.checked=false; },
+  reqs:[
+    req(s=>'Must scroll to the bottom of the terms box', (v,s)=>!!s.scrolled),
+    req(s=>'Must check "I have read and not understood the terms"', (v,s)=>!!s.checked),
+  ]
+});
+
+/* 23: NEWSLETTER */
+STEPS.push({
+  title:'Section 23 — Newsletter Frequency',
+  flavor:'You will receive correspondence regardless of your choice.',
+  input:'select', key:'news',
+  options:['','Daily','Weekly','Monthly','Never'],
+  reqs:[
+    req(s=>'Must select an option', v=>!!v),
+    req(s=>'Must not select "Never" (non-compliant)', v=>v!=='Never'),
+  ]
+});
+
+/* 24: FIBONACCI */
+STEPS.push({
+  title:'Section 24 — A Number Sequence',
+  flavor:'Enter three numbers, space-separated, that form a valid Fibonacci-style triple (each equals the sum of the previous two).',
+  input:'text', key:'fib', placeholder:'e.g. 3 5 8',
+  reqs:[
+    req(s=>'Must be exactly 3 numbers separated by spaces', v=>{ const p=v.trim().split(/\s+/); return p.length===3 && p.every(x=>/^\d+$/.test(x));}),
+    req(s=>'Third number must equal the sum of the first two', v=>{ const p=v.trim().split(/\s+/).map(Number); return p.length===3 && p[2]===p[0]+p[1];}),
+    req(s=>'None of the numbers may be zero', v=>{ const p=v.trim().split(/\s+/).map(Number); return p.every(x=>x!==0);}),
+  ]
+});
+
+/* 25: EMERGENCY CONTACT */
+STEPS.push({
+  title:'Section 25 — Emergency Contact Name',
+  flavor:'In case your application becomes an emergency.',
+  input:'text', key:'emergency',
+  reqs:[
+    req(s=>'Must be two words', v=>v.trim().split(/\s+/).length===2),
+    req(s=>'Must not be the same as your username', v=>v.toLowerCase().replace(/\s+/g,'')!==(G.username||'').toLowerCase()),
+    req(s=>'Neither word may repeat a letter three times in a row', v=>!/([a-zA-Z])\1\1/.test(v)),
+  ]
+});
+
+/* 26: ALPHABET BACKWARDS */
+STEPS.push({
+  title:'Section 26 — Type the Alphabet Backwards',
+  flavor:'A standard cognitive verification exercise.',
+  input:'text', key:'alpha',
+  reqs:[
+    req(s=>'Must be 26 letters, no spaces', v=>/^[a-zA-Z]{26}$/.test(v.replace(/\s/g,''))),
+    req(s=>'Must be Z to A, in reverse alphabetical order', v=>v.toLowerCase().replace(/\s/g,'')==='zyxwvutsrqponmlkjihgfedcba'),
+  ]
+});
+
+/* 27: SPIRIT ANIMAL */
+STEPS.push({
+  title:'Section 27 — Spirit Animal',
+  flavor:'Used to assign your case file folder color.',
+  input:'text', key:'spirit',
+  reqs:[
+    req(s=>'Must be a real animal', v=>{
+      const animals=['wolf','eagle','bear','owl','fox','lion','tiger','hawk','dolphin','otter','raven','deer','snake','turtle','rabbit','horse','cat','dog','falcon','panther'];
+      return animals.includes(v.toLowerCase().trim());
+    }),
+    req(s=>'Must not be "wolf" (the Bureau has run out of wolf folders)', v=>v.toLowerCase().trim()!=='wolf'),
+  ]
+});
+
+/* 28: SECOND SECURITY QUESTION */
+STEPS.push({
+  title:'Section 28 — Secondary Security Question',
+  flavor:'In case the first question is forgotten alongside everything else.',
+  input:'text', key:'secq2', placeholder:'Name of your first teacher',
+  reqs:[
+    req(s=>'Must differ from your first security answer', v=>v.toLowerCase().trim()!==(G.secq||'').toLowerCase().trim()),
+    req(s=>'Must be at least 3 letters', v=>v.replace(/[^a-zA-Z]/g,'').length>=3),
+    req(s=>'Must start with a consonant', v=>/^[^aeiouAEIOU\s]/.test(v.trim())),
+  ]
+});
+
+/* 29: FINAL OATH */
+STEPS.push({
+  title:'Section 29 — Final Oath',
+  flavor:'Type the oath exactly as written, including punctuation.',
+  input:'text', key:'oath',
+  oathText:'I solemnly swear that all of the above is probably true.',
+  reqs:[
+    req(s=>'Must match the oath exactly: "I solemnly swear that all of the above is probably true."',
+      v=>v.trim()==='I solemnly swear that all of the above is probably true.'),
+  ]
+});
+
+/* 30: CONFIRMATION CHECKBOX */
+STEPS.push({
+  title:'Section 30 — Confirmation',
+  flavor:'One last checkbox before the final identity verification.',
+  input:'checkboxOnly', key:'confirm',
+  label:'I understand this form cannot be revisited, appealed, or enjoyed.',
+  init(s){ s.checked=false; },
+  reqs:[
+    req(s=>'Checkbox must be checked', (v,s)=>!!s.checked),
+  ]
+});
+
+/* 31: RE-ENTER USERNAME */
+STEPS.push({
+  title:'Section 31 — Confirm Username',
+  flavor:'Re-type your username from Section 1. Copying and pasting is not permitted — the Bureau wants to see you mean it.',
+  input:'text', key:'usernameConfirm', noPaste:true,
+  reqs:[
+    req(s=>'Must exactly match the username you chose in Section 1', v=>v===G.username),
+  ]
+});
+
+/* 32: RE-ENTER PASSWORD */
+STEPS.push({
+  title:'Section 32 — Confirm Password',
+  flavor:'Re-type your password from Section 2. No pasting. The Bureau already explained why.',
+  input:'password', key:'passwordConfirm', noPaste:true,
+  reqs:[
+    req(s=>'Must exactly match the password you chose in Section 2', v=>v===G.password),
+    req(s=>'The digits must still sum correctly (the Bureau is paranoid)', v=>{
+      // recompute against original target stored on step 2 state
+      return digitSum(v)===STEPS[1]._state.target;
+    }),
+  ]
+});
+
+/* ================= ENGINE ================= */
+let cur = 0;
+let timers = {};
+const sheet = $('#sheet');
+const stepBody = $('#stepBody');
+const progressEl = $('#progress');
+$('#appId').textContent = 'APPLICANT FILE #'+G.fileId;
+
+function buildProgress(){
+  progressEl.innerHTML='';
+  for(let i=0;i<STEPS.length;i++){
+    const b=document.createElement('i');
+    if(i<cur) b.className='done';
+    else if(i===cur) b.className='now';
+    progressEl.appendChild(b);
+  }
+}
+
+function renderStep(){
+  if(cur>=STEPS.length){ renderDone(); return; }
+  const step = STEPS[cur];
+  if(!step._state){ step._state={}; step.init && step.init(step._state); step._startTime=Date.now(); }
+  const s = step._state;
+  $('#stepCount').textContent = 'STEP '+(cur+1)+' OF '+STEPS.length;
+  buildProgress();
+
+  let visibleCount = 0;
+  for(let i=0;i<step.reqs.length;i++){
+    visibleCount = i+1;
+    const r = step.reqs[i];
+    const val = getValue(step);
+    const ok = safeTest(r,val,s);
+    if(!ok) break;
+  }
+
+  const currentVal = getValue(step);
+
+  let html = `<div class="step-title">${step.title}</div>`;
+  html += `<div class="step-flavor">${step.flavor}</div>`;
+  html += `<div class="field-row">${renderInput(step,s)}</div>`;
+  html += `<ul class="req-list">`;
+  for(let i=0;i<visibleCount;i++){
+    const r = step.reqs[i];
+    const desc = typeof r.desc==='function' ? r.desc(s) : r.desc;
+    const ok = safeTest(r,currentVal,s);
+    const cls = ok?'pass':'fail';
+    html += `<li class="${cls}" style="animation-delay:${i*0.04}s"><span class="mark"></span><span>${desc}</span></li>`;
+  }
+  html += `</ul>`;
+  if(step.extraButtons){
+    html += `<div class="helpers">`+step.extraButtons.map((b,i)=>`<button class="btn" data-extra="${i}">${b.label}</button>`).join('')+`</div>`;
+  }
+  html += `<div class="footer-row"><span class="tally">FILE ${G.fileId} · §${cur+1}</span><button class="btn primary" id="nextBtn">Submit Section →</button></div>`;
+
+  stepBody.innerHTML = html;
+  wireInput(step,s);
+
+  if(step.extraButtons){
+    step.extraButtons.forEach((b,i)=>{
+      stepBody.querySelector(`[data-extra="${i}"]`).addEventListener('click',()=>{ b.onClick(s,renderStep); });
+    });
+  }
+
+  const nextBtn = $('#nextBtn');
+  function evalAll(){
+    const v = getValue(step);
+    return step.reqs.every(r=>safeTest(r,v,s));
+  }
+  nextBtn.disabled = !evalAll();
+  nextBtn.addEventListener('click', ()=>{
+    if(step._submitting) return;
+    if(!evalAll()) return;
+    step._submitting = true;
+    nextBtn.disabled = true;
+    if(step.onComplete) step.onComplete(getValue(step));
+    showStamp('approve','APPROVED');
+    setTimeout(()=>{ cur++; renderStep(); }, 650);
+  });
+
+  if(step.input==='captcha'){
+    const tick = ()=>{
+      const elapsed = (Date.now()-step._startTime)/1000;
+      step.onTick(s,elapsed);
+      renderReqListOnly(step,s);
+      if(!step._expiredHandled){
+        timers.captcha = setTimeout(tick, 1000);
+      }
+    };
+    clearTimeout(timers.captcha);
+    timers.captcha = setTimeout(tick,1000);
+  }
+}
+
+function renderReqListOnly(step,s){
+  // lightweight re-render of just requirement list + button state, called by tick
+  const list = stepBody.querySelector('.req-list');
+  if(!list) return;
+  const currentVal = getValue(step);
+  let visibleCount=0;
+  for(let i=0;i<step.reqs.length;i++){
+    visibleCount=i+1;
+    if(!safeTest(step.reqs[i],currentVal,s)) break;
+  }
+  let html='';
+  for(let i=0;i<visibleCount;i++){
+    const r=step.reqs[i];
+    const desc = typeof r.desc==='function'?r.desc(s):r.desc;
+    const ok = safeTest(r,currentVal,s);
+    html += `<li class="${ok?'pass':'fail'}"><span class="mark"></span><span>${desc}</span></li>`;
+  }
+  list.innerHTML = html;
+  const nb = $('#nextBtn');
+  if(nb) nb.disabled = !step.reqs.every(r=>safeTest(r,currentVal,s));
+}
+
+function safeTest(r,val,s){
+  try{ return !!r.test(val,s); }catch(e){ return false; }
+}
+
+function getValue(step){
+  switch(step.input){
+    case 'checkboxOnly': return step._state.checked?'checked':'';
+    case 'terms': return step._state.checked?'checked':'';
+    case 'captcha': {
+      const el = stepBody.querySelector('#captchaInput');
+      return el?el.value:'';
+    }
+    case 'range': {
+      const el = stepBody.querySelector('#rangeInput');
+      return el?el.value:String(step._state.value||0);
+    }
+    case 'textarea': {
+      const el = stepBody.querySelector('#taInput');
+      return el?el.value:'';
+    }
+    default: {
+      const el = stepBody.querySelector('#fieldInput');
+      return el?el.value:'';
+    }
+  }
+}
+
+function renderInput(step,s){
+  switch(step.input){
+    case 'text':
+    case 'password':
+      return `<input id="fieldInput" type="${step.input}" placeholder="${step.placeholder||''}" autocomplete="off" spellcheck="false">`;
+    case 'date':
+      return `<input id="fieldInput" type="date">`;
+    case 'color':
+      return `<input id="fieldInput" type="color" value="#888888" style="height:46px;">`;
+    case 'select':
+      return `<select id="fieldInput">${step.options.map(o=>`<option value="${o}">${o||'— select —'}</option>`).join('')}</select>`;
+    case 'textarea':
+      return `<textarea id="taInput" rows="4"></textarea>`;
+    case 'range':
+      return `<input id="rangeInput" type="range" min="${step.min}" max="${step.max}" value="${s.value??Math.floor((step.min+step.max)/2)}"><div style="text-align:center;font-size:13px;margin-top:4px;">Current value: <b id="rangeVal">${s.value??Math.floor((step.min+step.max)/2)}</b></div>`;
+    case 'captcha':
+      return `
+        <div class="captcha-box">
+          <canvas id="captchaCanvas" width="220" height="70"></canvas>
+          <input id="captchaInput" type="text" placeholder="Type the code shown above" autocomplete="off">
+          <div class="checkbox-row"><input type="checkbox" id="captchaCheck"><label for="captchaCheck">I am not a filing robot</label></div>
+        </div>`;
+    case 'terms':
+      return `
+        <div id="termsBox" style="height:90px;overflow-y:scroll;border:1px solid var(--ink);background:#fbf8ee;padding:8px;font-size:11px;line-height:1.5;margin-bottom:8px;">
+          ${'<p>By proceeding you agree to terms that are, at this time, entirely undefined. The Bureau reserves the right to define them retroactively, including but not limited to matters of font choice, applicant posture, and the temperature of the room in which this form is completed. Continued scrolling constitutes tacit agreement with future amendments not yet written.</p>'.repeat(4)}
+        </div>
+        <div class="checkbox-row"><input type="checkbox" id="termsCheck"><label for="termsCheck">I have read and not understood the terms</label></div>
+      `;
+    case 'checkboxOnly':
+      return `<div class="checkbox-row"><input type="checkbox" id="onlyCheck"><label for="onlyCheck">${step.label}</label></div>`;
+    default: return '';
+  }
+}
+
+function wireInput(step,s){
+  const refresh = ()=>{
+    // re-render just to update reqs & button, not full reflow (keeps focus)
+    renderReqListOnly(step,s);
+  };
+  const refreshWithValueChange = ()=>{
+    if(step.onValueChange) step.onValueChange(getValue(step), s, refresh);
+    refresh();
+  };
+  switch(step.input){
+    case 'text':
+    case 'password': {
+      const el = stepBody.querySelector('#fieldInput');
+      blockPaste(el);
+      el.addEventListener('input', refreshWithValueChange);
+      el.focus();
+      break;
+    }
+    case 'date': case 'color': case 'select': {
+      const el = stepBody.querySelector('#fieldInput');
+      el.addEventListener('input', refresh);
+      el.addEventListener('change', refresh);
+      break;
+    }
+    case 'textarea': {
+      const el = stepBody.querySelector('#taInput');
+      blockPaste(el);
+      el.addEventListener('input', refresh);
+      break;
+    }
+    case 'range': {
+      const el = stepBody.querySelector('#rangeInput');
+      el.addEventListener('input', ()=>{ s.value=el.value; stepBody.querySelector('#rangeVal').textContent=el.value; refresh(); });
+      break;
+    }
+    case 'captcha': {
+      const canvas = stepBody.querySelector('#captchaCanvas');
+      drawCaptcha(canvas, s.code);
+      canvas.addEventListener('click', ()=>{ s.code=genCaptcha(); drawCaptcha(canvas,s.code); refresh(); });
+      const input = stepBody.querySelector('#captchaInput');
+      blockPaste(input);
+      input.addEventListener('input', refresh);
+      const check = stepBody.querySelector('#captchaCheck');
+      check.addEventListener('change', ()=>{ s.checked=check.checked; refresh(); });
+      break;
+    }
+    case 'terms': {
+      const box = stepBody.querySelector('#termsBox');
+      box.addEventListener('scroll', ()=>{
+        if(box.scrollTop + box.clientHeight >= box.scrollHeight - 4){ s.scrolled=true; refresh(); }
+      });
+      const check = stepBody.querySelector('#termsCheck');
+      check.addEventListener('change', ()=>{ s.checked=check.checked; refresh(); });
+      break;
+    }
+    case 'checkboxOnly': {
+      const check = stepBody.querySelector('#onlyCheck');
+      check.addEventListener('change', ()=>{ s.checked=check.checked; refresh(); });
+      break;
+    }
+  }
+}
+
+function drawCaptcha(canvas, code){
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = '#dcd2ab';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(let i=0;i<6;i++){
+    ctx.strokeStyle = 'rgba(43,58,47,0.25)';
+    ctx.beginPath();
+    ctx.moveTo(rand(0,canvas.width), rand(0,canvas.height));
+    ctx.lineTo(rand(0,canvas.width), rand(0,canvas.height));
+    ctx.stroke();
+  }
+  for(let i=0;i<code.length;i++){
+    ctx.save();
+    const x = 22 + i*32;
+    const y = 42 + rand(-8,8);
+    ctx.translate(x,y);
+    ctx.rotate(rand(-25,25)*Math.PI/180);
+    ctx.font = `${rand(26,34)}px Georgia, serif`;
+    ctx.fillStyle = '#2b3a2f';
+    ctx.fillText(code[i],0,0);
+    ctx.restore();
+  }
+  for(let i=0;i<60;i++){
+    ctx.fillStyle='rgba(43,58,47,0.08)';
+    ctx.fillRect(rand(0,canvas.width),rand(0,canvas.height),2,2);
+  }
+}
+
+function showStamp(kind,text){
+  const stamp = $('#stamp');
+  clearTimeout(timers.stampFade);
+  stamp.className = 'stamp '+(kind==='approve'?'approve':'reject');
+  stamp.textContent = text;
+  stamp.classList.remove('show','fadeout');
+  void stamp.offsetWidth;
+  stamp.classList.add('show');
+  timers.stampFade = setTimeout(()=>{ stamp.classList.add('fadeout'); }, 1400);
+}
+
+function renderDone(){
+  buildProgress();
+  $('#stepCount').textContent = 'STEP 32 OF 32 · COMPLETE';
+  stepBody.innerHTML = `
+    <div class="done-screen">
+      <h2>Application Accepted</h2>
+      <p>File ${G.fileId} has been processed and archived.</p>
+      <p>Username on record: <b>${escapeHtml(G.username)}</b></p>
+      <p>You may now close this window. Or don't. The Bureau has no further instructions.</p>
+    </div>
+  `;
+  showStamp('approve','FILED');
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+renderStep();
+</script>
+</body>
+</html>
