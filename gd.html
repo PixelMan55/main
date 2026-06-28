@@ -630,6 +630,31 @@ border-radius:6px;
 opacity:0.5;
 }
 
+.halfblock{
+position:absolute;
+width:60px;
+height:20px;
+background:purple;
+border-radius:8px;
+}
+
+.fakehalfblock{
+position:absolute;
+width:60px;
+height:20px;
+background:purple;
+border-radius:6px;
+}
+
+.invishalfblock{
+position:absolute;
+width:60px;
+height:20px;
+background:gray;
+border-radius:6px;
+opacity:0.5;
+}
+
 .invisspike{
 position:absolute;
 width:30px;
@@ -851,6 +876,197 @@ background:#111;
 padding:6px 10px;
 border-radius:6px;
 z-index:1000;
+}
+
+#starsBar{
+position:fixed;
+top:18px;
+left:18px;
+z-index:5500;
+display:flex;
+gap:10px;
+align-items:center;
+}
+
+.starsPill{
+display:flex;
+align-items:center;
+gap:8px;
+padding:12px 18px;
+border-radius:18px;
+background:linear-gradient(180deg,rgba(20,20,40,.92),rgba(8,8,18,.95));
+border:2px solid rgba(255,255,255,.1);
+box-shadow:0 0 20px rgba(255,210,0,.25),0 6px 14px rgba(0,0,0,.4);
+color:#ffd75c;
+font-weight:900;
+font-size:18px;
+white-space:nowrap;
+}
+
+#achievementsBtn{
+padding:12px 16px!important;
+}
+
+#achPopup,#colorPopup{
+position:fixed;
+inset:0;
+z-index:999999;
+display:flex;
+align-items:center;
+justify-content:center;
+background:rgba(0,0,0,.75);
+backdrop-filter:blur(8px);
+}
+
+.achPanel{
+position:relative;
+width:min(700px,92vw);
+max-height:85vh;
+overflow:auto;
+background:linear-gradient(180deg,#1d1d45,#0c0c20);
+border-radius:28px;
+padding:28px;
+border:2px solid rgba(255,255,255,.08);
+box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 60px rgba(255,200,0,.15);
+color:white;
+display:flex;
+flex-direction:column;
+gap:16px;
+}
+
+.achHeader{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.achHeader h2{
+margin:0;
+font-size:34px;
+font-weight:900;
+background:linear-gradient(90deg,#ffd75c,#ff9800);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.achList{
+display:flex;
+flex-direction:column;
+gap:12px;
+}
+
+.achItem{
+display:flex;
+align-items:center;
+gap:16px;
+padding:16px;
+border-radius:18px;
+background:rgba(255,255,255,.04);
+border:2px solid rgba(255,255,255,.06);
+}
+
+.achItem.unlocked{
+border-color:rgba(255,215,0,.4);
+box-shadow:0 0 18px rgba(255,215,0,.18);
+}
+
+.achSwatch{
+width:46px;
+height:46px;
+border-radius:14px;
+flex-shrink:0;
+border:2px solid rgba(255,255,255,.25);
+}
+
+.achInfo{
+flex:1;
+}
+
+.achName{
+font-weight:900;
+font-size:17px;
+}
+
+.achDesc{
+font-size:13px;
+color:#b9c0e8;
+margin-top:2px;
+}
+
+.achLockTag{
+font-size:12px;
+font-weight:900;
+padding:6px 12px;
+border-radius:999px;
+background:rgba(255,255,255,.08);
+color:#aab;
+}
+
+.achUnlockTag{
+font-size:12px;
+font-weight:900;
+padding:6px 12px;
+border-radius:999px;
+background:linear-gradient(180deg,#ffd75c,#ff9800);
+color:black;
+}
+
+.colorGrid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+gap:16px;
+}
+
+.colorSlot{
+position:relative;
+display:flex;
+flex-direction:column;
+align-items:center;
+gap:6px;
+cursor:pointer;
+padding:10px;
+border-radius:16px;
+background:rgba(255,255,255,.04);
+border:2px solid rgba(255,255,255,.06);
+transition:.12s;
+}
+
+.colorSlot:hover{
+transform:translateY(-3px);
+}
+
+.colorSlot.equipped{
+border-color:#4dc3ff;
+box-shadow:0 0 18px rgba(0,150,255,.5);
+}
+
+.colorSlot.locked{
+opacity:.45;
+cursor:not-allowed;
+}
+
+.colorSwatchBig{
+width:54px;
+height:54px;
+border-radius:16px;
+border:3px solid rgba(255,255,255,.2);
+}
+
+.colorReq{
+font-size:11px;
+font-weight:900;
+color:#ccc;
+text-align:center;
+}
+
+.lockIcon{
+position:absolute;
+top:2px;
+right:2px;
+background:rgba(0,0,0,.7);
+border-radius:8px;
+font-size:14px;
+padding:2px 4px;
 }
 
 #popup{
@@ -1147,7 +1363,7 @@ border:2px solid rgba(255,255,255,0.08);
 
 #backBtn{
 position:fixed;
-top:18px;
+top:90px;
 left:18px;
 z-index:4000;
 display:none;
@@ -1234,6 +1450,11 @@ display:none;
 
 <body>
 
+<div id="starsBar">
+<div class="starsPill" id="starsDisplay">⭐ 0</div>
+<button id="achievementsBtn" onclick="openAchievements()">🏆 Achievements</button>
+</div>
+
 <div id="mainMenu">
 <div class="menuTitle">PIXEL PLATFORMS</div>
 
@@ -1255,6 +1476,10 @@ display:none;
 
 <div class="menuBtn" onclick="openCreator()">
 <span class="material-symbols-outlined">handyman</span>
+</div>
+
+<div class="menuBtn" onclick="openCustomize()" style="background:linear-gradient(180deg,#ff5ad1,#a300ff);">
+<span class="material-symbols-outlined">palette</span>
 </div>
 </div>
 </div>
@@ -1419,6 +1644,234 @@ let currentLevelVerified = false;
 let currentLevelBeaten = false;
 let builtInMode = false;
 
+/* ===== STARS / ACHIEVEMENTS / COLORS ===== */
+const COLOR_OPTIONS=[
+{id:"cyan",color:"#00e1ff",req:0,name:"Cyan"},
+{id:"lime",color:"#39ff6a",req:5,name:"Verdant"},
+{id:"magenta",color:"#ff39e0",req:15,name:"Neon Dream"},
+{id:"orange",color:"#ff8c1a",req:30,name:"Inferno"},
+{id:"gold",color:"#ffd700",req:50,name:"Golden"},
+{id:"red",color:"#ff2b2b",req:75,name:"Crimson"},
+{id:"white",color:"#ffffff",req:100,name:"Pure"},
+{id:"royal",color:"#8a2be2",req:150,name:"Royal"},
+{id:"black",color:"#0a0a0a",req:200,name:"Shadow"}
+];
+
+let localState=JSON.parse(localStorage.getItem("ppState")||"{}");
+
+let userStars = localState.stars || 0;
+let unlockedColors = localState.unlockedColors || ["cyan"];
+let equippedColor = localState.equippedColor || "cyan";
+let completedLevels = localState.completedLevels || {};
+let lastUnlockShown = localState.lastUnlockShown || [];
+
+function saveLocalState(){
+localStorage.setItem("ppState",JSON.stringify({
+stars:userStars,
+unlockedColors,
+equippedColor,
+completedLevels,
+lastUnlockShown
+}));
+}
+
+function colorIdToHex(id){
+const c=COLOR_OPTIONS.find(c=>c.id===id);
+return c?c.color:"#00e1ff";
+}
+
+function applyEquippedColor(){
+p.style.background=colorIdToHex(equippedColor);
+}
+
+function refreshStarsDisplay(){
+const el=document.getElementById("starsDisplay");
+if(el) el.innerText="⭐ "+userStars;
+}
+
+function checkColorUnlocks(){
+let newlyUnlocked=[];
+COLOR_OPTIONS.forEach(c=>{
+if(userStars>=c.req && !unlockedColors.includes(c.id)){
+unlockedColors.push(c.id);
+newlyUnlocked.push(c);
+}
+});
+if(newlyUnlocked.length){
+saveLocalState();
+syncUserToFirebase();
+showUnlockToast(newlyUnlocked);
+}
+}
+
+function showUnlockToast(newColors){
+const toast=document.createElement("div");
+toast.style.cssText=`
+position:fixed;top:90px;left:50%;transform:translateX(-50%);
+z-index:999999;background:linear-gradient(180deg,#ffd75c,#ff9800);
+color:black;font-weight:900;padding:18px 28px;border-radius:18px;
+box-shadow:0 0 40px rgba(255,180,0,.6);font-size:16px;text-align:center;
+`;
+toast.innerHTML="🏆 Achievement Unlocked!<br>"+newColors.map(c=>c.name+" color").join(", ");
+document.body.appendChild(toast);
+setTimeout(()=>toast.remove(),3500);
+}
+
+/* award stars for finishing a level, once per levelKey */
+function awardStars(amount, levelKey){
+if(!amount || amount<=0 || !levelKey) return;
+if(completedLevels[levelKey]) return;
+
+completedLevels[levelKey]=true;
+userStars += amount;
+
+saveLocalState();
+refreshStarsDisplay();
+checkColorUnlocks();
+syncUserToFirebase();
+}
+
+async function syncUserToFirebase(){
+if(!currentUser) return;
+try{
+await setDoc(doc(db,"users",currentUser.uid),{
+stars:userStars,
+unlockedColors,
+equippedColor,
+completedLevels
+},{merge:true});
+}catch(e){
+console.error(e);
+}
+}
+
+async function loadUserFromFirebase(){
+if(!currentUser) return;
+try{
+const snap=await getDoc(doc(db,"users",currentUser.uid));
+if(snap.exists()){
+const d=snap.data();
+
+/* merge remote + local so nothing is lost */
+userStars = Math.max(userStars, d.stars||0);
+
+if(d.unlockedColors){
+d.unlockedColors.forEach(c=>{
+if(!unlockedColors.includes(c)) unlockedColors.push(c);
+});
+}
+
+if(d.completedLevels){
+Object.keys(d.completedLevels).forEach(k=>{
+completedLevels[k]=true;
+});
+}
+
+if(d.equippedColor) equippedColor=d.equippedColor;
+
+saveLocalState();
+refreshStarsDisplay();
+applyEquippedColor();
+checkColorUnlocks();
+syncUserToFirebase();
+}else{
+syncUserToFirebase();
+}
+}catch(e){
+console.error(e);
+}
+}
+
+window.openAchievements=()=>{
+const old=document.getElementById("achPopup");
+if(old){ old.remove(); return; }
+
+const pop=document.createElement("div");
+pop.id="achPopup";
+
+pop.innerHTML=`
+<div class="achPanel">
+<div class="achHeader">
+<h2>🏆 Achievements</h2>
+<button id="closeAch">✕</button>
+</div>
+<div class="achList" id="achListInner"></div>
+</div>
+`;
+
+document.body.appendChild(pop);
+
+pop.onclick=(e)=>{ if(e.target===pop) pop.remove(); };
+pop.querySelector("#closeAch").onclick=()=>pop.remove();
+
+const list=pop.querySelector("#achListInner");
+
+COLOR_OPTIONS.forEach(c=>{
+const unlocked=unlockedColors.includes(c.id);
+const item=document.createElement("div");
+item.className="achItem"+(unlocked?" unlocked":"");
+item.innerHTML=`
+<div class="achSwatch" style="background:${c.color}"></div>
+<div class="achInfo">
+<div class="achName">${c.name}</div>
+<div class="achDesc">${c.req===0?"Unlocked by default":"Reach "+c.req+" ⭐ stars"}</div>
+</div>
+${unlocked?'<div class="achUnlockTag">UNLOCKED</div>':'<div class="achLockTag">🔒 '+Math.max(0,c.req-userStars)+' to go</div>'}
+`;
+list.appendChild(item);
+});
+};
+
+window.openCustomize=()=>{
+const old=document.getElementById("colorPopup");
+if(old) old.remove();
+
+const pop=document.createElement("div");
+pop.id="colorPopup";
+
+pop.innerHTML=`
+<div class="achPanel">
+<div class="achHeader">
+<h2>🎨 Customize Character</h2>
+<button id="closeColor">✕</button>
+</div>
+<div class="colorGrid" id="colorGridInner"></div>
+</div>
+`;
+
+document.body.appendChild(pop);
+
+pop.onclick=(e)=>{ if(e.target===pop) pop.remove(); };
+pop.querySelector("#closeColor").onclick=()=>pop.remove();
+
+const grid=pop.querySelector("#colorGridInner");
+
+COLOR_OPTIONS.forEach(c=>{
+const unlocked=unlockedColors.includes(c.id);
+const slot=document.createElement("div");
+slot.className="colorSlot"
++(unlocked?"":" locked")
++(equippedColor===c.id?" equipped":"");
+
+slot.innerHTML=`
+${unlocked?"":'<div class="lockIcon">🔒</div>'}
+<div class="colorSwatchBig" style="background:${c.color}"></div>
+<div class="colorReq">${c.name}${unlocked?"":" ("+c.req+"⭐)"}</div>
+`;
+
+slot.onclick=()=>{
+if(!unlocked) return;
+equippedColor=c.id;
+saveLocalState();
+applyEquippedColor();
+syncUserToFirebase();
+openCustomize();
+};
+
+grid.appendChild(slot);
+});
+};
+
 
 onAuthStateChanged(auth, async(u)=>{
 
@@ -1444,6 +1897,8 @@ document.getElementById("menuUser").innerText=username;
 }else{
 display.innerText = "No profile";
 }
+
+loadUserFromFirebase();
 
 }catch(e){
 console.error(e);
@@ -1524,11 +1979,14 @@ const editorPages=[
 
 [
 ["block","🟪 Block"],
+["halfblock","🟪 Half Block"],
 ["spike","🔺 Spike"],
 ["upspike","🔻 Upside Spike"],
 ["fakeblock","🟫 Fake Block"],
+["fakehalfblock","🟫 Fake Half Block"],
 ["fakespike","⚠ Fake Spike"],
 ["invisblock","⬜ Invis Block"],
+["invishalfblock","⬜ Invis Half Block"],
 ["invisspike","⚪ Invis Spike"],
 ["portal","🌀 Up Portal"],
 ["gportal","🌗 Down Portal"],
@@ -1632,6 +2090,8 @@ if(old) old.remove();
 
 const levels=[ { name:"Aurora", stars:1, desc:"A calm starter glowy level", color:"#8000ff" , difficulty:"easy", code:"eyJibG9ja3MiOlt7IngiOjUwLCJ5IjozMDAsImNvbG9yIjpudWxsfSx7IngiOjIwMCwieSI6MjQwLCJjb2xvciI6IiM4MDAwODAifSx7IngiOjQwMCwieSI6MTIwLCJjb2xvciI6IiMyNmFlMDAifSx7IngiOjg4MCwieSI6NDAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6NjAwLCJ5Ijo0MCwiY29sb3IiOiIjZmZiZTA0In0seyJ4Ijo2MDAsInkiOjQwLCJjb2xvciI6IiNmZmJlMDQifSx7IngiOjYwMCwieSI6NDAsImNvbG9yIjoiI2ZmYmUwNCJ9LHsieCI6NjAwLCJ5Ijo0MCwiY29sb3IiOiIjZmZiZTA0In0seyJ4Ijo1NjAsInkiOjQwLCJjb2xvciI6IiNmZmJlMDQifSx7IngiOjgwMCwieSI6LTQwLCJjb2xvciI6IiNlNTAwZjQifSx7IngiOjc2MCwieSI6LTQwLCJjb2xvciI6IiNlNTAwZjQifSx7IngiOjEwODAsInkiOjAsImNvbG9yIjoiIzk5ZmYwMCJ9LHsieCI6NDAwLCJ5IjowLCJjb2xvciI6IiMxZTAwZmYifSx7IngiOjIwMCwieSI6LTQwLCJjb2xvciI6IiNmZmEyMDAifV0sInNwaWtlcyI6W3sieCI6MjgwLCJ5IjoyMDB9LHsieCI6MTA4MCwieSI6LTQwfSx7IngiOjg4MCwieSI6MH0seyJ4Ijo4NDAsInkiOi04MH0seyJ4Ijo3NjAsInkiOi04MH0seyJ4Ijo0MDAsInkiOi00MH0seyJ4Ijo1NjAsInkiOjB9LHsieCI6MjAwLCJ5IjotODB9XSwidXBzcGlrZXMiOlt7IngiOjQ4MCwieSI6MTYwfSx7IngiOjY4MCwieSI6ODB9LHsieCI6MTI4MCwieSI6MjgwfSx7IngiOjk2MCwieSI6ODB9LHsieCI6MTE2MCwieSI6NDB9XSwiZmFrZWJsb2NrcyI6W3sieCI6NzYwLCJ5IjotNDAsImNvbG9yIjoiIzgwMDA4MCJ9XSwiZmFrZXNwaWtlcyI6W10sImludmlzYmxvY2tzIjpbeyJ4Ijo4ODAsInkiOjQwfV0sImludmlzc3Bpa2VzIjpbXSwicG9ydGFscyI6W3sieCI6MzYwLCJ5IjoyODB9XSwiZ3BvcnRhbHMiOlt7IngiOjEyNDAsInkiOi04MH1dLCJnbG93cyI6W3sieCI6MjgwLCJ5IjoyMDAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6MjQwLCJ5IjoyMDAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6MTYwLCJ5IjoxNjAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6ODAwLCJ5IjoyODAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6NDgwLCJ5IjoxNjAsImNvbG9yIjoiIzAwMGFhOSJ9LHsieCI6NDAwLCJ5IjoxNjAsImNvbG9yIjoiIzAwMGFhOSJ9LHsieCI6NDQwLCJ5IjoxNjAsImNvbG9yIjoiIzAwMGFhOSJ9LHsieCI6NjQwLCJ5Ijo4MCwiY29sb3IiOiIjNTRmZjQ0In0seyJ4Ijo2MDAsInkiOjQwLCJjb2xvciI6IiM1NGZmNDQifSx7IngiOjYwMCwieSI6NDAsImNvbG9yIjoiIzU0ZmY0NCJ9LHsieCI6ODgwLCJ5Ijo4MCwiY29sb3IiOiIjMDA2OTdlIn0seyJ4Ijo5MjAsInkiOjQwLCJjb2xvciI6IiMwMDY5N2UifSx7IngiOjg4MCwieSI6NDAsImNvbG9yIjoiIzAwNjk3ZSJ9LHsieCI6ODAwLCJ5IjotNDAsImNvbG9yIjoiIzAwMDAwMCJ9LHsieCI6ODAwLCJ5IjotNDAsImNvbG9yIjoiIzAwMDAwMCJ9LHsieCI6ODAwLCJ5IjotNDAsImNvbG9yIjoiIzAwMDAwMCJ9LHsieCI6ODAwLCJ5IjotNDAsImNvbG9yIjoiIzAwMDAwMCJ9LHsieCI6ODAwLCJ5IjotNDAsImNvbG9yIjoiIzAwMDAwMCJ9LHsieCI6ODAwLCJ5IjowLCJjb2xvciI6IiMwMDAwMDAifSx7IngiOjgwMCwieSI6MCwiY29sb3IiOiIjMDAwMDAwIn0seyJ4Ijo4MDAsInkiOi00MCwiY29sb3IiOiIjMDAwMDAwIn0seyJ4Ijo4MDAsInkiOi00MCwiY29sb3IiOiIjMDA5NmZmIn0seyJ4Ijo4MDAsInkiOi00MCwiY29sb3IiOiIjMDA5NmZmIn0seyJ4Ijo4MDAsInkiOi04MCwiY29sb3IiOiIjMDA5NmZmIn0seyJ4Ijo3NjAsInkiOi04MCwiY29sb3IiOiIjMDA5NmZmIn0seyJ4Ijo3NjAsInkiOjAsImNvbG9yIjoiIzAwOTZmZiJ9LHsieCI6MTEyMCwieSI6MCwiY29sb3IiOiIjZmY0ZDAwIn0seyJ4IjoxMTIwLCJ5IjowLCJjb2xvciI6IiNmZjRkMDAifSx7IngiOjEwODAsInkiOi00MCwiY29sb3IiOiIjZmY0ZDAwIn0seyJ4IjoxMDgwLCJ5Ijo0MCwiY29sb3IiOiIjZmY0ZDAwIn0seyJ4Ijo0NDAsInkiOi00MCwiY29sb3IiOiIjZmZhMjAwIn0seyJ4Ijo0MDAsInkiOi00MCwiY29sb3IiOiIjZmZhMjAwIn0seyJ4IjoyMDAsInkiOi04MCwiY29sb3IiOiIjZmYwMGQwIn0seyJ4IjoyMDAsInkiOi04MCwiY29sb3IiOiIjZmYwMGQwIn1dLCJwdWxzZWxpZ2h0cyI6W10sImNoYWlucyI6W10sImJnZGVjb3MiOltdLCJnb2FsIjp7IngiOjEyMCwieSI6LTEyMH19" }, { name:"Shadow Temple", stars:5, desc:"Dark glowing temple with difficult jumps.", difficulty:"Hard",   color:"#7a00ff", code:"eyJibG9ja3MiOlt7IngiOjQwLCJ5IjozMDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6ODAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4IjoxMjAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4IjoxNjAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4IjoyMDAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4IjoyNDAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4IjoyODAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4IjozMjAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4IjozNjAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4Ijo0MDAsInkiOjMwMCwiY29sb3IiOiIjN2EwMGZmIn0seyJ4Ijo2MDAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo2NDAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo2ODAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo3MjAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo3NjAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo4MDAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo4NDAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo4ODAsInkiOjI2MCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo5MjAsInkiOjIyMCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4Ijo5NjAsInkiOjIyMCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4IjoxMDAwLCJ5IjoyMjAsImNvbG9yIjoiIzAwYzNmZiJ9LHsieCI6MTA0MCwieSI6MjIwLCJjb2xvciI6IiMwMGMzZmYifSx7IngiOjEwODAsInkiOjIyMCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4IjoxMTIwLCJ5IjoyMjAsImNvbG9yIjoiIzAwYzNmZiJ9LHsieCI6MTE2MCwieSI6MzAwLCJjb2xvciI6IiMwMGMzZmYifSx7IngiOjEyMDAsInkiOjMwMCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4IjoxMjQwLCJ5IjozMDAsImNvbG9yIjoiIzAwYzNmZiJ9LHsieCI6MTI4MCwieSI6MzAwLCJjb2xvciI6IiMwMGMzZmYifSx7IngiOjEzMjAsInkiOjMwMCwiY29sb3IiOiIjMDBjM2ZmIn0seyJ4IjoxMzYwLCJ5IjozMDAsImNvbG9yIjoiIzAwYzNmZiJ9LHsieCI6MTYwMCwieSI6ODAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTY0MCwieSI6MTIwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjE2ODAsInkiOjgwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjE3MjAsInkiOjEyMCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoxNzYwLCJ5Ijo4MCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoxODAwLCJ5IjoxMjAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTg0MCwieSI6ODAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTg4MCwieSI6MTIwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjE5MjAsInkiOjgwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjE5NjAsInkiOjEyMCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoyMDAwLCJ5Ijo4MCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoyMDQwLCJ5IjoxMjAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjA4MCwieSI6ODAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjEyMCwieSI6MTIwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjIxNjAsInkiOjgwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjIyMDAsInkiOjEyMCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoyMjQwLCJ5Ijo4MCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoyMjgwLCJ5IjoxMjAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjMyMCwieSI6ODAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjM2MCwieSI6MTIwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjI0MDAsInkiOjgwLCJjb2xvciI6IiNmZjAwODgifSx7IngiOjI0NDAsInkiOjEyMCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoyNDgwLCJ5Ijo4MCwiY29sb3IiOiIjZmYwMDg4In0seyJ4IjoyNTIwLCJ5IjoxMjAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjcyMCwieSI6MzAwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjI3NjAsInkiOjMwMCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjoyODAwLCJ5IjoyNjAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6Mjg0MCwieSI6MjYwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjI4ODAsInkiOjMwMCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjoyOTIwLCJ5IjozMDAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6Mjk2MCwieSI6MjYwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjMwMDAsInkiOjI2MCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozMDQwLCJ5IjozMDAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzA4MCwieSI6MzAwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjMxMjAsInkiOjI2MCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozMTYwLCJ5IjoyNjAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzIwMCwieSI6MzAwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjMyNDAsInkiOjMwMCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozMjgwLCJ5IjoyNjAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzMyMCwieSI6MjYwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjMzNjAsInkiOjMwMCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozNDAwLCJ5IjozMDAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzQ0MCwieSI6MjYwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjM0ODAsInkiOjI2MCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozNTIwLCJ5IjozMDAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzU2MCwieSI6MzAwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjM2MDAsInkiOjI2MCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozNjQwLCJ5IjoyNjAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzY4MCwieSI6MzAwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjM3MjAsInkiOjMwMCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozNzYwLCJ5IjoyNjAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzgwMCwieSI6MjYwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjM4NDAsInkiOjMwMCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4IjozODgwLCJ5IjozMDAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6MzkyMCwieSI6MjYwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjM5NjAsInkiOjI2MCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4Ijo0MDAwLCJ5IjozMDAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6NDA0MCwieSI6MzAwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjQwODAsInkiOjI2MCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4Ijo0MTIwLCJ5IjoyNjAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6NDE2MCwieSI6MzAwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjQyMDAsInkiOjMwMCwiY29sb3IiOiIjZmZhYTAwIn0seyJ4Ijo0MjQwLCJ5IjoyNjAsImNvbG9yIjoiI2ZmYWEwMCJ9LHsieCI6NDI4MCwieSI6MjYwLCJjb2xvciI6IiNmZmFhMDAifSx7IngiOjQ3MjAsInkiOjEyMCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo0NzYwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo0ODAwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo0ODQwLCJ5IjoxMjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDg4MCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDkyMCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDk2MCwieSI6MTIwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjUwMDAsInkiOjgwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjUwNDAsInkiOjgwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjUwODAsInkiOjEyMCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo1MTIwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo1MTYwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo1MjAwLCJ5IjoxMjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTI0MCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTI4MCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTM2MCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTQwMCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTQ0MCwieSI6MTIwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjU0ODAsInkiOjgwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjU1MjAsInkiOjgwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjU1NjAsInkiOjEyMCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo1NjAwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo1NjQwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo1NjgwLCJ5IjoxMjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTcyMCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTc2MCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTgwMCwieSI6MTIwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjU4NDAsInkiOjgwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjU4ODAsInkiOjgwLCJjb2xvciI6IiMwMGZmOTkifSx7IngiOjU5MjAsInkiOjEyMCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo1OTYwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo2MDAwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZjk5In0seyJ4Ijo2MDQwLCJ5IjoxMjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NjA4MCwieSI6ODAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NjMyMCwieSI6MzAwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjYzNjAsInkiOjMwMCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NDAwLCJ5IjozMDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjQ0MCwieSI6MzAwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY0ODAsInkiOjMwMCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NTIwLCJ5IjozMDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjU2MCwieSI6MzAwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY2MDAsInkiOjMwMCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NjQwLCJ5IjozMDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjY4MCwieSI6MzAwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY3MjAsInkiOjMwMCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NzYwLCJ5IjozMDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjgwMCwieSI6MzAwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY4NDAsInkiOjMwMCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2ODgwLCJ5IjozMDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjkyMCwieSI6MzAwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY5NjAsInkiOjMwMCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo3MDAwLCJ5IjozMDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NTMyMCwieSI6MTIwLCJjb2xvciI6IiM4MDAwODAifSx7IngiOjUzMjAsInkiOjEyMCwiY29sb3IiOiIjMDFlZjg4In1dLCJzcGlrZXMiOlt7IngiOjMyMCwieSI6MjYwfSx7IngiOjM2MCwieSI6MjYwfSx7IngiOjkyMCwieSI6MjIwfSx7IngiOjk2MCwieSI6MjIwfSx7IngiOjEyMDAsInkiOjE4MH0seyJ4IjoxMjQwLCJ5IjoxODB9LHsieCI6MjcyMCwieSI6MjYwfSx7IngiOjI5NjAsInkiOjIyMH0seyJ4IjozMjAwLCJ5IjoyNjB9LHsieCI6MzQ0MCwieSI6MjIwfSx7IngiOjM2ODAsInkiOjI2MH0seyJ4IjozOTIwLCJ5IjoyMjB9LHsieCI6NDE2MCwieSI6MjYwfSx7IngiOjY2MDAsInkiOjI2MH0seyJ4Ijo2NjQwLCJ5IjoyNjB9XSwidXBzcGlrZXMiOlt7IngiOjE4NDAsInkiOjEyMH0seyJ4IjoxODgwLCJ5IjoxMjB9LHsieCI6NTIwMCwieSI6MTIwfSx7IngiOjUyNDAsInkiOjEyMH1dLCJmYWtlYmxvY2tzIjpbeyJ4IjoyMTYwLCJ5Ijo4MCwiY29sb3IiOiIjNDQ0In0seyJ4Ijo0MjAwLCJ5IjozMDAsImNvbG9yIjoiIzY2NiJ9LHsieCI6NDI0MCwieSI6MzAwLCJjb2xvciI6IiM2NjYifV0sImZha2VzcGlrZXMiOlt7IngiOjIyNDAsInkiOjQwfV0sImludmlzYmxvY2tzIjpbXSwiaW52aXNzcGlrZXMiOlt7IngiOjQzNjAsInkiOjI2MH1dLCJwb3J0YWxzIjpbeyJ4IjoxNDgwLCJ5IjoyMjB9LHsieCI6NDYwMCwieSI6MjYwfV0sImdwb3J0YWxzIjpbeyJ4IjoyNjAwLCJ5IjoxMjB9LHsieCI6NjIwMCwieSI6MTIwfV0sImdsb3dzIjpbeyJ4Ijo0MCwieSI6MjQwLCJjb2xvciI6IiM3YTAwZmYifSx7IngiOjgwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MTIwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MTYwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MjAwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MjQwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MjgwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MzIwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MzYwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6NDAwLCJ5IjoyNDAsImNvbG9yIjoiIzdhMDBmZiJ9LHsieCI6MTYwMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTY0MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTY4MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTcyMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTc2MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTgwMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTg0MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTg4MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTkyMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MTk2MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjAwMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjA0MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjA4MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjEyMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjE2MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjIwMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjI0MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjI4MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjMyMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjM2MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjQwMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjQ0MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjQ4MCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6MjUyMCwieSI6NDAsImNvbG9yIjoiI2ZmMDA4OCJ9LHsieCI6NDcyMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDc2MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDgwMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDg0MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDg4MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDkyMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NDk2MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTAwMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTA0MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTA4MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTEyMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTE2MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTIwMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTI0MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTI4MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTMyMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTM2MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTQwMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTQ0MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTQ4MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTUyMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTU2MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTYwMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTY0MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTY4MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTcyMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTc2MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTgwMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTg0MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTg4MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTkyMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NTk2MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NjAwMCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NjA0MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NjA4MCwieSI6MjAsImNvbG9yIjoiIzAwZmY5OSJ9LHsieCI6NjMyMCwieSI6MjQwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjYzNjAsInkiOjI0MCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NDAwLCJ5IjoyNDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjQ0MCwieSI6MjQwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY0ODAsInkiOjI0MCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NTIwLCJ5IjoyNDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjU2MCwieSI6MjQwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY2MDAsInkiOjI0MCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NjQwLCJ5IjoyNDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjY4MCwieSI6MjQwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY3MjAsInkiOjI0MCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2NzYwLCJ5IjoyNDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjgwMCwieSI6MjQwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY4NDAsInkiOjI0MCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo2ODgwLCJ5IjoyNDAsImNvbG9yIjoiI2ZmZmZmZiJ9LHsieCI6NjkyMCwieSI6MjQwLCJjb2xvciI6IiNmZmZmZmYifSx7IngiOjY5NjAsInkiOjI0MCwiY29sb3IiOiIjZmZmZmZmIn0seyJ4Ijo3MDAwLCJ5IjoyNDAsImNvbG9yIjoiI2ZmZmZmZiJ9XSwicHVsc2VsaWdodHMiOltdLCJjaGFpbnMiOltdLCJiZ2RlY29zIjpbXSwiZ29hbCI6eyJ4Ijo3MjAwLCJ5IjoyNjB9fQ==" }, { name:"Dripstone Mine", stars:7, desc:"A green themed level with hanging spikes.", color:"#ff6721" , difficulty:"harder", code:"eyJibG9ja3MiOlt7IngiOjUwLCJ5IjozMDAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6MjgwLCJ5IjozMjAsImNvbG9yIjoiIzAwZmZiZiJ9LHsieCI6NDQwLCJ5Ijo4MCwiY29sb3IiOiIjMDBmZmFhIn0seyJ4IjozMjAsInkiOjQwLCJjb2xvciI6IiMwMGZmYWEifSx7IngiOjIwMCwieSI6LTQwLCJjb2xvciI6IiMwMGZmYWEifSx7IngiOjQwMCwieSI6LTE2MCwiY29sb3IiOiIjMDBmZmFhIn0seyJ4Ijo1NjAsInkiOi0yNDAsImNvbG9yIjoiIzAwZmY1OSJ9LHsieCI6NzIwLCJ5IjotMzIwLCJjb2xvciI6IiMwMGZmYjMifSx7IngiOjg4MCwieSI6LTI0MCwiY29sb3IiOiIjMDBmZmVlIn0seyJ4IjoxMTIwLCJ5IjotMTYwLCJjb2xvciI6IiMwMGZmZWUifSx7IngiOjEyODAsInkiOi00MCwiY29sb3IiOiIjMDBmZmVlIn1dLCJzcGlrZXMiOlt7IngiOjM2MCwieSI6MjgwfSx7IngiOjM2MCwieSI6MH0seyJ4Ijo0ODAsInkiOjQwfSx7IngiOjIwMCwieSI6LTgwfSx7IngiOjI0MCwieSI6LTgwfSx7IngiOjQ0MCwieSI6LTIwMH0seyJ4Ijo2MDAsInkiOi0yODB9LHsieCI6MTE2MCwieSI6LTIwMH0seyJ4IjoxMjAwLCJ5IjotMjAwfSx7IngiOjkyMCwieSI6LTI4MH0seyJ4Ijo4MDAsInkiOi0zNjB9XSwidXBzcGlrZXMiOlt7IngiOjI4MCwieSI6MzYwfSx7IngiOjMyMCwieSI6MzYwfSx7IngiOjM2MCwieSI6MzYwfSx7IngiOjQ0MCwieSI6MTIwfSx7IngiOjUyMCwieSI6MTIwfSx7IngiOjQwMCwieSI6ODB9LHsieCI6MzYwLCJ5Ijo4MH0seyJ4IjozMjAsInkiOjgwfSx7IngiOjQ0MCwieSI6LTEyMH0seyJ4Ijo0ODAsInkiOi0xMjB9LHsieCI6NjAwLCJ5IjotMjAwfSx7IngiOjU2MCwieSI6LTIwMH0seyJ4Ijo2NDAsInkiOi0yMDB9LHsieCI6OTYwLCJ5IjotMjAwfSx7IngiOjkyMCwieSI6LTIwMH0seyJ4IjoxMTIwLCJ5IjotMTIwfSx7IngiOjExNjAsInkiOi0xMjB9LHsieCI6MTIwMCwieSI6LTEyMH0seyJ4IjoxMzIwLCJ5IjowfSx7IngiOjEzNjAsInkiOjB9LHsieCI6MTI4MCwieSI6MH0seyJ4IjoxNDQwLCJ5Ijo4MH0seyJ4IjoxNDgwLCJ5Ijo4MH0seyJ4IjoxNTIwLCJ5Ijo4MH1dLCJmYWtlYmxvY2tzIjpbeyJ4Ijo3MjAsInkiOi0xNjAsImNvbG9yIjoiIzVhNWU1YiJ9LHsieCI6MTQ0MCwieSI6NDAsImNvbG9yIjoiIzAwZmZlZSJ9XSwiZmFrZXNwaWtlcyI6W3sieCI6NzYwLCJ5IjotMjAwfSx7IngiOjE1MjAsInkiOjB9XSwiaW52aXNibG9ja3MiOlt7IngiOjE0NDAsInkiOi0xMjB9XSwiaW52aXNzcGlrZXMiOlt7IngiOjE1MjAsInkiOi0xNjB9XSwicG9ydGFscyI6W3sieCI6NDQwLCJ5IjoyODB9XSwiZ3BvcnRhbHMiOlt7IngiOjYwMCwieSI6MH1dLCJnbG93cyI6W3sieCI6MTQ0MCwieSI6LTE2MCwiY29sb3IiOiIjMDBmZmIzIn1dLCJwdWxzZWxpZ2h0cyI6W10sImNoYWlucyI6W10sImJnZGVjb3MiOltdLCJnb2FsIjp7IngiOjE2MDAsInkiOi00MH19" }, { name:"Memory Cave", stars:10, desc:"A hard memory level with a lot of fakes", color:"red" , difficulty:"demon", code:"eyJibG9ja3MiOlt7IngiOjUwLCJ5IjozMDAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6MzIwLCJ5IjozMjAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6MzIwLCJ5IjozMjAsImNvbG9yIjoiIzAwMTFmZiJ9LHsieCI6NTIwLCJ5IjoyNDAsImNvbG9yIjoiI2ZmMDAwMCJ9LHsieCI6MjAwLCJ5Ijo0NDAsImNvbG9yIjoiIzAwMDAwMCJ9LHsieCI6NjgwLCJ5IjozMjAsImNvbG9yIjoiI2M4ZmYwMCJ9LHsieCI6ODgwLCJ5IjoyODAsImNvbG9yIjoiIzgwMDA4MCJ9LHsieCI6MTA4MCwieSI6MzYwLCJjb2xvciI6IiNkNGZmMDAifSx7IngiOjEyNDAsInkiOjQ0MCwiY29sb3IiOiIjZmYwMDAwIn0seyJ4IjoxMzIwLCJ5Ijo0NDAsImNvbG9yIjoiI2ZmMDAwMCJ9LHsieCI6MTY0MCwieSI6NDgwLCJjb2xvciI6IiMwMGZmNjIifSx7IngiOjE5MjAsInkiOjQ4MCwiY29sb3IiOiIjMDBmZjYyIn0seyJ4IjoxNzYwLCJ5Ijo1NjAsImNvbG9yIjoiIzAwZmY2MiJ9LHsieCI6MTgwMCwieSI6NTYwLCJjb2xvciI6IiMwMGZmNjIifSx7IngiOjIwODAsInkiOjg4MCwiY29sb3IiOiIjODAwMDgwIn0seyJ4IjoyMjQwLCJ5Ijo5NjAsImNvbG9yIjoiIzgwMDA4MCJ9XSwic3Bpa2VzIjpbeyJ4IjozMjAsInkiOjI4MH0seyJ4Ijo0MDAsInkiOjI4MH0seyJ4IjoyMDAsInkiOjQwMH0seyJ4IjoyNDAsInkiOjQwMH0seyJ4IjoyODAsInkiOjQwMH0seyJ4Ijo1MjAsInkiOjM2MH0seyJ4Ijo2MDAsInkiOjM2MH0seyJ4Ijo2MDAsInkiOjIwMH0seyJ4Ijo1NjAsInkiOjIwMH0seyJ4IjoxMTYwLCJ5IjozMjB9LHsieCI6MTEyMCwieSI6MzIwfSx7IngiOjEyODAsInkiOjQwMH0seyJ4IjoxMzIwLCJ5IjozMjB9LHsieCI6MTM2MCwieSI6NDAwfSx7IngiOjE2ODAsInkiOjQ0MH0seyJ4IjoxODAwLCJ5Ijo1MjB9LHsieCI6MTc2MCwieSI6NTIwfSx7IngiOjE4NDAsInkiOjUyMH0seyJ4IjoxODgwLCJ5Ijo1MjB9LHsieCI6MjA4MCwieSI6NDgwfSx7IngiOjIwODAsInkiOjU2MH0seyJ4IjoyMjQwLCJ5Ijo0ODB9LHsieCI6MjI0MCwieSI6NTYwfSx7IngiOjIwNDAsInkiOjY0MH0seyJ4IjoyMDQwLCJ5Ijo3MjB9LHsieCI6MjIwMCwieSI6NjQwfSx7IngiOjIyMDAsInkiOjcyMH0seyJ4IjoyMDgwLCJ5Ijo4NDB9LHsieCI6MjEyMCwieSI6ODQwfV0sInVwc3Bpa2VzIjpbeyJ4IjoxNTIwLCJ5Ijo0MDB9LHsieCI6MTU2MCwieSI6NDAwfSx7IngiOjE3NjAsInkiOjYwMH0seyJ4IjoxODAwLCJ5Ijo2MDB9LHsieCI6MTg0MCwieSI6NjAwfSx7IngiOjE4ODAsInkiOjYwMH0seyJ4IjoyMDgwLCJ5Ijo1MjB9LHsieCI6MjA4MCwieSI6NjAwfSx7IngiOjIyNDAsInkiOjUyMH0seyJ4IjoyMjQwLCJ5Ijo2MDB9LHsieCI6MjA0MCwieSI6NjgwfSx7IngiOjIwNDAsInkiOjc2MH0seyJ4IjoyMjAwLCJ5Ijo2ODB9LHsieCI6MjIwMCwieSI6NzYwfV0sImZha2VibG9ja3MiOlt7IngiOjUyMCwieSI6NDAwLCJjb2xvciI6IiNmZjAwMDAifSx7IngiOjUyMCwieSI6MjQwLCJjb2xvciI6IiNmZjAwMDAifSx7IngiOjk2MCwieSI6MjgwLCJjb2xvciI6IiM4MDAwODAifSx7IngiOjE0ODAsInkiOjM2MCwiY29sb3IiOiIjODAwMDgwIn1dLCJmYWtlc3Bpa2VzIjpbeyJ4IjozNjAsInkiOjI4MH0seyJ4Ijo5MjAsInkiOjI0MH0seyJ4Ijo5NjAsInkiOjI0MH0seyJ4IjoxNTIwLCJ5IjozMjB9LHsieCI6MTU2MCwieSI6MzIwfV0sImludmlzYmxvY2tzIjpbeyJ4Ijo2ODAsInkiOjE2MH0seyJ4IjoxNDgwLCJ5Ijo1NjB9XSwiaW52aXNzcGlrZXMiOlt7IngiOjU2MCwieSI6MzYwfSx7IngiOjc2MCwieSI6MTIwfSx7IngiOjE1NjAsInkiOjUyMH1dLCJwb3J0YWxzIjpbXSwiZ3BvcnRhbHMiOltdLCJnbG93cyI6W10sInB1bHNlbGlnaHRzIjpbXSwiY2hhaW5zIjpbXSwiYmdkZWNvcyI6W10sImdvYWwiOnsieCI6MjI4MCwieSI6ODgwfX0=" }];
 
+
+window.mainLevels=levels;
 
 const menu=document.createElement("div");
 menu.id="levelsMenu";
@@ -1817,9 +2277,9 @@ box-shadow:
 
 card.querySelector("button").onclick=()=>{
 
-loadLevel(lvl.code);
-
 menu.remove();
+
+window.playBuiltIn(i);
 
 };
 
@@ -1829,6 +2289,8 @@ grid.appendChild(card);
 
 };
 window.playBuiltIn=(i)=>{
+
+window.currentBuiltInIndex=i;
 
 builtInMode=true;
 playingOnlineLevel=true;
@@ -1893,6 +2355,7 @@ game.innerHTML="";
 game.appendChild(p);
 
 playingOnlineLevel=false;
+builtInMode=false;
 
 player.x=100;
 player.y=200;
@@ -1914,11 +2377,14 @@ chains,
 bgdecos,
 pulselights,
 blocks,
+halfblocks,
 spikes,
 upspikes,
 fakeblocks,
+fakehalfblocks,
 fakespikes,
 invisblocks,
+invishalfblocks,
 invisspikes,
 portals,
 gportals
@@ -1929,10 +2395,13 @@ arr.forEach(o=>o.el.remove());
 });
 
 blocks=[];
+halfblocks=[];
 spikes=[];
 fakeblocks=[];
+fakehalfblocks=[];
 fakespikes=[];
 invisblocks=[];
+invishalfblocks=[];
 invisspikes=[];
 portals=[];
 gportals=[];
@@ -2041,11 +2510,14 @@ game.appendChild(p);
 
 /* WORLD */
 let blocks=[];
+let halfblocks=[];
 let spikes=[];
 let fakeblocks=[];
+let fakehalfblocks=[];
 let fakespikes=[];
 let upspikes=[];
 let invisblocks=[];
+let invishalfblocks=[];
 let invisspikes=[];
 let portals=[];
 let gportals=[];
@@ -2156,7 +2628,9 @@ if(color){
 
 if(
 cls==="block" ||
-cls==="fakeblock"
+cls==="fakeblock" ||
+cls==="halfblock" ||
+cls==="fakehalfblock"
 ){
 el.style.background=color;
 }
@@ -2189,11 +2663,14 @@ extra
 }
 
 const addBlock=(x,y,color)=>make("block",x,y,blocks,color);
+const addHalfBlock=(x,y,color)=>make("halfblock",x,y,halfblocks,color);
 const addSpike=(x,y)=>make("spike",x,y,spikes);
 const addFakeBlock=(x,y,color)=>make("fakeblock",x,y,fakeblocks,color);
+const addFakeHalfBlock=(x,y,color)=>make("fakehalfblock",x,y,fakehalfblocks,color);
 const addUpSpike=(x,y)=>make("upspike",x,y,upspikes);
 const addFakeSpike=(x,y)=>make("fakespike",x,y,fakespikes);
 const addInvisBlock=(x,y)=>make("invisblock",x,y,invisblocks);
+const addInvisHalfBlock=(x,y)=>make("invishalfblock",x,y,invishalfblocks);
 const addInvisSpike=(x,y)=>make("invisspike",x,y,invisspikes);
 const addPortal=(x,y)=>make("portal",x,y,portals);
 const addGPortal=(x,y)=>make("gportal",x,y,gportals);
@@ -2243,6 +2720,12 @@ y:b.y,
 color:b.color||null
 })),
 
+halfblocks:halfblocks.map(b=>({
+x:b.x,
+y:b.y,
+color:b.color||null
+})),
+
 spikes:spikes.map(s=>({
 x:s.x,
 y:s.y
@@ -2259,12 +2742,23 @@ y:b.y,
 color:b.color||null
 })),
 
+fakehalfblocks:fakehalfblocks.map(b=>({
+x:b.x,
+y:b.y,
+color:b.color||null
+})),
+
 fakespikes:fakespikes.map(s=>({
 x:s.x,
 y:s.y
 })),
 
 invisblocks:invisblocks.map(b=>({
+x:b.x,
+y:b.y
+})),
+
+invishalfblocks:invishalfblocks.map(b=>({
 x:b.x,
 y:b.y
 })),
@@ -2350,11 +2844,14 @@ bgdecos,
 pulselights,
 
 blocks,
+halfblocks,
 spikes,
 upspikes,
 fakeblocks,
+fakehalfblocks,
 fakespikes,
 invisblocks,
+invishalfblocks,
 invisspikes,
 portals,
 gportals
@@ -2369,10 +2866,13 @@ goal.el.remove();
 }
 
 blocks=[];
+halfblocks=[];
 spikes=[];
 fakeblocks=[];
+fakehalfblocks=[];
 fakespikes=[];
 invisblocks=[];
+invishalfblocks=[];
 invisspikes=[];
 portals=[];
 gportals=[];
@@ -2384,10 +2884,13 @@ upspikes=[];
 goal=null;
 
 (d.blocks||[]).forEach(b=>addBlock(b.x,b.y,b.color));
+(d.halfblocks||[]).forEach(b=>addHalfBlock(b.x,b.y,b.color));
 (d.spikes||[]).forEach(s=>addSpike(s.x,s.y));
 (d.fakeblocks||[]).forEach(b=>addFakeBlock(b.x,b.y,b.color));
+(d.fakehalfblocks||[]).forEach(b=>addFakeHalfBlock(b.x,b.y,b.color));
 (d.fakespikes||[]).forEach(s=>addFakeSpike(s.x,s.y));
 (d.invisblocks||[]).forEach(b=>addInvisBlock(b.x,b.y));
+(d.invishalfblocks||[]).forEach(b=>addInvisHalfBlock(b.x,b.y));
 (d.invisspikes||[]).forEach(s=>addInvisSpike(s.x,s.y));
 (d.upspikes||[]).forEach(s=>addUpSpike(s.x,s.y));
 (d.portals||[]).forEach(p=>addPortal(p.x,p.y));
@@ -2427,6 +2930,12 @@ y:b.y,
 color:b.color
 })),
 
+halfblocks:halfblocks.map(b=>({
+x:b.x,
+y:b.y,
+color:b.color
+})),
+
 spikes:spikes.map(s=>({
 x:s.x,
 y:s.y
@@ -2443,12 +2952,23 @@ y:b.y,
 color:b.color
 })),
 
+fakehalfblocks:fakehalfblocks.map(b=>({
+x:b.x,
+y:b.y,
+color:b.color
+})),
+
 fakespikes:fakespikes.map(s=>({
 x:s.x,
 y:s.y
 })),
 
 invisblocks:invisblocks.map(b=>({
+x:b.x,
+y:b.y
+})),
+
+invishalfblocks:invishalfblocks.map(b=>({
 x:b.x,
 y:b.y
 })),
@@ -2755,6 +3275,9 @@ editingLevelId=l.id;
 currentLevelVerified=!!l.verified;
 currentLevelBeaten=false;
 
+builtInMode=false;
+window.currentOnlineLevelStars = (l.ratingCount>0) ? Math.round(l.rating) : 0;
+
 player.x=100;
 player.y=200;
 player.vx=0;
@@ -3054,12 +3577,15 @@ return !hit;
 };
 
 blocks=delCheck(blocks,60,30);
+halfblocks=delCheck(halfblocks,30,30);
 spikes=delCheck(spikes,30,30);
 upspikes=delCheck(upspikes,30,30);
 pulselights=delCheck(pulselights,70,70);
 fakeblocks=delCheck(fakeblocks,60,30);
+fakehalfblocks=delCheck(fakehalfblocks,30,30);
 fakespikes=delCheck(fakespikes,30,30);
 invisblocks=delCheck(invisblocks,60,30);
+invishalfblocks=delCheck(invishalfblocks,30,30);
 invisspikes=delCheck(invisspikes,30,30);
 portals=delCheck(portals,30,40);
 gportals=delCheck(gportals,30,40);
@@ -3084,8 +3610,14 @@ document.getElementById("colorPicker").value;
 if(tool==="block")
 addBlock(x,y,color);
 
+if(tool==="halfblock")
+addHalfBlock(x,y,color);
+
 if(tool==="fakeblock")
 addFakeBlock(x,y,color);
+
+if(tool==="fakehalfblock")
+addFakeHalfBlock(x,y,color);
 
 if(tool==="glow")
 addGlow(x,y,color);
@@ -3104,6 +3636,7 @@ addPulse(x,y,color);
 if(tool==="spike") addSpike(x,y);
 if(tool==="fakespike") addFakeSpike(x,y);
 if(tool==="invisblock")addInvisBlock(x,y);
+if(tool==="invishalfblock")addInvisHalfBlock(x,y);
 if(tool==="invisspike")addInvisSpike(x,y);
 if(tool==="portal") addPortal(x,y);
 if(tool==="gportal") addGPortal(x,y);
@@ -3200,6 +3733,39 @@ player.grounded = true;
 }
 
 /* upside down gravity */
+if(gravity === -1 && player.vy <= 0){
+
+player.y = b.y + 20;
+
+player.vy = 0;
+
+player.grounded = true;
+
+}
+
+}
+
+});
+
+halfblocks.forEach(b=>{
+
+if(
+player.x < b.x + 60 &&
+player.x + 30 > b.x &&
+player.y < b.y + 20 &&
+player.y + 30 > b.y
+){
+
+if(gravity === 1 && player.vy >= 0){
+
+player.y = b.y - 30;
+
+player.vy = 0;
+
+player.grounded = true;
+
+}
+
 if(gravity === -1 && player.vy <= 0){
 
 player.y = b.y + 20;
@@ -3340,6 +3906,35 @@ rotation=0;
 
 });
 
+invishalfblocks.forEach(b=>{
+
+if(
+player.x < b.x + 60 &&
+player.x + 30 > b.x &&
+player.y < b.y + 20 &&
+player.y + 30 > b.y
+){
+
+if(gravity === 1 && player.vy >= 0){
+
+player.y = b.y - 30;
+player.vy = 0;
+player.grounded = true;
+rotation=0;
+}
+
+if(gravity === -1 && player.vy <= 0){
+
+player.y = b.y + 20;
+player.vy = 0;
+player.grounded = true;
+rotation=0;
+}
+
+}
+
+});
+
 /* GOAL */
 if(goal){
 
@@ -3355,6 +3950,16 @@ player.y+30 > goal.y
 alert("Level Complete!");
 
 currentLevelBeaten = true;
+
+/* STAR REWARD */
+if(builtInMode && window.currentBuiltInIndex!=null && window.mainLevels){
+const lvl=window.mainLevels[window.currentBuiltInIndex];
+if(lvl){
+awardStars(lvl.stars||0, "builtin:"+window.currentBuiltInIndex);
+}
+}else if(playingOnlineLevel && editingLevelId){
+awardStars(window.currentOnlineLevelStars||0, "online:"+editingLevelId);
+}
 
 /* local verification */
 if(!currentLevelVerified){
@@ -3409,10 +4014,13 @@ bgdecos,
 pulselights,
 
 blocks,
+halfblocks,
 spikes,
 fakeblocks,
+fakehalfblocks,
 fakespikes,
 invisblocks,
+invishalfblocks,
 invisspikes,
 upspikes,
 portals,
@@ -3437,6 +4045,13 @@ goal.el.style.top=(goal.y-camera.y)+"px";
 
 /* invis visibility */
 invisblocks.forEach(b=>{
+b.el.style.opacity =
+mode==="edit"
+? "0.5"
+: "0";
+});
+
+invishalfblocks.forEach(b=>{
 b.el.style.opacity =
 mode==="edit"
 ? "0.5"
@@ -3559,6 +4174,8 @@ bindMobileButton("btn-right", "ArrowRight");
 bindMobileButton("btn-jump", " ");
 
 addBlock(50,300);
+applyEquippedColor();
+refreshStarsDisplay();
 updateEditorUI();
 update();
 
