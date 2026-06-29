@@ -10,7 +10,7 @@ from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDocs, collection, onSnapshot } 
+import { getFirestore, doc, setDoc, getDocs, collection, onSnapshot, updateDoc } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -126,41 +126,53 @@ window.cleanChatIfNeeded = async function(messages, snapshot) {
   }
 };
 
-window.sendDuelRequest = async function(targetUsername){
-  if(!targetUsername) return alert("Enter username");
+window.sendDuelRequest = async function(targetUid){
+  if(!targetUid) return alert("Enter username");
+  if(!auth.currentUser) return alert("You must be logged in to duel");
+
+  if(targetUid === auth.currentUser.uid){
+    return alert("You can't duel yourself!");
+  }
 
   const duelRef = doc(collection(db, "duels"));
 
   await setDoc(duelRef, {
-    from: save.username,
-    to: targetUsername, // ✅ FIXED
+    fromUid: auth.currentUser.uid,
+    fromName: save.username || "Player",
+    toUid: targetUid, // ✅ now a real uid, matched against auth.currentUser.uid on the receiving end
     status: "pending",
     created: Date.now()
   });
 
+  window._pendingDuelId = duelRef.id;
+  window.startSentDuelListener(duelRef.id);
+
   alert("Duel request sent!");
 };
 
+window._shownDuelPopups = window._shownDuelPopups || new Set();
+
 window.startDuelListener = function(){
-  if(duelUnsub) return;
+  if(window.duelUnsub) return;
 
   const duelCol = collection(db, "duels");
 
-  duelUnsub = onSnapshot(duelCol, (snap)=>{
-    snap.forEach(d => {
+  window.duelUnsub = onSnapshot(duelCol, (snap)=>{
+    if(!auth.currentUser) return;
+    const myUid = auth.currentUser.uid;
+
+    snap.docChanges().forEach(change => {
+      const d = change.doc;
       const data = d.data();
 
-      // 🔥 DEBUG (remove later)
-      console.log("DUEL CHECK:", data.to, "vs", save.username);
-
-      if(!save.username) return;
-
-if(data.to === save.username && data.status === "pending" && !document.getElementById("duelPopup")){
-
-        if(document.getElementById("duelPopup")) return;
+      // Incoming pending request for me
+      if(data.toUid === myUid && data.status === "pending"){
+        if(window._shownDuelPopups.has(d.id)) return;
+        window._shownDuelPopups.add(d.id);
 
         const div = document.createElement("div");
-        div.id = "duelPopup";
+        div.id = "duelPopup_" + d.id;
+        div.className = "duelPopup";
 
         div.style.position = "fixed";
         div.style.top = "20px";
@@ -169,17 +181,50 @@ if(data.to === save.username && data.status === "pending" && !document.getElemen
         div.style.background = "#000";
         div.style.border = "2px solid #00ff9c";
         div.style.padding = "15px";
+        div.style.borderRadius = "10px";
         div.style.zIndex = "9999";
+        div.style.textAlign = "center";
 
         div.innerHTML = `
-          <div>${data.from} challenged you!</div>
-          <button onclick="acceptDuel('${d.id}')">Accept</button>
-          <button onclick="declineDuel('${d.id}')">Decline</button>
+          <div style="margin-bottom:10px;">${(data.fromName || "Someone")} challenged you!</div>
+          <button onclick="acceptDuel('${d.id}')" style="margin-right:8px;padding:8px 14px;background:#00ff9c;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Accept</button>
+          <button onclick="declineDuel('${d.id}')" style="padding:8px 14px;background:#333;color:#fff;border:none;border-radius:6px;cursor:pointer;">Decline</button>
         `;
 
         document.body.appendChild(div);
       }
+
+      // Request was removed/cancelled/declined while popup is showing
+      if(change.type === "removed"){
+        document.getElementById("duelPopup_" + d.id)?.remove();
+        window._shownDuelPopups.delete(d.id);
+      }
     });
+  });
+};
+
+// Sender-side: watch the duel you sent until it becomes active, then join as guest.
+window.startSentDuelListener = function(duelId){
+  const ref = doc(db, "duels", duelId);
+
+  const unsub = onSnapshot(ref, (snap)=>{
+    const data = snap.data();
+    if(!data){
+      unsub(); // duel was deleted (declined)
+      return;
+    }
+
+    if(data.status === "active" && !window._inMatch){
+      window.currentDuelId = duelId;
+      window.isHost = true; // the sender hosts the authoritative simulation
+      unsub();
+      window.startGameSync();
+    }
+
+    if(data.status === "declined"){
+      alert((data.toName || "Player") + " declined your duel request.");
+      unsub();
+    }
   });
 };
 
@@ -190,17 +235,20 @@ window.acceptDuel = async function(id){
     status: "active"
   }, { merge: true });
 
-  currentDuelId = id;
-  isHost = false;
+  window.currentDuelId = id;
+  window.isHost = false; // the acceptor is the guest; sender (host) runs the simulation
 
-  document.getElementById("duelPopup")?.remove();
+  document.getElementById("duelPopup_" + id)?.remove();
+  window._shownDuelPopups.delete(id);
 
-  startGameSync();
+  window.startGameSync();
 };
 
 window.declineDuel = async function(id){
-  await deleteDoc(doc(db, "duels", id));
-  document.getElementById("duelPopup")?.remove();
+  await setDoc(doc(db, "duels", id), { status: "declined" }, { merge: true }).catch(()=>{});
+  await deleteDoc(doc(db, "duels", id)).catch(()=>{});
+  document.getElementById("duelPopup_" + id)?.remove();
+  window._shownDuelPopups.delete(id);
 };
 
 const app = initializeApp(firebaseConfig);
@@ -211,11 +259,13 @@ setPersistence(auth, browserLocalPersistence)
 const db = getFirestore(app);
 // ================= MULTIPLAYER SYSTEM =================
 
-let duelUnsub = null;
-let gameUnsub = null;
-
-let currentDuelId = null;
-let isHost = false;
+// Shared multiplayer state lives on `window` so both this ES module and the
+// later non-module <script> blocks (which can't see module-scoped `let`s)
+// read and write the exact same variables.
+window.duelUnsub = window.duelUnsub ?? null;
+window.gameUnsub = window.gameUnsub ?? null;
+window.currentDuelId = window.currentDuelId ?? null;
+window.isHost = window.isHost ?? false;
 
 const globalEventRef = doc(db, "global", "events");
 
@@ -325,6 +375,17 @@ window.setDoc = setDoc;
 window.doc = doc;
 window.getDocs = getDocs;
 window.collection = collection;
+// The following were used throughout the non-module <script> blocks below
+// but were never exposed, causing silent ReferenceErrors that aborted large
+// portions of script execution on every page load (auth-state handling,
+// announcements, admin freeze/unfreeze commands, hack-sequence detection).
+window.getDoc = getDoc;
+window.deleteDoc = deleteDoc;
+window.onSnapshot = onSnapshot;
+window.updateDoc = updateDoc;
+window.addDoc = addDoc;
+window.onAuthStateChanged = onAuthStateChanged;
+window.signOut = signOut;
 
 window.triggerGlobalZoink = async function() {
   const username = save.username;
@@ -490,24 +551,36 @@ window.triggerAdminAbuse = async function(){
 };
 
 window.syncMyPlayer = async function(){
-  if(!currentDuelId) return;
+  if(!window.currentDuelId) return;
+  if(typeof p1 === "undefined" || !p1) return;
 
-  const ref = doc(db, "games", currentDuelId);
+  const ref = doc(db, "games", window.currentDuelId);
 
-  if(isHost){
+  if(window.isHost){
+    // Host runs the real simulation and is the source of truth for both fighters.
     await setDoc(ref, {
       p1x: p1.x,
       p1y: p1.y,
-      p1hp: p1.health,
-      p1: save.username
-    }, { merge:true });
-  } else {
-    await setDoc(ref, {
+      p1hp: p1.hp,
+      p1: save.username || "Player",
       p2x: p2.x,
       p2y: p2.y,
-      p2hp: p2.health,
-      p2: save.username
-    }, { merge:true });
+      p2hp: p2.hp,
+      hostUpdated: Date.now()
+    }, { merge:true }).catch(e=>console.error("syncMyPlayer (host) failed:", e));
+  } else {
+    // Guest only reports their *intended input* (keys held) plus a heartbeat;
+    // the host applies it and writes back authoritative state.
+    await setDoc(ref, {
+      guestKeys: {
+        a: !!(keys.a || keys.keyleft),
+        d: !!(keys.d || keys.keyright),
+        w: !!(keys.w || keys[" "] || keys.keyup),
+        s: !!keys.s
+      },
+      p2: save.username || "Player",
+      guestUpdated: Date.now()
+    }, { merge:true }).catch(e=>console.error("syncMyPlayer (guest) failed:", e));
   }
 };
 
@@ -533,19 +606,11 @@ showAnnouncement(data.author, data.text);
   }
 });
 
-onSnapshot(playerRef, (doc) => {
-  const data = doc.data();
-
-  if (data.hacked && !window._wasHacked) {
-    window._wasHacked = true;
-
-    startHackSequence(data.hackCode);
-  }
-
-  if (!data.hacked) {
-    window._wasHacked = false;
-  }
-});
+// NOTE: the "hacked" player-doc watcher used to live here, but referenced an
+// undefined `playerRef` (no uid was known at module-load time) which crashed
+// this entire script block on every page load. It's now set up properly in
+// script block 2's onAuthStateChanged handler, once we actually know the
+// logged-in user's uid and have access to startHackSequence().
 
 window.getFormattedName = function(username) {
   if (!username || username === "Guest") {
@@ -564,6 +629,16 @@ window.getFormattedName = function(username) {
   // default player
   return `<span style="color:#00ff9c;">${username}</span>`;
 };
+
+// IMPORTANT: <script type="module"> is always deferred by the browser,
+// meaning it runs AFTER any plain <script> blocks below it in the document,
+// not before — even though it's physically first in the file. Anything in
+// those later plain scripts that calls Firebase functions (auth, db, doc,
+// onSnapshot, etc.) immediately/synchronously on page load must wait for
+// this event, or it will throw "X is not defined" on every single load.
+window.dispatchEvent(new Event("firebaseReady"));
+window._firebaseReady = true;
+
 
 </script>
 <meta charset="UTF-8">
@@ -666,54 +741,245 @@ body.pixelizedActive {
 .hidden { display: none !important; }
 
 /* --- MAIN MENU STYLING --- */
+/* ===== REDESIGNED MAIN MENU ===== */
 #menu {
-    margin-top: 50px;
-    padding: 40px;
-    background: rgba(0, 0, 0, 0.9);
-    border: 4px solid #fff;
-    width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-    position: relative;
-    /* The "Insanity" Border */
-    box-shadow: 
-        0 0 10px #fff,
-        -10px 0 20px #ff00ff,
-        10px 0 20px #00ff9c,
-        0 0 50px rgba(255, 255, 255, 0.2);
-    animation: menudistort 6s infinite alternate;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 680px;
+  max-width: 96vw;
+  background: #111;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+  padding: 0;
+  overflow: hidden;
 }
 
-/* Warping animation for the menu */
-@keyframes menudistort {
-    0% { border-color: #fff; }
-    33% { border-color: #ff00ff; }
-    66% { border-color: #00ff9c; }
-    100% { border-color: #fff; }
+#menu-inner {
+  display: flex;
+  flex-direction: row;
+  min-height: 420px;
 }
 
-/* Specific Menu Button Overrides */
-#menu button {
-    width: 80%; /* Make them large and imposing */
-    display: block;
-    margin: 10px auto;
+#menu-left {
+  flex: 1;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #111;
 }
 
-/* Play Button should look extra chaotic */
-#menu button[onclick="startGame()"] {
-    background: linear-gradient(45deg, #ff0000, #ff00ff);
-    color: white;
-    font-weight: bold;
-    font-size: 20px;
-    border-color: #fff;
-    animation: pulseChaos 1s infinite;
+#menu-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #fff;
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+  letter-spacing: 0.5px;
 }
 
-@keyframes pulseChaos {
-    0% { box-shadow: 0 0 10px #ff0000; transform: scale(1); }
-    50% { box-shadow: 0 0 30px #ff00ff, 0 0 10px #fff; transform: scale(1.05); }
-    100% { box-shadow: 0 0 10px #ff0000; transform: scale(1); }
+#coinDisplay {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #ffd700;
+  margin-bottom: 6px;
 }
+#coinDisplay img { width: 20px; height: 20px; image-rendering: pixelated; }
+
+#difficulty-label {
+  font-size: 13px;
+  color: #aaa;
+  margin-bottom: 6px;
+  display: block;
+}
+#difficulty-label select {
+  background: #222;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 13px;
+}
+
+#menu-primary-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.play-btn {
+  background: #fff !important;
+  color: #111 !important;
+  font-weight: bold !important;
+  font-size: 16px !important;
+  letter-spacing: 1px;
+  border: none !important;
+}
+.play-btn:hover { background: #ddd !important; }
+
+.menu-btn {
+  background: transparent;
+  color: #ddd;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 9px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  width: 100%;
+}
+.menu-btn:hover {
+  background: #222;
+  color: #fff;
+  border-color: #555;
+}
+
+#menu-secondary-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.menu-btn-sm {
+  background: transparent;
+  color: #999;
+  border: 1px solid #2a2a2a;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+.menu-btn-sm:hover {
+  background: #1e1e1e;
+  color: #fff;
+}
+
+/* RIGHT SIDE: animated stickman */
+#menu-right {
+  width: 220px;
+  background: #0d0d0d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-left: 1px solid #1e1e1e;
+}
+
+#menu-stickman-wrap {
+  width: 160px;
+  height: 240px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
+}
+
+#menu-stickman-label {
+  font-size: 11px;
+  color: #555;
+  letter-spacing: 1px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* Menu stickman (larger, animated) */
+.menu-fighter {
+  transform-origin: bottom center;
+  animation: menuIdle 1s infinite alternate ease-in-out;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+@keyframes menuIdle {
+  0%  { transform: translateY(0px) rotate(-1deg); }
+  100%{ transform: translateY(-8px) rotate(1deg); }
+}
+
+.ms-head {
+  width: 40px; height: 40px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: transparent;
+  margin-bottom: 2px;
+}
+.ms-body {
+  width: 3px; height: 60px;
+  background: #fff;
+  margin: 0 auto;
+}
+.ms-arms {
+  position: absolute;
+  top: 46px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.ms-armbar {
+  width: 80px;
+  height: 3px;
+  background: #fff;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  animation: menuSwing 2s infinite alternate ease-in-out;
+  transform-origin: left center;
+}
+@keyframes menuSwing {
+  0%  { transform: rotate(-15deg); }
+  100%{ transform: rotate(15deg); }
+}
+.ms-weapon-wrap {
+  position: absolute;
+  right: -6px;
+  top: -36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ms-blade {
+  width: 8px; height: 48px;
+  background: linear-gradient(to bottom, #ffffff, #aaaaaa);
+  border-radius: 4px 4px 2px 2px;
+  box-shadow: 0 0 8px rgba(255,255,255,0.4);
+}
+.ms-handle {
+  width: 10px; height: 18px;
+  background: #6b3f1d;
+  border-radius: 3px;
+  border: 1px solid #8b5e2d;
+}
+.ms-legs {
+  position: relative;
+  width: 50px;
+  height: 60px;
+  margin-top: 2px;
+}
+.ms-leg {
+  position: absolute;
+  bottom: 0;
+  width: 3px;
+  height: 58px;
+  background: #fff;
+  border-radius: 2px;
+  transform-origin: top center;
+}
+.ms-left  { left: 16px; animation: menuLegL 1.2s infinite alternate ease-in-out; }
+.ms-right { left: 26px; animation: menuLegR 1.2s infinite alternate ease-in-out; }
+@keyframes menuLegL { 0%{transform:rotate(-18deg)} 100%{transform:rotate(10deg)} }
+@keyframes menuLegR { 0%{transform:rotate(12deg)}  100%{transform:rotate(-14deg)} }
+
+
 
 /* Admin Button - Hidden corner power */
 #adminBtn {
@@ -750,18 +1016,23 @@ body.pixelizedActive {
 
 /* The actual "Console" look used in standard admin console */
 .admin-console {
-    background: #000;
+    background: rgba(0,0,0,0.97);
     color: #00ff9c;
     font-family: monospace;
-    width: 100%; /* Fill container */
-    max-width: 600px;
-    height: 400px;
+    width: 560px;
+    max-width: 96vw;
+    height: 340px;
     border: 2px solid #00ff9c;
-    margin: 10px auto;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 0 15px #00ff9c;
-    position: relative;
+    box-shadow: 0 0 30px #00ff9c, 0 0 60px rgba(0,255,156,0.2);
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2147483647;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 /* Scanline effect over console */
@@ -1423,14 +1694,7 @@ button,select{padding:10px;font-size:16px;margin:6px}
 }
 
 .admin-console{
-background:#000;
-color:#00ff9c;
-font-family:monospace;
-width:420px;
-height:300px;
-border:2px solid #00ff9c;
-display:flex;
-flex-direction:column;
+/* styles handled above */
 }
 
 .blessedReveal{
@@ -1599,14 +1863,15 @@ background:linear-gradient(to left, gold, blue);
 .r-limited{border-color:orange;box-shadow:0 0 16px orange}
 
 .swordBox{
-  width:100px;height:50px;
+  width:100px;height:70px;
   border:2px solid white;
   margin:6px auto;
   background:#111;
   display:flex;
   align-items:center;
   justify-content:center;
-  position:relative
+  position:relative;
+  overflow:visible;
 }
 .swordMini{
   height:4px;
@@ -1910,6 +2175,105 @@ height:32px;
   background:#eee;
   border-radius:4px;
 }
+
+/* ===== SWORD TEXTURES BY TYPE ===== */
+
+/* DAGGER — short, slim */
+.blade-dagger { width:5px; height:22px; border-radius:3px 3px 6px 6px; background:#ccc; }
+
+/* RAPIER — very thin, long */
+.blade-rapier { width:3px; height:42px; border-radius:2px; background:#d0d0e8; }
+
+/* GREAT SWORDS — wide, tall */
+.blade-great {
+  width:10px; height:50px;
+  border-radius:6px 6px 3px 3px;
+  background: linear-gradient(to bottom, #fff 0%, #888 100%);
+}
+
+/* DEFAULT SWORD */
+.blade-sword { width:6px; height:32px; border-radius:4px; background:#eee; }
+
+/* AXE HEAD */
+.axe-head {
+  width:0; height:0;
+  position:relative;
+  border-left:14px solid transparent;
+  border-right:0px solid transparent;
+  border-bottom:26px solid #aaa;
+  filter:drop-shadow(0 0 2px rgba(0,0,0,0.5));
+  margin-bottom:0;
+}
+.axe-handle { width:5px; height:22px; background:#7a4a1e; border-radius:2px; }
+
+/* HAMMER HEAD */
+.hammer-head {
+  width:18px; height:16px;
+  background:#888;
+  border-radius:3px;
+  margin-bottom:0;
+}
+.hammer-handle { width:5px; height:28px; background:#6b3f1d; border-radius:2px; }
+
+/* HANDLE TINTS BY RARITY */
+.handle { width:6px; height:14px; background:#6b3f1d; border-radius:3px; }
+.handle-common  { background:#6b3f1d; }
+.handle-decent  { background:#5a7a3a; }
+.handle-great   { background:#2a5a9a; }
+.handle-insane  { background:#8a2a8a; }
+.handle-alienish{ background:#1a9a7a; }
+.handle-demonic { background:#9a1a1a; }
+.handle-blessed { background:#b8860b; }
+.handle-limited { background:#1a1a9a; }
+.handle-pixelized{ background:#0a0a0a; image-rendering:pixelated; }
+
+/* ===== BLADE RARITY GLOW / GRADIENT ===== */
+.weapon-common  .blade { background:#ccc; }
+.weapon-decent  .blade { background:linear-gradient(to bottom,#9fff9f,#5a9a5a); box-shadow:0 0 3px #5a9a5a; }
+.weapon-great   .blade { background:linear-gradient(to bottom,#8af,#3366cc); box-shadow:0 0 5px #3366cc; }
+.weapon-insane  .blade { background:linear-gradient(to bottom,#d08aff,#7a00cc); box-shadow:0 0 6px #7a00cc; }
+.weapon-alienish .blade { background:linear-gradient(to bottom,#7fffdf,#00bfa5); box-shadow:0 0 8px #00bfa5; }
+.weapon-demonic .blade {
+  background:linear-gradient(to bottom,#ff4444,#7a0000);
+  box-shadow:0 0 10px #ff0000, 0 0 20px rgba(255,0,0,0.4);
+  animation: demonicPulse 1.4s infinite alternate;
+}
+@keyframes demonicPulse {
+  0%  { box-shadow:0 0 8px #ff0000; }
+  100%{ box-shadow:0 0 20px #ff0000, 0 0 30px rgba(255,100,0,0.6); }
+}
+.weapon-blessed .blade {
+  background:linear-gradient(to bottom,#fff9aa,#ffd700);
+  box-shadow:0 0 12px #ffd700, 0 0 24px rgba(255,215,0,0.5);
+  animation: blessedPulse 1.8s infinite alternate;
+}
+@keyframes blessedPulse {
+  0%  { box-shadow:0 0 10px #ffd700; filter:brightness(1.1); }
+  100%{ box-shadow:0 0 22px #ffd700, 0 0 36px rgba(255,220,0,0.5); filter:brightness(1.4); }
+}
+.weapon-limited .blade {
+  background:linear-gradient(135deg,#ff6ec7,#7b2fff,#00cfff);
+  box-shadow:0 0 14px #aa66ff;
+  animation: limitedShimmer 2s infinite alternate;
+}
+@keyframes limitedShimmer {
+  0%  { filter:hue-rotate(0deg) brightness(1.1); }
+  100%{ filter:hue-rotate(60deg) brightness(1.4); }
+}
+.weapon-pixelized .blade {
+  background: repeating-linear-gradient(
+    to bottom, #0ff 0px, #0ff 4px, #00f 4px, #00f 8px
+  );
+  image-rendering:pixelated;
+  box-shadow:0 0 8px #0ff;
+}
+
+/* AXE rarity glow on the axe-head border */
+.weapon-demonic .axe-head { border-bottom-color:#cc2200; filter:drop-shadow(0 0 6px #ff2200); }
+.weapon-blessed .axe-head { border-bottom-color:#ffd700; filter:drop-shadow(0 0 8px #ffd700); }
+.weapon-insane  .axe-head { border-bottom-color:#aa44ff; filter:drop-shadow(0 0 5px #aa44ff); }
+
+
 
 .legs{
   image-rendering: pixelated;
@@ -2856,12 +3220,13 @@ body.hacked .scanline {
 }
 
 @keyframes auraPulse{
-  from{
-    filter:drop-shadow(0 0 5px red);
-  }
-  to{
-    filter:drop-shadow(0 0 20px red);
-  }
+  from{ filter:drop-shadow(0 0 5px red); }
+  to{ filter:drop-shadow(0 0 20px red); }
+}
+
+@keyframes auraPulseGlow{
+  from{ opacity: 0.7; transform: scale(0.95); }
+  to{ opacity: 1; transform: scale(1.05); }
 }
 
 #beam{
@@ -3256,37 +3621,69 @@ body.megaShake::after{
 <body>
 
 <div id="menu" class="panel">
-<div id="coinDisplay">
-<img src="https://e7.pngegg.com/pngimages/1003/599/png-clipart-pixel-art-mario-coin-text-rectangle-thumbnail.png">
-<span id="coinText">0</span>
+
+<div id="menu-inner">
+  <!-- LEFT: navigation -->
+  <div id="menu-left">
+    <div id="coinDisplay">
+      <img src="https://e7.pngegg.com/pngimages/1003/599/png-clipart-pixel-art-mario-coin-text-rectangle-thumbnail.png">
+      <span id="coinText">0</span>
+    </div>
+
+    <h1 id="menu-title">Pixel Stickman<br>Fighting</h1>
+
+    <div id="announcementBar" style="color:gold;margin:6px 0;font-weight:bold;font-size:13px;"></div>
+    <div id="userBar" style="margin-bottom:8px;"></div>
+
+    <div id="menu-primary-btns">
+      <label id="difficulty-label"><b>Difficulty:</b> <select id="difficulty"></select></label>
+      <button class="menu-btn play-btn" onclick="startGame()">▶ Play</button>
+      <button class="menu-btn" onclick="openEditor()">Edit Character</button>
+      <button class="menu-btn" onclick="openRoll()">Roll 🎲</button>
+    </div>
+
+    <div id="menu-secondary-btns">
+      <button class="menu-btn-sm" onclick="openAchievements()">Achievements</button>
+      <button class="menu-btn-sm" onclick="openStats()">Stats</button>
+      <button class="menu-btn-sm" onclick="openLeaderboard()">Leaderboard</button>
+      <button class="menu-btn-sm" onclick="openChat()">Chat</button>
+      <button class="menu-btn-sm" onclick="openEventsMenu()">Events</button>
+      <button class="menu-btn-sm" onclick="openEventQuests()">Quests</button>
+      <button class="menu-btn-sm" onclick="openShop()">Shop</button>
+      <button class="menu-btn-sm" onclick="openSettings()">⚙ Settings</button>
+      <button class="menu-btn-sm" onclick="openLogin()">Login</button>
+      <button class="menu-btn-sm" onclick="openSignup()">Sign Up</button>
+      <button class="menu-btn-sm" onclick="window.location='https://forms.gle/d8683hHXeeWaPd5z8'">Poll</button>
+      <button class="menu-btn-sm" onclick="window.location='https://pixelman55.github.io/main/log'">Update Log</button>
+      <button class="menu-btn-sm" onclick="openMore()">More Games</button>
+      <button id="dailyRewardBtn" class="menu-btn-sm" onclick="claimDailyReward()">🎁 Daily Reward</button>
+    </div>
+  </div>
+
+  <!-- RIGHT: animated stickman preview -->
+  <div id="menu-right">
+    <div id="menu-stickman-wrap">
+      <div class="menu-fighter" id="menuStickman">
+        <div class="head ms-head"></div>
+        <div class="ms-body"></div>
+        <div class="ms-arms">
+          <div class="ms-armbar">
+            <div class="ms-weapon-wrap">
+              <div class="ms-blade"></div>
+              <div class="ms-handle"></div>
+            </div>
+          </div>
+        </div>
+        <div class="ms-legs">
+          <div class="ms-leg ms-left"></div>
+          <div class="ms-leg ms-right"></div>
+        </div>
+      </div>
+    </div>
+    <div id="menu-stickman-label">animated stickman</div>
+  </div>
 </div>
-  <h1>Pixel Stickman Fighting</h1>
-<div id="announcementBar" style="color:gold;margin:10px;font-weight:bold"></div>
-<div id="userBar"></div>
-  <label><b>Choose Difficulty:</b>
-    <select id="difficulty"></select>
-  </label><br>
-  <button onclick="startGame()">Play ⚔️</button>
-  <button onclick="openEditor()">Edit Character 🎨</button>
-  <button onclick="openRoll()">Roll 🎲</button>
-  <button onclick="openAchievements()">Achievements ✅</button>
-  <button onclick="openStats()">Stats 👌</button>
-  <button onclick="window.location='https://forms.gle/d8683hHXeeWaPd5z8'">Poll 🗳️</button>
-    <button onclick="window.location='https://pixelman55.github.io/main/log'">Update Log 📝</button>
-<br><br>
 
-
-<button onclick="openLeaderboard()">Leaderboard 🏆</button>
-<button onclick="openChat()">Chat 💬</button>
-<button onclick="openEventsMenu()">Events 🥳</button>
-<button onclick="openEventQuests()">Event Quests 👑</button>
-<button onclick="openMore()">More Games</button>
-<br><br>
-<button onclick="openLogin()">Login</button>
-<button onclick="openSignup()">Sign Up</button>
-<button onclick="openSettings()">⚙️ Settings</button>
-<button onclick="openShop()">Shop 🛒</button>
-<button id="dailyRewardBtn" onclick="claimDailyReward()">🎁 Daily Reward</button>
 </div>
 <div id="fallingEggs" onclick="showAnnouncement('You found an easter egg! Get it?', 'LOL')"></div>
 <button id="adminBtn" onclick="openAdmin()" style="display:none">AP</button>
@@ -3813,8 +4210,8 @@ font-size:12px">
 
 <hr>
 
-<div id="adminConsole" class="admin-console">
-<div class="console-header">Admin Console</div>
+<div id="adminConsole" class="admin-console" style="display:none;">
+<div class="console-header">Admin Console <span onclick="document.getElementById('adminConsole').style.display='none'" style="float:right;cursor:pointer;color:#ff4444;padding:0 6px;">✕</span></div>
 
 <div id="consoleOutput" class="console-output"></div>
 
@@ -4182,7 +4579,7 @@ updateEventTiming();
 updateEventUI();
 renderEventsMenu();
 updateZoinkFest();
-saveplayerstats()
+savePlayerStats()
 },1000);
 
 }
@@ -4874,21 +5271,7 @@ save.eventData.quests.push(randomQuest());
 
 }
 
-function applyAura(fighter, auraId){
-  const aura = AURAS.find(a => a.id === auraId);
-  if(!aura || aura.id === "none") return;
-
-  const glow = document.createElement("div");
-
-  glow.style.position = "absolute";
-  glow.style.inset = "-10px";
-  glow.style.borderRadius = "50%";
-  glow.style.pointerEvents = "none";
-
-  glow.style.boxShadow = `0 0 25px ${aura.color}, 0 0 50px ${aura.color}`;
-
-  fighter.appendChild(glow);
-}
+// applyAura is defined further down (single canonical version)
 
 function startFakeTerminal(){
   const term = document.getElementById("hackTerminal");
@@ -5199,9 +5582,6 @@ function closeShop(){
   document.getElementById("menu").classList.remove("hidden");
 }
 
-save.auras = save.auras || ["none"];
-save.selectedAura = save.selectedAura || "none";
-
 function renderAuras(){
   const grid = document.getElementById("auraGrid");
   grid.innerHTML = "";
@@ -5275,23 +5655,27 @@ function renderAuraShop(){
 }
 
 function applyAura(fighter, auraId){
+  // Remove any existing aura glow
+  const old = fighter.querySelector(".aura-glow");
+  if(old) old.remove();
+
   const aura = AURAS.find(a => a.id === auraId);
   if(!aura || aura.id === "none") return;
 
   const glow = document.createElement("div");
-
-  glow.style.position = "absolute";
-  glow.style.inset = "-10px";
-  glow.style.borderRadius = "50%";
-  glow.style.pointerEvents = "none";
-
-  glow.style.boxShadow = `0 0 25px ${aura.color}, 0 0 50px ${aura.color}`;
-
+  glow.className = "aura-glow";
+  glow.style.cssText = `
+    position:absolute;
+    inset:-14px;
+    border-radius:50%;
+    pointer-events:none;
+    z-index:0;
+    box-shadow: 0 0 18px 6px ${aura.color}, 0 0 40px 10px ${aura.color}88;
+    animation: auraPulseGlow 1.2s ease-in-out infinite alternate;
+    --aura-color: ${aura.color};
+  `;
   fighter.appendChild(glow);
-}
-
-
-function setCoinsLite() {
+} {
   save.coins = Number(document.getElementById("liteCoins").value);
   updateCoins();
   saveData();
@@ -5693,9 +6077,9 @@ window.zoinkActive = true;
 renderSwords();
 window.prevHat = save.hat;
 
-p1El.innerHTML = makeStick(save.color, save.sword);
+p1El.innerHTML = makeStick(save.color, save.sword, true);
 
-p1El.innerHTML = makeStick(save.color, save.sword);
+p1El.innerHTML = makeStick(save.color, save.sword, true);
 }
 function giveCarrots(){
 
@@ -5776,7 +6160,7 @@ function formatReward(r){
 function deactivateZoink(){
 
 
-p1El.innerHTML = makeStick(save.color, save.sword);
+p1El.innerHTML = makeStick(save.color, save.sword, true);
 document.body.style.backgroundImage = "";
 
 clearInterval(window.zoinkGradient);
@@ -5787,7 +6171,7 @@ glow.style.opacity = "0";
 
 // remove hat
 
-p1El.innerHTML = makeStick(save.color, save.sword);
+p1El.innerHTML = makeStick(save.color, save.sword, true);
 
 clearInterval(window.zoinkInterval);
 document.body.style.boxShadow = "";
@@ -5802,7 +6186,7 @@ bgMusic.volume = 1;
 window.zoinkActive = false;
 renderSwords();
 
-p1El.innerHTML = makeStick(save.color, save.sword);
+p1El.innerHTML = makeStick(save.color, save.sword, true);
 
 }
 
@@ -6123,6 +6507,8 @@ initEventQuests();
 save.coins = Number(save.coins || 0);
 save.dataBits = save.dataBits || 0;
 save.pixels = save.pixels || 0;
+save.auras = save.auras || ["none"];
+save.selectedAura = save.selectedAura || "none";
 
 
 if(save.coins === undefined) save.coins = 0;
@@ -6423,6 +6809,18 @@ function backToMenu(){
     blackHole.style.opacity = "0";
     blackHole.style.pointerEvents = "none";
 running = false;
+
+// If quitting out of an active PvP match: the host should tell the other
+// player it's over (counts as a forfeit/loss for whoever quit); the guest
+// just disconnects, since the host remains the source of truth.
+if(window._isPvP && window.currentDuelId){
+  if(window.isHost){
+    endPvPMatchHost(false); // host quitting = host forfeits = guest wins
+  } else {
+    window.endPvPMatch();
+  }
+}
+
 document.getElementById("pauseMenu").style.display="none";
 document.getElementById("pauseBtn").style.display = "none";
   stopGame();
@@ -6901,10 +7299,25 @@ unlockText = `Unlock: ${s.unlock}`;
 }
     const card=document.createElement("div");
     card.className=`swordCard r-${s.rarity}${unlocked?"":" locked"}${save.sword===id?" selected":""}`;
+
+    // Build real weapon preview using actual game weapon CSS classes
+    const { type: pt, rarity: pr } = getSwordClasses(id);
+    let weaponInner = "";
+    if(pt === "axe"){
+      weaponInner = `<div class="axe-head"></div><div class="handle axe-handle"></div>`;
+    } else if(pt === "hammer"){
+      weaponInner = `<div class="hammer-head"></div><div class="handle hammer-handle"></div>`;
+    } else {
+      weaponInner = `<div class="blade blade-${pt}"></div><div class="handle handle-${pr}"></div>`;
+    }
+    const previewHtml = unlocked
+      ? `<div class="weapon weapon-${pt} weapon-${pr}" style="transform:rotate(45deg) scale(1.4);margin:auto;">${weaponInner}</div>`
+      : `<div class="lock">🔒</div>`;
+
     card.innerHTML=`
       <div class="swordName">${s.name}</div>
       <div><b>Rarity:</b> ${s.rarity.toUpperCase()}</div>
-      <div class="swordBox">${unlocked?`<div class="swordMini" style="width:${s.dmg*2}px"></div>`:`<div class="lock">🔒</div>`}</div>
+      <div class="swordBox">${previewHtml}</div>
       <div class="swordStats">
         DMG:${s.dmg}<br>
         Knock:${s.knock}<br>
@@ -6929,16 +7342,45 @@ function renderAchievements(){
 }
 
 /* ================= GAME ================= */
-const GRAVITY=0.6,JUMP_FORCE=-12,GROUND_Y=40;
+const GRAVITY=0.6; let JUMP_FORCE=-12; const GROUND_Y=40;
 const ARENA_WIDTH = 800;      // same as #game width
 const FIGHTER_WIDTH = 70;     // same as .fighter width
 let p1,p2,keys={};
 addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
 addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 
-function makeStick(color,swordId){
+function getSwordClasses(swordId){
+  const s = swords[swordId] || {};
+  const rarity = s.rarity || "common";
+  const isAxe = swordId === "axe" || (s.name||"").toLowerCase().includes("axe") || (s.name||"").toLowerCase().includes("cleaver");
+  const isHammer = swordId === "hammer" || (s.name||"").toLowerCase().includes("hammer");
+  const isRapier = swordId === "rapier" || (s.name||"").toLowerCase().includes("rapier") || (s.name||"").toLowerCase().includes("saber") || (s.name||"").toLowerCase().includes("blade");
+  const isDagger = swordId === "dagger";
+  const isGreat = swordId === "greatsword" || swordId === "executioner" || (s.name||"").toLowerCase().includes("great") || (s.name||"").toLowerCase().includes("executioner") || (s.name||"").toLowerCase().includes("claymore");
+  let type = "sword";
+  if(isAxe) type = "axe";
+  else if(isHammer) type = "hammer";
+  else if(isRapier) type = "rapier";
+  else if(isDagger) type = "dagger";
+  else if(isGreat) type = "great";
+  return { type, rarity };
+}
+
+function makeStick(color,swordId, isPlayer=false){
   const s=swords[swordId];
+  const { type, rarity } = getSwordClasses(swordId);
+
+  // Build aura glow HTML for player fighter only
+  let auraHtml = "";
+  if(isPlayer && save.selectedAura && save.selectedAura !== "none"){
+    const aura = (typeof AURAS !== "undefined") ? AURAS.find(a => a.id === save.selectedAura) : null;
+    if(aura){
+      auraHtml = `<div class="aura-glow" style="position:absolute;inset:-14px;border-radius:50%;pointer-events:none;z-index:0;box-shadow:0 0 18px 6px ${aura.color},0 0 40px 10px ${aura.color}88;animation:auraPulseGlow 1.2s ease-in-out infinite alternate;"></div>`;
+    }
+  }
+
   return `<div style="--c:${color}; position:relative;">
+  ${auraHtml}
    <div class="head">
   ${save.hat && save.hat !== "none" ? `<div class="hat ${save.hat}"></div>` : ""}
 </div>
@@ -6946,9 +7388,17 @@ function makeStick(color,swordId){
 
 <div class="arms">
   <div class="armBar">
-    <div class="weapon">
-<div class="blade"></div>
-<div class="handle"></div>
+    <div class="weapon weapon-${type} weapon-${rarity}">
+${type === "axe" ? `
+<div class="axe-head"></div>
+<div class="handle axe-handle"></div>
+` : type === "hammer" ? `
+<div class="hammer-head"></div>
+<div class="handle hammer-handle"></div>
+` : `
+<div class="blade blade-${type}"></div>
+<div class="handle handle-${rarity}"></div>
+`}
     </div>
   </div>
 </div>
@@ -6974,7 +7424,7 @@ document.getElementById("pauseBtn").style.display = "block";
   const d=difficulties[save.difficulty];
   p1={x:100,y:0,vy:0,onGround:true,hp:100,cd:0,stun:0};
   p2={x:600,hp:d.npcHP,cd:0,stun:0,speed:d.npcSpeed,ai:d.npcAI,think:0};
-  p1El.innerHTML=makeStick(save.color,save.sword);
+  p1El.innerHTML=makeStick(save.color,save.sword,true);
   p2El.innerHTML=makeStick("#f55","dagger");
   running=true;
   bgMusic.currentTime = 0;
@@ -7069,6 +7519,35 @@ return;
 
   if(!running)return;
 
+// === PVP: GUEST PATH ===
+// The guest never runs physics locally — the host is authoritative and the
+// Firestore listener in startGameSync() already writes the latest p1/p2
+// into these objects. We just need to update the DOM each frame.
+if(window._isPvP && !window.isHost){
+  p1El.style.left = p1.x + "px";
+  p2El.style.left = p2.x + "px";
+  p1El.style.bottom = (GROUND_Y - p1.y) + "px";
+  p2El.style.bottom = (GROUND_Y - p2.y) + "px";
+
+  if(p1.x < p2.x){ p1El.classList.remove("facingLeft"); } else { p1El.classList.add("facingLeft"); }
+  if(p2.x < p1.x){ p2El.classList.remove("facingLeft"); } else { p2El.classList.add("facingLeft"); }
+
+  p1Health.style.width = Math.max(p1.hp,0)*2 + "px";
+  p2Health.style.width = Math.max(p2.hp,0)*2 + "px";
+  p1Text.textContent = Math.max(p1.hp,0) + "%";
+  p2Text.textContent = Math.max(p2.hp,0) + "%";
+
+  requestAnimationFrame(loop);
+  return;
+}
+
+// === PVP: HOST PATH ===
+// Same physics as single-player below, except p2's "AI" is replaced by the
+// guest's real keypresses (synced via window._guestKeys), and p2's attack
+// uses a default sword since the guest's chosen sword isn't tracked yet.
+const pvpHost = window._isPvP && window.isHost;
+const gKeys = pvpHost ? (window._guestKeys || {a:false,d:false,w:false,s:false}) : null;
+
 // 🌌 VOID EVENT PHYSICS
 let currentGravity = GRAVITY;
 
@@ -7144,31 +7623,58 @@ setTimeout(()=>{
   arms.classList.remove("swing");
   weapon.classList.remove("attackMove");
 },150);
-    if(p2.hp<=0)return endGame(true);
+    if(p2.hp<=0){
+      if(pvpHost) endPvPMatchHost(true);
+      return endGame(true);
+    }
   }
 
-  if(p2.think>0)p2.think--;
-  if(p2.stun===0&&p2.think===0){
-    const d=p1.x-p2.x,a=Math.abs(d);
-    if(p2.ai===0)p2.x+=Math.sign(d)*p2.speed;
-   if(p2.ai===1){
-  if(a>70)p2.x+=Math.sign(d)*(p2.speed*6);
-  if(a<50)p2.x-=Math.sign(d)*(p2.speed*0.6);}
-  if(p2.ai>=2){
-  if(a>80)p2.x+=Math.sign(d)*(p2.speed*5);
-  if(a<45)p2.x-=Math.sign(d)*(p2.speed*0.5);
-}
-    if(a<80&&p2.cd===0)p2.cd=28-(p2.ai*4);
-    p2.think=Math.max(2,12-(p2.ai*3));
+  if(pvpHost){
+    // --- Guest's fighter is driven by their real synced keypresses ---
+    p2.vy += currentGravity;
+    p2.y += p2.vy;
+    if(p2.y > 0){ p2.y = 0; p2.vy = 0; p2.onGround = true; }
+    if(gKeys.w && p2.onGround){ p2.vy = JUMP_FORCE; p2.onGround = false; }
+    if(p2.stun === 0){
+      if(gKeys.a) p2.x -= 4;
+      if(gKeys.d) p2.x += 4;
+    }
 
+    const guestSword = swords["dagger"]; // TODO: sync guest's chosen sword once tracked
+    if(gKeys.s && p2.cd === 0 && Math.abs(p1.x - p2.x) < 60){
+      if(!invincible){
+        p1.hp -= guestSword.dmg;
+      }
+      p1.stun = guestSword.stun;
+      p1.x += (p1.x > p2.x ? 1 : -1) * guestSword.knock;
+      p2.cd = 18;
+    }
+  } else {
+    if(p2.think>0)p2.think--;
+    if(p2.stun===0&&p2.think===0){
+      const d=p1.x-p2.x,a=Math.abs(d);
+      if(p2.ai===0)p2.x+=Math.sign(d)*p2.speed;
+     if(p2.ai===1){
+    if(a>70)p2.x+=Math.sign(d)*(p2.speed*6);
+    if(a<50)p2.x-=Math.sign(d)*(p2.speed*0.6);}
+    if(p2.ai>=2){
+    if(a>80)p2.x+=Math.sign(d)*(p2.speed*5);
+    if(a<45)p2.x-=Math.sign(d)*(p2.speed*0.5);
+  }
+      if(a<80&&p2.cd===0)p2.cd=28-(p2.ai*4);
+      p2.think=Math.max(2,12-(p2.ai*3));
+    }
   }
 
   if(p2.cd===1&&Math.abs(p1.x-p2.x)<60){
-if(!invincible){
+if(!invincible && !pvpHost){
 p1.hp-=10;
 }
     p1.stun=12;
-    if(p1.hp<=0)return endGame(false);
+    if(p1.hp<=0){
+      if(pvpHost) endPvPMatchHost(false);
+      return endGame(false);
+    }
   }
 
   if(p1.cd>0)p1.cd--;
@@ -7520,14 +8026,21 @@ createUserWithEmailAndPassword(auth,email,pass)
 
 alert("Account created!");
 localStorage.setItem("username", user);
+save.username = user;
 
+// Write to both collections so all parts of the code can find the username
 setDoc(doc(db,"players",cred.user.uid),{
 username:user,
 wins:0,
 losses:0
 });
 
+// registerAuthStateHandler reads from "users" collection
+setDoc(doc(db,"users",cred.user.uid),{
+username:user
+});
 
+updateUserBar();
 backToMenu();
 
 })
@@ -7581,13 +8094,20 @@ snap.forEach(docSnap => {
       ...data
     };
 
+    // Ensure username is always set and persisted
+    if(data.username){
+      save.username = data.username;
+      localStorage.setItem("username", data.username);
+    }
+
     localStorage.setItem(saveKey, JSON.stringify(save));
 
     updateCoins();
     renderSwords();
     renderHatGrid();
+    updateUserBar();
 
-    console.log("✅ Player data loaded");
+    console.log("✅ Player data loaded:", save.username);
   }
 
 });
@@ -7803,7 +8323,13 @@ data.message
 });
 }
 
-startAnnouncements();
+// The module that defines `doc`/`onSnapshot` etc. is deferred by the browser
+// and runs after this script block, so we can't call this immediately.
+if(window._firebaseReady){
+  startAnnouncements();
+} else {
+  window.addEventListener("firebaseReady", startAnnouncements, { once: true });
+}
 
 
 function startEventSystem(){
@@ -7926,8 +8452,6 @@ saveData();
   
   await setDoc(playerRef, playerData, { merge: true });
 }
-window.onAuthStateChanged = onAuthStateChanged;
-window.signOut = signOut;
 async function updateUserBar(){
 
 const bar=document.getElementById("userBar");
@@ -7952,8 +8476,10 @@ username=d.data().username;
 
 if(username === "PixelMan" || username === "THEFIREMOUSE" || username === "lil_Jim" || username === "mid4567" || username === "I_Am_Sam" || username === "willyboy" || username === "SUPERBOY"){
 document.getElementById("adminBtn").style.display="block";
+adminLevel = (username === "PixelMan") ? "owner" : "admin";
 }else{
 document.getElementById("adminBtn").style.display="none";
+adminLevel = "none";
 }
 
 bar.innerHTML=
@@ -7981,7 +8507,8 @@ alert("Logout failed: " + e.message);
 }
 
 }
-onAuthStateChanged(auth, async (user)=>{
+function registerAuthStateHandler(){
+  onAuthStateChanged(auth, async (user)=>{
 
 if(!user) return;
 
@@ -8015,7 +8542,37 @@ document.getElementById("adminBtn").style.display = "block";
 listenForCommands();
 listenForGlobalCommands();
 
+// Watch this player's own doc for an admin-triggered "hacked" flag and
+// play the hack sequence when it's set. (Previously this lived in the
+// Firebase module as a top-level statement referencing an undefined
+// `playerRef`, which crashed on every page load before anyone was even
+// logged in - it now runs per-user, once we actually know their uid.)
+if(!window._hackWatcherActive){
+  window._hackWatcherActive = true;
+  const myPlayerRef = doc(db, "players", uid);
+  onSnapshot(myPlayerRef, (playerSnap) => {
+    const pData = playerSnap.data();
+    if(!pData) return;
+
+    if(pData.hacked && !window._wasHacked){
+      window._wasHacked = true;
+      startHackSequence(pData.hackCode);
+    }
+
+    if(!pData.hacked){
+      window._wasHacked = false;
+    }
+  });
+}
+
 });
+}
+
+if(window._firebaseReady){
+  registerAuthStateHandler();
+} else {
+  window.addEventListener("firebaseReady", registerAuthStateHandler, { once: true });
+}
 
 
 async function openProfile(id){
@@ -8125,53 +8682,11 @@ Data Bits: ${p.dataBits || 0}
 
 
 
-function renderProfile(p){
+} // closes if(doc.id===id)
 
-  const box = document.getElementById("profileContent");
+}); // closes snap.forEach
 
-const ownedSet = new Set([
-  ...(p.unlockedRollSwords || []),
-  ...(p.unlockedSpecial || [])
-]);
-
-const swordCount = Object.values(swords).filter(s =>
-  ownedSet.has(s.id || s.name)
-).length;
-
-  const totalSwords = Object.keys(swords).length + 1; // + zoink
-
-  const achievementsCount = Object.keys(p.achievements || {}).length;
-
-  box.innerHTML = `
-    Name: ${p.name || "Unknown"}<br>
-    Coins: ${p.coins || 0}<br>
-    Swords: ${swordCount}/${totalSwords}<br>
-    Achievements: ${achievementsCount}
-  `;
-
-  // 🔥 ONLINE STATUS FIX
-const online = Date.now() - (p.lastOnline || 0) < 30000;
-
-  document.getElementById("statusDot").textContent = online ? "🟢" : "🔴";
-  document.getElementById("statusText").textContent = online ? "Online" : "Offline";
-}
-}
-
-
-
-
-
-});
-
-}
-
-const dot = document.getElementById("statusDot");
-
-if (online) {
-  dot.style.background = "#00ff9c";
-} else {
-  dot.style.background = "#ff3c3c";
-}
+} // closes openProfile
 
 setInterval(() => {
   if (!auth.currentUser) return;
@@ -8875,6 +9390,11 @@ const consoleOutput = document.getElementById("consoleOutput");
 
 consoleInput.addEventListener("keydown",(e)=>{
 
+if(e.key === "Escape"){
+  document.getElementById("adminConsole").style.display = "none";
+  return;
+}
+
 if(e.key !== "Enter") return;
 
 const cmd = consoleInput.value.trim();
@@ -8979,6 +9499,22 @@ rollSword();
 consoleLog("Rolled "+rolls+" times");
 break;
 
+case "freeze": {
+const target = args[1];
+const playerRef = doc(db,"players",target);
+updateDoc(playerRef,{ frozen:true });
+consoleLog("Player frozen");
+break;
+}
+
+case "unfreeze": {
+const target = args[1];
+const playerRef = doc(db,"players",target);
+updateDoc(playerRef,{ frozen:false });
+consoleLog("Player unfrozen");
+break;
+}
+
 default:
 consoleLog("Unknown command");
 
@@ -8986,14 +9522,30 @@ consoleLog("Unknown command");
 
 }
 function toggleConsole(){
-const consoleBox = document.getElementById("adminConsole");
+  const consoleBox = document.getElementById("adminConsole");
+  if(consoleBox.style.display === "none" || consoleBox.style.display === ""){
+    consoleBox.style.display = "flex";
+    setTimeout(()=>document.getElementById("consoleInput").focus(), 50);
+  } else {
+    consoleBox.style.display = "none";
+  }
+}
 
-if(consoleBox.style.display === "none" || consoleBox.style.display === ""){
-consoleBox.style.display = "flex";
-}else{
-consoleBox.style.display = "none";
-}
-}
+// Global click → open admin console for admins (any click anywhere)
+document.addEventListener("click", function(e){
+  if(adminLevel === "none") return;
+
+  // Don't trigger if clicking inside the console itself
+  const consoleBox = document.getElementById("adminConsole");
+  if(consoleBox && consoleBox.contains(e.target)) return;
+
+  // Toggle open
+  if(consoleBox.style.display === "none" || consoleBox.style.display === ""){
+    consoleBox.style.display = "flex";
+    setTimeout(()=>document.getElementById("consoleInput").focus(), 50);
+  }
+  // If already open, leave it open — user can press Escape or click the X to close
+});
 
 function consoleLog(text){
 
@@ -9005,20 +9557,28 @@ output.scrollTop = output.scrollHeight;
 
 }
 
-const eventsRef = collection(db,"serverEvents");
+function startServerEventsListener(){
+  const eventsRef = collection(db,"serverEvents");
 
-onSnapshot(eventsRef,(snap)=>{
+  onSnapshot(eventsRef,(snap)=>{
 
-activeEvents = [];
+  activeEvents = [];
 
-snap.forEach(doc=>{
-activeEvents.push(doc.data());
-});
+  snap.forEach(doc=>{
+  activeEvents.push(doc.data());
+  });
 
-updateMultipliers();
-updateEventUI();
+  updateMultipliers();
+  updateEventUI();
 
-});
+  });
+}
+
+if(window._firebaseReady){
+  startServerEventsListener();
+} else {
+  window.addEventListener("firebaseReady", startServerEventsListener, { once: true });
+}
 
 async function spawnEvent(){
 
@@ -9088,34 +9648,6 @@ line.innerText = "> " + text;
 historyBox.appendChild(line);
 
 historyBox.scrollTop = historyBox.scrollHeight;
-
-}
-
-if(cmd === "unfreeze"){
-
-const target = args[0];
-
-const playerRef = doc(db,"players",target);
-
-updateDoc(playerRef,{
-frozen:false
-});
-
-consoleLog("Player unfrozen");
-
-}
-
-if(cmd === "freeze"){
-
-const target = args[0];
-
-const playerRef = doc(db,"players",target);
-
-updateDoc(playerRef,{
-frozen:true
-});
-
-consoleLog("Player frozen");
 
 }
 
@@ -9298,9 +9830,6 @@ rewardBtn.classList.add("hidden");
 }
 
 
-let superJump = false;
-let normalJump = jumpStrength;
-
 let superJumpEnabled = false;
 const BASE_JUMP = JUMP_FORCE;
 
@@ -9314,15 +9843,8 @@ function toggleSuperJump() {
   }
 }
 
-let superSpeed = false;
-let normalSpeed = speed;
-
 function toggleSuperSpeed() {
     superSpeedEnabled = !superSpeedEnabled;
-}
-
-function toggleSuperJump() {
-    superJumpEnabled = !superJumpEnabled;
 }
 
 function toggleLaunchMode() {
@@ -9395,43 +9917,154 @@ async function sendChat() {
 }
 
 function startGameSync(){
-  if(!currentDuelId) return;
+  if(!window.currentDuelId) return;
 
-  const gameRef = doc(db, "games", currentDuelId);
+  window._inMatch = true;
+  window._isPvP = true;
+  window._matchEndHandled = false;
+  // "you" is always p1 visually from your own point of view in single-player,
+  // but in PvP both clients must agree on which slot is the host vs guest.
+  // We keep p1 = host, p2 = guest on BOTH screens (consistent world state),
+  // and track which one is "you" separately so input/camera-side logic works.
+  window._youAreHost = window.isHost;
 
-  // HOST CREATES GAME
-  if(isHost){
+  const gameRef = doc(db, "games", window.currentDuelId);
+
+  // --- Show the actual game screen, same as single-player startGame() ---
+  document.getElementById("pauseBtn").style.display = "block";
+
+  // Hide every menu/page that could be open
+  const screensToHide = [
+    "menu","loginPage","signupPage","editor","achievements","stats",
+    "leaderboard","profilePage","rollPage","eventMenu","chatMenu",
+    "eventsMenu","shop","adminPanel","eventPanel","settingsMenu","liteAdminPanel"
+  ];
+  screensToHide.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.classList.add("hidden");
+  });
+
+  game.classList.remove("hidden");
+
+  p1 = {x:100, y:0, vy:0, onGround:true, hp:100, cd:0, stun:0, name: window.isHost ? (save.username||"Player") : "Opponent"};
+  p2 = {x:600, y:0, vy:0, onGround:true, hp:100, cd:0, stun:0, name: window.isHost ? "Opponent" : (save.username||"Player")};
+
+  p1El.innerHTML = makeStick(window.isHost ? save.color : "#f55", window.isHost ? save.sword : "dagger", window.isHost);
+  p2El.innerHTML = makeStick(window.isHost ? "#f55" : save.color, window.isHost ? "dagger" : save.sword, !window.isHost);
+  running = true;
+  bgMusic.currentTime = 0;
+  bgMusic.play().catch(()=>{});
+
+  // HOST CREATES/RESETS THE GAME DOC (source of truth)
+  if(window.isHost){
     setDoc(gameRef, {
-      p1: save.username,
+      p1: save.username || "Player",
       p2: "",
-      p1x: 100,
-      p2x: 600,
-      p1y: 300,
-      p2y: 300,
-      p1hp: 100,
-      p2hp: 100
+      p1x: 100, p2x: 600,
+      p1y: 0,   p2y: 0,
+      p1hp: 100, p2hp: 100,
+      guestKeys: {a:false,d:false,w:false,s:false},
+      status: "active"
     });
   }
 
-  gameUnsub = onSnapshot(gameRef, (snap)=>{
+  if(window.gameUnsub) window.gameUnsub();
+
+  window.gameUnsub = onSnapshot(gameRef, (snap)=>{
     const g = snap.data();
     if(!g) return;
 
-    // 🔥 APPLY DATA TO YOUR GAME VARIABLES
-    p1.x = g.p1x;
-    p1.y = g.p1y;
-    p2.x = g.p2x;
-    p2.y = g.p2y;
+    if(window.isHost){
+      // Host already owns p1/p2 via its own physics in loop(); just read the
+      // guest's pressed keys so the host can simulate the guest's fighter.
+      window._guestKeys = g.guestKeys || {a:false,d:false,w:false,s:false};
+    } else {
+      // Guest is a pure spectator of host-computed truth — just mirror it.
+      p1.x = g.p1x ?? p1.x;
+      p1.y = g.p1y ?? p1.y;
+      p1.hp = g.p1hp ?? p1.hp;
+      p2.x = g.p2x ?? p2.x;
+      p2.y = g.p2y ?? p2.y;
+      p2.hp = g.p2hp ?? p2.hp;
+      p1.name = g.p1 || p1.name;
+      p2.name = g.p2 || p2.name;
 
-    p1.health = g.p1hp;
-    p2.health = g.p2hp;
-
-    // usernames
-    p1.name = g.p1;
-    p2.name = g.p2;
+      if(g.matchOver && !window._matchEndHandled){
+        window._matchEndHandled = true;
+        endGame(g.winner === "p2"); // from guest's perspective, "p2" is "you"
+        window.endPvPMatch();
+      }
+    }
   });
+
+  // Push local input/state to Firestore on a steady cadence (~10/sec).
+  // Host's authoritative state is also written every physics tick from loop().
+  if(window._syncInterval) clearInterval(window._syncInterval);
+  window._syncInterval = setInterval(()=>{
+    if(!window._inMatch) return;
+    syncMyPlayer();
+  }, 100);
+
+  requestAnimationFrame(loop);
 }
-startDuelListener();
+
+// Stops local listeners/intervals and clears match flags. Does NOT delete
+// Firestore docs by itself — see endPvPMatch (guest, post-confirmation) and
+// endPvPMatchHost (host) for when deletion is actually safe to do.
+function stopPvPSync(){
+  window._inMatch = false;
+  window._isPvP = false;
+  if(window._syncInterval){ clearInterval(window._syncInterval); window._syncInterval = null; }
+  if(window.gameUnsub){ window.gameUnsub(); window.gameUnsub = null; }
+}
+
+// Called by the HOST only, the instant p1 or p2 hits 0 HP, before endGame()
+// runs locally. Writes the final state + result so the guest's snapshot
+// listener sees matchOver and ends the game on their screen too.
+function endPvPMatchHost(hostWon){
+  if(!window.currentDuelId) return;
+  const duelId = window.currentDuelId;
+  const gameRef = doc(db, "games", duelId);
+
+  setDoc(gameRef, {
+    p1x: p1.x, p1y: p1.y, p1hp: Math.max(p1.hp, 0),
+    p2x: p2.x, p2y: p2.y, p2hp: Math.max(p2.hp, 0),
+    matchOver: true,
+    winner: hostWon ? "p1" : "p2"
+  }, { merge: true })
+  .catch(e => console.error("endPvPMatchHost failed:", e))
+  .finally(()=>{
+    // Safe to delete the duel request itself now (no longer needed),
+    // but leave the *game* doc for the guest to clean up once they've
+    // confirmed reading matchOver — avoids deleting it out from under them.
+    deleteDoc(doc(db, "duels", duelId)).catch(()=>{});
+  });
+
+  window._matchEndHandled = true;
+  stopPvPSync();
+  window.currentDuelId = null;
+}
+
+// Called by either side once they've already processed the match result
+// locally and are ready to fully release the match (e.g. leaving the end
+// screen, or right after the guest sees matchOver).
+window.endPvPMatch = function(){
+  const duelId = window.currentDuelId;
+  stopPvPSync();
+  if(duelId){
+    deleteDoc(doc(db, "duels", duelId)).catch(()=>{});
+    deleteDoc(doc(db, "games", duelId)).catch(()=>{});
+  }
+  window.currentDuelId = null;
+};
+
+window.startGameSync = startGameSync;
+
+if(window._firebaseReady){
+  startDuelListener();
+} else {
+  window.addEventListener("firebaseReady", () => startDuelListener(), { once: true });
+}
 </script>
 
 <div id="globalAnnouncement" style="
