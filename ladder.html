@@ -743,16 +743,42 @@
     return { start, target, optimal, dateStr, number: puzzleNumber(dateStr) };
   }
 
-  /* ---------------- Storage helpers ---------------- */
-  async function storageGet(key){
+  /* ---------------- Storage helpers ----------------
+     Primary: window.storage (available inside the Claude.ai artifact panel).
+     Fallback: localStorage (so the game still remembers your streak if this
+     file is downloaded and opened directly in a normal browser, where
+     window.storage doesn't exist). We read from whichever has data and
+     write to both, so progress survives in either context. */
+  const LS_PREFIX = "ladder:";
+
+  function lsGet(key){
     try{
-      const r = await window.storage.get(key, false);
-      return r ? JSON.parse(r.value) : null;
+      const raw = localStorage.getItem(LS_PREFIX+key);
+      return raw ? JSON.parse(raw) : null;
     }catch(e){ return null; }
   }
+  function lsSet(key, value){
+    try{ localStorage.setItem(LS_PREFIX+key, JSON.stringify(value)); }
+    catch(e){ /* ignore (e.g. storage disabled) */ }
+  }
+
+  async function storageGet(key){
+    let remote = null;
+    if(typeof window.storage !== "undefined" && window.storage){
+      try{
+        const r = await window.storage.get(key, false);
+        remote = r ? JSON.parse(r.value) : null;
+      }catch(e){ remote = null; }
+    }
+    if(remote != null) return remote;
+    return lsGet(key);
+  }
   async function storageSet(key, value){
-    try{ await window.storage.set(key, JSON.stringify(value), false); }
-    catch(e){ /* ignore */ }
+    if(typeof window.storage !== "undefined" && window.storage){
+      try{ await window.storage.set(key, JSON.stringify(value), false); }
+      catch(e){ /* fall through to local backup */ }
+    }
+    lsSet(key, value);
   }
 
   const DEFAULT_STATS = {
