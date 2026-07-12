@@ -571,12 +571,13 @@ window.syncMyPlayer = async function(){
   } else {
     // Guest only reports their *intended input* (keys held) plus a heartbeat;
     // the host applies it and writes back authoritative state.
+    const k = window._keys || {};
     await setDoc(ref, {
       guestKeys: {
-        a: !!(keys.a || keys.keyleft),
-        d: !!(keys.d || keys.keyright),
-        w: !!(keys.w || keys[" "] || keys.keyup),
-        s: !!keys.s
+        a: !!(k.a || k.arrowleft),
+        d: !!(k.d || k.arrowright),
+        w: !!(k.w || k[" "] || k.arrowup),
+        s: !!k.s
       },
       p2: save.username || "Player",
       guestUpdated: Date.now()
@@ -3229,6 +3230,15 @@ body.hacked .scanline {
   to{ opacity: 1; transform: scale(1.05); }
 }
 
+/* Aura: pulsing drop-shadow on the fighter wrapper — works through overflow:hidden */
+.has-aura {
+  animation: auraPulseFilter 1.4s ease-in-out infinite alternate;
+}
+@keyframes auraPulseFilter {
+  from { filter: var(--aura-filter, drop-shadow(0 0 6px currentColor)); opacity: 0.85; }
+  to   { filter: var(--aura-filter, drop-shadow(0 0 18px currentColor)) drop-shadow(0 0 6px currentColor); opacity: 1; }
+}
+
 #beam{
   position:absolute;
   left:50%;
@@ -4210,20 +4220,7 @@ font-size:12px">
 
 <hr>
 
-<div id="adminConsole" class="admin-console" style="display:none;">
-<div class="console-header">Admin Console <span onclick="document.getElementById('adminConsole').style.display='none'" style="float:right;cursor:pointer;color:#ff4444;padding:0 6px;">✕</span></div>
 
-<div id="consoleOutput" class="console-output"></div>
-
-<div class="console-input-row">
-<span class="console-prefix">></span>
-<input id="consoleInput" type="text" placeholder="type command..." autocomplete="off">
-</div>
-</div>
-<button onclick="runAdminCommand(consoleInput.value)">Execute</button>
-<button onclick="toggleConsole()">Console</button>
-
-</div>
 <div id="adminToggles" class="hidden adminStuff">
 <!-- TOGGLES -->
 <h3>Toggles</h3>
@@ -7346,8 +7343,9 @@ const GRAVITY=0.6; let JUMP_FORCE=-12; const GROUND_Y=40;
 const ARENA_WIDTH = 800;      // same as #game width
 const FIGHTER_WIDTH = 70;     // same as .fighter width
 let p1,p2,keys={};
-addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
-addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+addEventListener("keydown",e=>{ keys[e.key.toLowerCase()]=true; window._keys=keys; });
+addEventListener("keyup",e=>{ keys[e.key.toLowerCase()]=false; window._keys=keys; });
+window._keys = keys;
 
 function getSwordClasses(swordId){
   const s = swords[swordId] || {};
@@ -7370,17 +7368,19 @@ function makeStick(color,swordId, isPlayer=false){
   const s=swords[swordId];
   const { type, rarity } = getSwordClasses(swordId);
 
-  // Build aura glow HTML for player fighter only
-  let auraHtml = "";
+  // Aura: applied as a CSS class on the wrapper div, not a child element,
+  // so overflow:hidden on #game can't clip it (filter works on the element itself)
+  let auraStyle = "";
+  let auraClass = "";
   if(isPlayer && save.selectedAura && save.selectedAura !== "none"){
     const aura = (typeof AURAS !== "undefined") ? AURAS.find(a => a.id === save.selectedAura) : null;
     if(aura){
-      auraHtml = `<div class="aura-glow" style="position:absolute;inset:-14px;border-radius:50%;pointer-events:none;z-index:0;box-shadow:0 0 18px 6px ${aura.color},0 0 40px 10px ${aura.color}88;animation:auraPulseGlow 1.2s ease-in-out infinite alternate;"></div>`;
+      auraStyle = `filter:drop-shadow(0 0 8px ${aura.color}) drop-shadow(0 0 16px ${aura.color});`;
+      auraClass = "has-aura";
     }
   }
 
-  return `<div style="--c:${color}; position:relative;">
-  ${auraHtml}
+  return `<div style="--c:${color}; position:relative; ${auraStyle}" class="${auraClass}">
    <div class="head">
   ${save.hat && save.hat !== "none" ? `<div class="hat ${save.hat}"></div>` : ""}
 </div>
@@ -9384,36 +9384,14 @@ alert("Locked: "+s.name);
 
 }
 
-const consoleInput = document.getElementById("consoleInput");
-const consoleOutput = document.getElementById("consoleOutput");
-
-
-consoleInput.addEventListener("keydown",(e)=>{
-
-if(e.key === "Escape"){
-  document.getElementById("adminConsole").style.display = "none";
-  return;
-}
-
-if(e.key !== "Enter") return;
-
-const cmd = consoleInput.value.trim();
-consoleInput.value="";
-
-runAdminCommand(cmd);
-
-});
+// consoleInput/Output and keydown listener now defined in the console logic block below
 
 function consoleLog(msg){
-
 const line=document.createElement("div");
-
 line.textContent="> "+msg;
-
+const consoleOutput = document.getElementById("consoleOutput");
 consoleOutput.appendChild(line);
-
 consoleOutput.scrollTop=consoleOutput.scrollHeight;
-
 }
 
 function runAdminCommand(cmd){
@@ -9521,41 +9499,81 @@ consoleLog("Unknown command");
 }
 
 }
+// ======= ADMIN CONSOLE LOGIC =======
+const ADMIN_COMMANDS = [
+  "help","coins","wins","losses","unlock","unlockall","instakill","godmode",
+  "givecoins","roll","hitboxes","freeze","unfreeze","invincible","launchmode",
+  "superSpeed","superJump","kill","fling","sethp","pvp"
+];
+
 function toggleConsole(){
-  const consoleBox = document.getElementById("adminConsole");
-  if(consoleBox.style.display === "none" || consoleBox.style.display === ""){
-    consoleBox.style.display = "flex";
-    setTimeout(()=>document.getElementById("consoleInput").focus(), 50);
-  } else {
-    consoleBox.style.display = "none";
-  }
+  const box = document.getElementById("adminConsole");
+  if(adminLevel === "none") return;
+  const isHidden = box.style.display === "none" || box.style.display === "";
+  box.style.display = isHidden ? "flex" : "none";
+  if(isHidden) setTimeout(()=>document.getElementById("consoleInput").focus(), 30);
 }
 
-// Global click → open admin console for admins (any click anywhere)
-document.addEventListener("click", function(e){
+// Open on "/" keypress anywhere (admin only), close on Escape
+document.addEventListener("keydown", function(e){
   if(adminLevel === "none") return;
+  const box = document.getElementById("adminConsole");
+  const input = document.getElementById("consoleInput");
+  const focused = document.activeElement;
 
-  // Don't trigger if clicking inside the console itself
-  const consoleBox = document.getElementById("adminConsole");
-  if(consoleBox && consoleBox.contains(e.target)) return;
-
-  // Toggle open
-  if(consoleBox.style.display === "none" || consoleBox.style.display === ""){
-    consoleBox.style.display = "flex";
-    setTimeout(()=>document.getElementById("consoleInput").focus(), 50);
+  if(e.key === "/" && focused !== input){
+    e.preventDefault();
+    box.style.display = "flex";
+    setTimeout(()=>input.focus(), 30);
+    return;
   }
-  // If already open, leave it open — user can press Escape or click the X to close
+  if(e.key === "Escape"){
+    box.style.display = "none";
+    document.getElementById("consoleSuggestions").style.display = "none";
+  }
 });
 
-function consoleLog(text){
+// Autocomplete logic
+const consoleInput = document.getElementById("consoleInput");
+const consoleOutput = document.getElementById("consoleOutput");
+const consoleSuggestions = document.getElementById("consoleSuggestions");
 
-const output = document.getElementById("consoleOutput");
+consoleInput.addEventListener("input", function(){
+  const val = consoleInput.value.trim().toLowerCase();
+  if(!val){ consoleSuggestions.style.display="none"; return; }
+  const matches = ADMIN_COMMANDS.filter(c => c.startsWith(val));
+  if(!matches.length || (matches.length===1 && matches[0]===val)){
+    consoleSuggestions.style.display="none"; return;
+  }
+  consoleSuggestions.innerHTML = matches.map(m =>
+    `<div class="console-suggestion" onclick="consoleInput.value='${m} ';consoleSuggestions.style.display='none';consoleInput.focus();"
+      style="padding:5px 10px;cursor:pointer;color:#00ff9c;font-family:monospace;font-size:13px;"
+      onmouseover="this.style.background='#1a3a2a'" onmouseout="this.style.background=''"
+    >${m}</div>`
+  ).join("");
+  consoleSuggestions.style.display = "block";
+});
 
-output.innerHTML += "<div>> " + text + "</div>";
+consoleInput.addEventListener("keydown", function(e){
+  if(e.key === "Tab"){
+    e.preventDefault();
+    const val = consoleInput.value.trim().toLowerCase();
+    const matches = ADMIN_COMMANDS.filter(c => c.startsWith(val));
+    if(matches.length) { consoleInput.value = matches[0] + " "; consoleSuggestions.style.display="none"; }
+    return;
+  }
+  if(e.key === "Escape"){
+    document.getElementById("adminConsole").style.display = "none";
+    consoleSuggestions.style.display = "none";
+    return;
+  }
+  if(e.key !== "Enter") return;
+  const cmd = consoleInput.value.trim();
+  consoleInput.value = "";
+  consoleSuggestions.style.display = "none";
+  if(cmd) runAdminCommand(cmd);
+});
 
-output.scrollTop = output.scrollHeight;
-
-}
 
 function startServerEventsListener(){
   const eventsRef = collection(db,"serverEvents");
@@ -9640,15 +9658,10 @@ await deleteDoc(doc(db,"serverEvents",e.type));
 
 const historyBox = document.getElementById("consoleHistory");
 
-function consoleLog(text){
-
+function lbConsoleLog(text){
 const line = document.createElement("div");
 line.innerText = "> " + text;
-
-historyBox.appendChild(line);
-
-historyBox.scrollTop = historyBox.scrollHeight;
-
+if(historyBox){ historyBox.appendChild(line); historyBox.scrollTop = historyBox.scrollHeight; }
 }
 
 function updateTabUI(){
@@ -9959,6 +9972,9 @@ function startGameSync(){
   if(window.isHost){
     setDoc(gameRef, {
       p1: save.username || "Player",
+      p1color: save.color || "#ffffff",
+      p1sword: save.sword || "dagger",
+      p1hat: save.hat || "none",
       p2: "",
       p1x: 100, p2x: 600,
       p1y: 0,   p2y: 0,
@@ -9966,6 +9982,13 @@ function startGameSync(){
       guestKeys: {a:false,d:false,w:false,s:false},
       status: "active"
     });
+  } else {
+    // Guest writes own appearance so host can render them
+    setDoc(gameRef, {
+      p2color: save.color || "#ffffff",
+      p2sword: save.sword || "dagger",
+      p2hat: save.hat || "none",
+    }, { merge: true });
   }
 
   if(window.gameUnsub) window.gameUnsub();
@@ -9975,11 +9998,19 @@ function startGameSync(){
     if(!g) return;
 
     if(window.isHost){
-      // Host already owns p1/p2 via its own physics in loop(); just read the
-      // guest's pressed keys so the host can simulate the guest's fighter.
+      // Host reads guest keys for simulation
       window._guestKeys = g.guestKeys || {a:false,d:false,w:false,s:false};
+      // Apply guest appearance (p2) when it arrives
+      if(g.p2color && g.p2color !== window._lastP2Color){
+        window._lastP2Color = g.p2color;
+        // Temporarily swap save fields to build opponent stickman, then restore
+        const myColor=save.color, mySword=save.sword, myHat=save.hat;
+        save.color=g.p2color; save.sword=g.p2sword||"dagger"; save.hat=g.p2hat||"none";
+        p2El.innerHTML = makeStick(save.color, save.sword, false);
+        save.color=myColor; save.sword=mySword; save.hat=myHat;
+      }
     } else {
-      // Guest is a pure spectator of host-computed truth — just mirror it.
+      // Guest mirrors host-computed positions/hp
       p1.x = g.p1x ?? p1.x;
       p1.y = g.p1y ?? p1.y;
       p1.hp = g.p1hp ?? p1.hp;
@@ -9988,10 +10019,17 @@ function startGameSync(){
       p2.hp = g.p2hp ?? p2.hp;
       p1.name = g.p1 || p1.name;
       p2.name = g.p2 || p2.name;
-
+      // Apply host appearance (p1) when it arrives
+      if(g.p1color && g.p1color !== window._lastP1Color){
+        window._lastP1Color = g.p1color;
+        const myColor=save.color, mySword=save.sword, myHat=save.hat;
+        save.color=g.p1color; save.sword=g.p1sword||"dagger"; save.hat=g.p1hat||"none";
+        p1El.innerHTML = makeStick(save.color, save.sword, false);
+        save.color=myColor; save.sword=mySword; save.hat=myHat;
+      }
       if(g.matchOver && !window._matchEndHandled){
         window._matchEndHandled = true;
-        endGame(g.winner === "p2"); // from guest's perspective, "p2" is "you"
+        endGame(g.winner === "p2");
         window.endPvPMatch();
       }
     }
@@ -10128,10 +10166,41 @@ overflow:hidden;
   </div>
 
 </div>
-
 <div id="abuseText">ADMIN ABUSE</div>
 </div>
 <div id="slashContainer"></div>
 <div id="beam"></div>
+<!-- ======= FLOATING ADMIN CONSOLE (always on top, body-level) ======= -->
+<div id="adminConsole" style="
+  display:none;
+  position:fixed;
+  bottom:60px;
+  left:50%;
+  transform:translateX(-50%);
+  width:560px;
+  max-width:96vw;
+  background:rgba(0,0,0,0.97);
+  border:2px solid #00ff9c;
+  border-radius:8px;
+  box-shadow:0 0 30px #00ff9c,0 0 60px rgba(0,255,156,0.2);
+  font-family:monospace;
+  color:#00ff9c;
+  flex-direction:column;
+  z-index:2147483647;
+  overflow:hidden;
+">
+  <div style="background:#111;padding:6px 10px;border-bottom:1px solid #00ff9c;display:flex;justify-content:space-between;align-items:center;">
+    <span style="color:#fff;text-shadow:0 0 5px #00ff9c;">⌨ Admin Console</span>
+    <span onclick="document.getElementById('adminConsole').style.display='none'" style="cursor:pointer;color:#ff4444;font-size:16px;padding:0 4px;">✕</span>
+  </div>
+  <div id="consoleOutput" style="flex:1;height:220px;overflow-y:auto;padding:10px;font-size:13px;color:#00ff9c;background:repeating-linear-gradient(0deg,#000,#000 2px,#050505 2px,#050505 4px);"></div>
+  <!-- Autocomplete suggestions -->
+  <div id="consoleSuggestions" style="display:none;background:#111;border-top:1px solid #333;max-height:120px;overflow-y:auto;"></div>
+  <div style="display:flex;border-top:1px solid #00ff9c;background:#000;">
+    <span style="padding:8px 6px;color:#ff00ff;">›</span>
+    <input id="consoleInput" type="text" placeholder="type command… (Tab to complete)" autocomplete="off" style="flex:1;background:transparent;border:none;color:#00ff9c;outline:none;font-family:monospace;font-size:13px;padding:8px 4px;">
+  </div>
+</div>
+
 </body>
 </html>
