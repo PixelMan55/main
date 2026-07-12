@@ -108,6 +108,75 @@
     border-radius: 6px;
     box-shadow: 0 0 0 3px #0d0716, 0 0 30px rgba(53,240,255,0.15);
     background: #05030a;
+    transition: box-shadow .3s ease, border-color .3s ease;
+  }
+
+  #board-wrap.danger{
+    border-color: #ff2b4d;
+    animation: danger-pulse 0.9s ease-in-out infinite;
+  }
+  @keyframes danger-pulse{
+    0%,100%{ box-shadow: 0 0 0 3px #0d0716, 0 0 18px rgba(255,43,77,0.35); }
+    50%{ box-shadow: 0 0 0 3px #0d0716, 0 0 40px rgba(255,43,77,0.85); }
+  }
+
+  #flash-overlay{
+    position:absolute; inset:0;
+    background: #fff;
+    opacity:0;
+    pointer-events:none;
+    z-index: 4;
+  }
+  #flash-overlay.hit{
+    animation: flash-pop 0.35s ease-out;
+  }
+  @keyframes flash-pop{
+    0%{ opacity:0.85; }
+    100%{ opacity:0; }
+  }
+
+  #banner-container{
+    position:absolute;
+    top: 42%; left:0; right:0;
+    display:flex; flex-direction:column; align-items:center;
+    pointer-events:none;
+    z-index: 7;
+  }
+  .banner{
+    font-family:'Press Start 2P', monospace;
+    font-size: clamp(14px, 3.2vw, 22px);
+    text-align:center;
+    padding: 8px 14px;
+    letter-spacing: 1px;
+    animation: banner-pop 1.6s cubic-bezier(.2,.9,.3,1) forwards;
+    white-space: nowrap;
+  }
+  @keyframes banner-pop{
+    0%{ opacity:0; transform: scale(0.4) rotate(-3deg); }
+    12%{ opacity:1; transform: scale(1.15) rotate(2deg); }
+    22%{ transform: scale(1) rotate(0deg); }
+    78%{ opacity:1; }
+    100%{ opacity:0; transform: scale(1.1) translateY(-16px); }
+  }
+
+  #countdown-overlay{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    pointer-events:none;
+    z-index: 8;
+  }
+  .countdown-num{
+    font-family:'Press Start 2P', monospace;
+    font-size: 64px;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 14px var(--neon-yellow), 0 0 30px var(--neon-yellow);
+    animation: countdown-pop 0.9s ease-out forwards;
+  }
+  @keyframes countdown-pop{
+    0%{ opacity:0; transform: scale(0.3); }
+    30%{ opacity:1; transform: scale(1.2); }
+    45%{ transform: scale(1); }
+    100%{ opacity:0; transform: scale(0.9); }
   }
 
   canvas#board{
@@ -331,7 +400,10 @@
       <canvas id="board" width="300" height="600"></canvas>
       <div id="scanlines"></div>
       <div id="vignette"></div>
+      <div id="flash-overlay"></div>
       <div id="toast-container"></div>
+      <div id="banner-container"></div>
+      <div id="countdown-overlay"></div>
 
       <div id="overlay">
         <h2>RETRO BLOCKS</h2>
@@ -354,6 +426,18 @@
           <div><span class="pw-icon">🌈</span> Rainbow — bonus row clear</div>
           <div><span class="pw-icon">✕2</span> Multi — 2x score x3 clears</div>
           <div><span class="pw-icon">⏱</span> Slow-Mo — slows the drop</div>
+        </div>
+      </div>
+      <div>
+        <div class="label">RANDOM TWISTS</div>
+        <div id="powerup-list">
+          <div><span class="pw-icon">🔀</span> Mirror — controls flip</div>
+          <div><span class="pw-icon">🚀</span> Turbo — faster drop</div>
+          <div><span class="pw-icon">💥</span> Frenzy — score x2</div>
+          <div><span class="pw-icon">🪩</span> Disco — board glows wild</div>
+          <div><span class="pw-icon">🪙</span> Coin — bonus block appears</div>
+          <div><span class="pw-icon">⬛</span> Big Block — giant piece</div>
+          <div><span class="pw-icon">🛡️</span> Shield — saves one game over</div>
         </div>
       </div>
       <div>
@@ -420,6 +504,14 @@
   };
   const TYPE_KEYS = Object.keys(SHAPES);
 
+  // Rare "giant" piece — kept out of the normal bag, only spawned via the BIG BLOCK twist
+  const GIANT_SHAPES = {
+    PLUS: { color:"#fff2a8", matrix:[
+      [0,1,0],[1,1,1],[0,1,0]
+    ]}
+  };
+  function getShapeDef(type){ return SHAPES[type] || GIANT_SHAPES[type]; }
+
   // ---------- STATE ----------
   let board = makeBoard();
   let bag = [];
@@ -430,6 +522,17 @@
   let combo = 0;
   let multiplier = 1, multiplierClearsLeft = 0;
   let slowMoActive = false, slowMoTimeout = null;
+  let mirrorActive = false, mirrorTimeout = null;
+  let turboActive = false, turboTimeout = null;
+  let frenzyActive = false, frenzyTimeout = null;
+  let discoActive = false, discoTimeout = null;
+  let shieldActive = false;
+  let pendingGiant = false;
+  let lastWasTetris = false;
+  let dangerActive = false;
+  let musicInterval = null;
+  let musicStep = 0;
+  const TWIST_CHANCE = 0.22;
   let landed = false;
   let dropTimer = 0;
   let lastTime = 0;
@@ -477,8 +580,31 @@
     clear: (n)=>beep(440+n*90,0.18,"square",0.06),
     power: ()=>beep(660,0.2,"sawtooth",0.05),
     levelup: ()=>{ beep(523,0.1,"square",0.06); setTimeout(()=>beep(659,0.1,"square",0.06),100); setTimeout(()=>beep(784,0.15,"square",0.06),200); },
+    fanfare: ()=>{ beep(523,0.12,"square",0.07); setTimeout(()=>beep(659,0.12,"square",0.07),110); setTimeout(()=>beep(784,0.12,"square",0.07),220); setTimeout(()=>beep(1047,0.25,"square",0.08),330); },
+    heartbeat: ()=>beep(70,0.09,"sine",0.05),
     gameover: ()=>{ beep(200,0.3,"sawtooth",0.06); setTimeout(()=>beep(140,0.4,"sawtooth",0.06),200); }
   };
+
+  // ---------- BACKGROUND MUSIC (simple procedural loop, speeds up with level) ----------
+  const BASS_NOTES = [110.00, 130.81, 146.83, 164.81];
+  function beatMs(){ return Math.max(190, 480 - (level-1)*22); }
+  function startMusic(){
+    stopMusic();
+    musicStep = 0;
+    musicInterval = setInterval(()=>{
+      if(!muted && running && !paused && !gameOver){
+        beep(BASS_NOTES[musicStep % BASS_NOTES.length], 0.14, "triangle", 0.025);
+        if(musicStep % 4 === 0) beep(BASS_NOTES[0]/2, 0.2, "sine", 0.02);
+      }
+      musicStep++;
+    }, beatMs());
+  }
+  function restartMusic(){
+    if(musicInterval) startMusic();
+  }
+  function stopMusic(){
+    if(musicInterval){ clearInterval(musicInterval); musicInterval = null; }
+  }
 
   // ---------- BAG RANDOMIZER ----------
   function refillBag(){
@@ -496,7 +622,7 @@
 
   // ---------- PIECE ----------
   function makePieceFromType(type){
-    const def = SHAPES[type];
+    const def = getShapeDef(type);
     const matrix = def.matrix.map(r=>r.slice());
     const size = matrix.length;
     const piece = {
@@ -517,15 +643,38 @@
 
   let queuedNextType = null;
   function spawnPiece(){
-    const type = queuedNextType || nextType();
+    let type = queuedNextType || nextType();
     queuedNextType = nextType();
+    if(pendingGiant){
+      type = "PLUS";
+      pendingGiant = false;
+      showToast("⬛ BIG BLOCK!");
+    }
     current = makePieceFromType(type);
     landed = false;
     holdUsed = false;
     if(collide(current.matrix, current.row, current.col)){
-      triggerGameOver();
+      if(useShieldIfAvailable()){
+        if(collide(current.matrix, current.row, current.col)){
+          doGameOver();
+          return;
+        }
+      } else {
+        doGameOver();
+        return;
+      }
     }
     drawNext();
+  }
+
+  function useShieldIfAvailable(){
+    if(!shieldActive) return false;
+    shieldActive = false;
+    for(let r=0;r<5;r++) board[r] = Array(COLS).fill(null);
+    showToast("🛡️ SHIELD SAVED YOU!");
+    sfx.power();
+    updateHud();
+    return true;
   }
 
   function collide(matrix, row, col){
@@ -573,6 +722,7 @@
 
   function tryMove(dir){
     if(!current || paused || gameOver) return;
+    if(mirrorActive) dir = -dir;
     if(!collide(current.matrix, current.row, current.col+dir)){
       current.col += dir;
       landed = false;
@@ -635,10 +785,13 @@
     }
     sfx.lock();
     if(aboveTop){
-      triggerGameOver();
-      return;
+      if(!useShieldIfAvailable()){
+        doGameOver();
+        return;
+      }
     }
     clearLines();
+    if(Math.random() < TWIST_CHANCE) triggerRandomTwist();
     spawnPiece();
   }
 
@@ -647,10 +800,10 @@
     for(let r=0;r<ROWS;r++){
       if(board[r].every(cell=>cell)) fullRows.push(r);
     }
-    if(fullRows.length===0){ combo = 0; updateHud(); return; }
+    if(fullRows.length===0){ combo = 0; checkDangerZone(); updateHud(); return; }
 
     const rowsToClear = new Set(fullRows);
-    const effects = { bomb:[], laser:[], rainbow:0, multi:0, slow:false };
+    const effects = { bomb:[], laser:[], rainbow:0, multi:0, slow:false, coins:0 };
 
     fullRows.forEach(r=>{
       board[r].forEach((cell,c)=>{
@@ -661,6 +814,7 @@
           else if(cell.power==="multi") effects.multi++;
           else if(cell.power==="slow") effects.slow = true;
         }
+        if(cell && cell.coin) effects.coins++;
       });
     });
 
@@ -673,11 +827,13 @@
       }
       spawnBurst(c*BLOCK+BLOCK/2, r*BLOCK+BLOCK/2, POWER_GLOW.bomb, 26);
       shakeTime = 260;
+      flashScreen();
     });
 
     effects.laser.forEach(c=>{
       for(let r=0;r<ROWS;r++) board[r][c]=null;
       spawnBurst(c*BLOCK+BLOCK/2, ROWS*BLOCK/2, POWER_GLOW.laser, 20);
+      flashScreen();
     });
 
     for(let i=0;i<effects.rainbow;i++){
@@ -719,23 +875,71 @@
 
     combo++;
     if(combo>1) points += combo*50*level;
+    if(combo>=3) showBanner("COMBO x"+combo+"!", "#ff2e8f");
 
     if(multiplierClearsLeft>0){
       points *= 2;
       multiplierClearsLeft--;
       if(multiplierClearsLeft===0) multiplier = 1;
     }
+    if(frenzyActive){ points *= 2; }
+
+    if(effects.coins>0){
+      const coinBonus = effects.coins * 300 * level;
+      points += coinBonus;
+      showToast("🪙 COIN BONUS! +"+coinBonus);
+    }
+
+    if(linesCleared===4){
+      if(lastWasTetris){
+        points = Math.round(points*1.5);
+        showBanner("BACK-TO-BACK TETRIS!", "#35f0ff");
+      } else {
+        showBanner("TETRIS!", "#35f0ff");
+      }
+      lastWasTetris = true;
+      flashScreen();
+    } else if(linesCleared>0){
+      lastWasTetris = false;
+    }
+
+    const boardEmpty = board.every(row=>row.every(cell=>!cell));
+    if(boardEmpty){
+      const clearBonus = 3000*level;
+      points += clearBonus;
+      showBanner("PERFECT CLEAR!", "#ffe135");
+      showToast("✨ PERFECT CLEAR! +"+clearBonus);
+      spawnBurst(COLS*BLOCK/2, ROWS*BLOCK/2, "#ffe135", 60);
+      flashScreen();
+      shakeTime = 300;
+      sfx.fanfare();
+    }
 
     score += points;
     totalLines += linesCleared;
     const newLevel = Math.floor(totalLines/10)+1;
-    if(newLevel>level){ level = newLevel; sfx.levelup(); showToast("LEVEL "+level+"!"); }
+    if(newLevel>level){
+      level = newLevel;
+      sfx.levelup();
+      showBanner("LEVEL "+level+"!", "#39ff6a");
+      restartMusic();
+    }
 
     if(linesCleared>=4) shakeTime = 320;
-    sfx.clear(linesCleared);
+    if(!boardEmpty) sfx.clear(linesCleared);
 
     if(score>highscore) highscore = score;
+    checkDangerZone();
     updateHud();
+  }
+
+  function checkDangerZone(){
+    let danger = false;
+    for(let r=0;r<4;r++){
+      if(board[r].some(cell=>cell)){ danger = true; break; }
+    }
+    dangerActive = danger;
+    document.getElementById("board-wrap").classList.toggle("danger", dangerActive);
   }
 
   function activateSlowMo(){
@@ -743,6 +947,75 @@
     if(slowMoTimeout) clearTimeout(slowMoTimeout);
     slowMoTimeout = setTimeout(()=>{ slowMoActive=false; updateHud(); }, 8000);
     updateHud();
+  }
+
+  // ---------- RANDOM TWISTS ----------
+  const TWISTS = [
+    { key:"mirror", icon:"🔀", label:"MIRROR CONTROLS" },
+    { key:"turbo",  icon:"🚀", label:"TURBO DROP" },
+    { key:"frenzy", icon:"💥", label:"SCORE FRENZY x2" },
+    { key:"disco",  icon:"🪩", label:"DISCO BOARD" },
+    { key:"coin",   icon:"🪙", label:"COIN BLOCK" },
+    { key:"giant",  icon:"⬛", label:"BIG BLOCK INCOMING" },
+    { key:"shield", icon:"🛡️", label:"GUARDIAN SHIELD" }
+  ];
+
+  function placeCoinOnBoard(){
+    const candidates = [];
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        const cell = board[r][c];
+        if(cell && !cell.power && !cell.coin) candidates.push([r,c]);
+      }
+    }
+    if(!candidates.length) return false;
+    const [r,c] = candidates[Math.floor(Math.random()*candidates.length)];
+    board[r][c].coin = true;
+    spawnBurst(c*BLOCK+BLOCK/2, r*BLOCK+BLOCK/2, "#ffd700", 10);
+    return true;
+  }
+
+  function triggerRandomTwist(){
+    let pool = TWISTS;
+    if(shieldActive) pool = pool.filter(t=>t.key!=="shield");
+    const twist = pool[Math.floor(Math.random()*pool.length)];
+    let applied = true;
+    switch(twist.key){
+      case "mirror":
+        mirrorActive = true;
+        if(mirrorTimeout) clearTimeout(mirrorTimeout);
+        mirrorTimeout = setTimeout(()=>{ mirrorActive=false; updateHud(); }, 10000);
+        break;
+      case "turbo":
+        turboActive = true;
+        if(turboTimeout) clearTimeout(turboTimeout);
+        turboTimeout = setTimeout(()=>{ turboActive=false; updateHud(); }, 8000);
+        break;
+      case "frenzy":
+        frenzyActive = true;
+        if(frenzyTimeout) clearTimeout(frenzyTimeout);
+        frenzyTimeout = setTimeout(()=>{ frenzyActive=false; updateHud(); }, 10000);
+        break;
+      case "disco":
+        discoActive = true;
+        if(discoTimeout) clearTimeout(discoTimeout);
+        discoTimeout = setTimeout(()=>{ discoActive=false; updateHud(); }, 7000);
+        break;
+      case "coin":
+        applied = placeCoinOnBoard();
+        break;
+      case "giant":
+        pendingGiant = true;
+        break;
+      case "shield":
+        shieldActive = true;
+        break;
+    }
+    if(applied){
+      showToast(twist.icon+" TWIST: "+twist.label+"!");
+      sfx.power();
+      updateHud();
+    }
   }
 
   // ---------- PARTICLES / SHAKE ----------
@@ -786,8 +1059,27 @@
     setTimeout(()=>el.remove(), 1450);
   }
 
+  // ---------- BIG BANNER (for major moments) ----------
+  function showBanner(text, color){
+    const container = document.getElementById("banner-container");
+    const el = document.createElement("div");
+    el.className = "banner";
+    el.textContent = text;
+    el.style.color = color || "#ffe135";
+    el.style.textShadow = "0 0 10px "+(color||"#ffe135")+", 0 0 26px "+(color||"#ffe135");
+    container.appendChild(el);
+    setTimeout(()=>el.remove(), 1650);
+  }
+
+  function flashScreen(){
+    const el = document.getElementById("flash-overlay");
+    el.classList.remove("hit");
+    void el.offsetWidth; // restart animation
+    el.classList.add("hit");
+  }
+
   // ---------- RENDER ----------
-  function drawBlock(g, x, y, color, powerType, glowPhase){
+  function drawBlock(g, x, y, color, powerType, glowPhase, isCoin){
     g.save();
     g.fillStyle = color;
     g.fillRect(x, y, BLOCK, BLOCK);
@@ -814,6 +1106,18 @@
       g.textAlign = "center";
       g.textBaseline = "middle";
       g.fillText(POWER_ICON[powerType], x+BLOCK/2, y+BLOCK/2+1);
+    } else if(isCoin){
+      const pulse = 0.5 + 0.5*Math.sin(glowPhase/150);
+      g.shadowColor = "#ffd700";
+      g.shadowBlur = 8 + pulse*8;
+      g.strokeStyle = "#ffd700";
+      g.lineWidth = 2;
+      g.strokeRect(x+3, y+3, BLOCK-6, BLOCK-6);
+      g.shadowBlur = 0;
+      g.font = "13px sans-serif";
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      g.fillText("🪙", x+BLOCK/2, y+BLOCK/2+1);
     }
     g.restore();
   }
@@ -841,14 +1145,19 @@
     }
 
     // locked blocks
+    if(discoActive){
+      ctx.save();
+      ctx.filter = "hue-rotate(" + ((Date.now()/8)%360) + "deg) saturate(1.6)";
+    }
     for(let r=0;r<ROWS;r++){
       for(let c=0;c<COLS;c++){
         const cell = board[r][c];
         if(cell){
-          drawBlock(ctx, c*BLOCK, r*BLOCK, cell.color, cell.power, glowPhase);
+          drawBlock(ctx, c*BLOCK, r*BLOCK, cell.color, cell.power, glowPhase, cell.coin);
         }
       }
     }
+    if(discoActive) ctx.restore();
 
     if(current){
       // ghost piece
@@ -887,7 +1196,7 @@
   function drawMini(g, canvas, type){
     g.clearRect(0,0,canvas.width, canvas.height);
     if(!type) return;
-    const def = SHAPES[type];
+    const def = getShapeDef(type);
     const matrix = def.matrix;
     const size = matrix.length;
     const cell = 20;
@@ -916,6 +1225,11 @@
     const effects = [];
     if(multiplierClearsLeft>0) effects.push("✕2 SCORE ("+multiplierClearsLeft+")");
     if(slowMoActive) effects.push("⏱ SLOW-MO");
+    if(mirrorActive) effects.push("🔀 MIRROR");
+    if(turboActive) effects.push("🚀 TURBO");
+    if(frenzyActive) effects.push("💥 FRENZY");
+    if(discoActive) effects.push("🪩 DISCO");
+    if(shieldActive) effects.push("🛡️ SHIELD READY");
     document.getElementById("active-effects").textContent = effects.join("   ");
   }
 
@@ -923,7 +1237,8 @@
   function dropIntervalForLevel(){
     let base = Math.max(90, 1000 - (level-1)*70);
     if(slowMoActive) base *= 2.2;
-    return base;
+    if(turboActive) base *= 0.45;
+    return Math.max(45, base);
   }
 
   function tick(dt){
@@ -956,9 +1271,10 @@
   }
 
   // ---------- GAME OVER / START ----------
-  function triggerGameOver(){
+  function doGameOver(){
     gameOver = true;
     running = false;
+    stopMusic();
     sfx.gameover();
     const overlay = document.getElementById("overlay");
     overlay.classList.remove("hidden");
@@ -972,10 +1288,42 @@
 
   function startGame(){
     ensureAudio();
+    document.getElementById("overlay").classList.add("hidden");
+    runCountdown(beginRun);
+  }
+
+  function runCountdown(callback){
+    const el = document.getElementById("countdown-overlay");
+    const seq = ["3","2","1","GO!"];
+    let i = 0;
+    function step(){
+      el.innerHTML = '<div class="countdown-num">'+seq[i]+'</div>';
+      beep(i<3 ? 440+i*90 : 880, 0.16, "square", 0.05);
+      i++;
+      if(i<seq.length){
+        setTimeout(step, 550);
+      } else {
+        setTimeout(()=>{ el.innerHTML = ""; callback(); }, 500);
+      }
+    }
+    step();
+  }
+
+  function beginRun(){
     board = makeBoard();
     score = 0; level = 1; totalLines = 0; combo = 0;
     multiplier = 1; multiplierClearsLeft = 0;
     slowMoActive = false;
+    if(slowMoTimeout) clearTimeout(slowMoTimeout);
+    mirrorActive = false; if(mirrorTimeout) clearTimeout(mirrorTimeout);
+    turboActive = false; if(turboTimeout) clearTimeout(turboTimeout);
+    frenzyActive = false; if(frenzyTimeout) clearTimeout(frenzyTimeout);
+    discoActive = false; if(discoTimeout) clearTimeout(discoTimeout);
+    shieldActive = false;
+    pendingGiant = false;
+    lastWasTetris = false;
+    dangerActive = false;
+    document.getElementById("board-wrap").classList.remove("danger");
     holdPiece = null; holdUsed = false;
     particles = [];
     gameOver = false; paused = false; running = true;
@@ -985,8 +1333,8 @@
     spawnPiece();
     drawHold();
     updateHud();
-    document.getElementById("overlay").classList.add("hidden");
     document.getElementById("pause-btn").textContent = "⏸ PAUSE";
+    startMusic();
   }
 
   function togglePause(){
