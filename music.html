@@ -1,52 +1,685 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom Audio Button</title>
-    <style>
-        /* Basic styling for the custom button */
-        #playButton {
-            background-color: #4CAF50;
-            border: none;
-            color: white;
-            padding: 15px 32px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 8px;
-        }
-        #playButton:hover {
-            background-color: #45a049;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel Boss Battle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#0d0221;
+    --bg-panel:#170a35;
+    --hp-red:#ff2e63;
+    --hp-yellow:#ffd23f;
+    --accent-cyan:#08f7fe;
+    --accent-green:#2ee6a6;
+    --line:#3a1f6b;
+    --text-dim:#a89fd1;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:24px;
+    background:
+      radial-gradient(circle at 50% 20%, #24124f 0%, var(--bg-deep) 60%);
+    font-family:'VT323', monospace;
+    overflow:hidden;
+    position:relative;
+    padding:32px 12px;
+  }
+
+  body::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.035) 0px,
+      rgba(255,255,255,0.035) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events:none;
+    z-index:5;
+  }
+
+  .cabinet{
+    width:min(90vw, 420px);
+    background:var(--bg-panel);
+    border:4px solid var(--line);
+    border-radius:12px;
+    box-shadow:
+      0 0 0 4px var(--bg-deep),
+      0 0 40px rgba(8,247,254,0.15),
+      0 20px 60px rgba(0,0,0,0.6);
+    padding:28px 24px 32px;
+    position:relative;
+    z-index:2;
+  }
+
+  .eyebrow{
+    font-family:'Press Start 2P', monospace;
+    font-size:9px;
+    letter-spacing:2px;
+    color:var(--hp-yellow);
+    text-align:center;
+    margin:0 0 14px;
+    text-shadow:0 0 8px rgba(255,210,63,0.6);
+  }
+
+  h1{
+    font-family:'Press Start 2P', monospace;
+    font-size:clamp(15px, 4.2vw, 20px);
+    line-height:1.6;
+    color:#fff;
+    text-align:center;
+    margin:0 0 20px;
+    text-shadow:
+      3px 3px 0 var(--hp-red),
+      0 0 18px rgba(255,46,99,0.5);
+    letter-spacing:1px;
+  }
+
+  h2.section-title{
+    font-family:'Press Start 2P', monospace;
+    font-size:12px;
+    color:#fff;
+    text-align:center;
+    margin:0 0 18px;
+    text-shadow:2px 2px 0 var(--hp-red);
+    letter-spacing:1px;
+  }
+
+  .hp-wrap{ margin-bottom:22px; }
+
+  .hp-label{
+    display:flex;
+    justify-content:space-between;
+    font-size:14px;
+    color:var(--text-dim);
+    letter-spacing:1px;
+    margin-bottom:6px;
+  }
+
+  .hp-track{
+    height:18px;
+    background:#000;
+    border:3px solid var(--line);
+    border-radius:3px;
+    padding:2px;
+    position:relative;
+  }
+
+  .hp-fill{
+    height:100%;
+    width:0%;
+    border-radius:1px;
+    background:linear-gradient(90deg, var(--hp-red), var(--hp-yellow));
+    transition:width 0.15s linear;
+    box-shadow:0 0 10px rgba(255,46,99,0.7);
+  }
+
+  .hp-fill.idle{
+    background:repeating-linear-gradient(
+      45deg,
+      var(--line), var(--line) 6px,
+      #2a1550 6px, #2a1550 12px
+    );
+    box-shadow:none;
+  }
+
+  .sprite-row{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin-bottom:22px;
+    height:20px;
+    align-items:flex-end;
+  }
+
+  .bar{
+    width:6px;
+    background:var(--accent-cyan);
+    box-shadow:0 0 8px rgba(8,247,254,0.8);
+    border-radius:1px;
+    height:6px;
+  }
+
+  .bar.playing{ animation:bounce 0.9s ease-in-out infinite; }
+  .bar:nth-child(1).playing{ animation-delay:0s; }
+  .bar:nth-child(2).playing{ animation-delay:0.15s; }
+  .bar:nth-child(3).playing{ animation-delay:0.3s; }
+  .bar:nth-child(4).playing{ animation-delay:0.15s; }
+  .bar:nth-child(5).playing{ animation-delay:0s; }
+
+  @keyframes bounce{
+    0%, 100%{ height:6px; }
+    50%{ height:20px; }
+  }
+
+  .arcade-btn{
+    display:block;
+    width:100%;
+    font-family:'Press Start 2P', monospace;
+    font-size:13px;
+    letter-spacing:1px;
+    color:#1a0a3a;
+    background:var(--accent-cyan);
+    border:none;
+    padding:16px 10px;
+    cursor:pointer;
+    border-radius:6px;
+    box-shadow:
+      0 6px 0 #0592a0,
+      0 10px 20px rgba(8,247,254,0.35);
+    transition:transform 0.06s ease, box-shadow 0.06s ease, background 0.15s ease;
+  }
+
+  .arcade-btn:hover{ background:#4dfaff; }
+
+  .arcade-btn:active{
+    transform:translateY(6px);
+    box-shadow:
+      0 0 0 #0592a0,
+      0 4px 10px rgba(8,247,254,0.35);
+  }
+
+  .arcade-btn:focus-visible{
+    outline:3px solid var(--hp-yellow);
+    outline-offset:3px;
+  }
+
+  .arcade-btn:disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+
+  #playButton.is-playing{
+    background:var(--hp-red);
+    box-shadow:
+      0 6px 0 #9c0f30,
+      0 10px 20px rgba(255,46,99,0.4);
+    color:#fff;
+  }
+  #playButton.is-playing:hover{ background:#ff5482; }
+
+  .hint{
+    text-align:center;
+    font-size:14px;
+    color:var(--text-dim);
+    margin-top:14px;
+    letter-spacing:0.5px;
+  }
+
+  /* ===== ARENA / GAME ===== */
+  .arena.shake{
+    animation:shake 0.28s ease;
+  }
+  @keyframes shake{
+    0%, 100%{ transform:translate(0,0); }
+    20%{ transform:translate(-6px, 2px); }
+    40%{ transform:translate(6px, -2px); }
+    60%{ transform:translate(-4px, 2px); }
+    80%{ transform:translate(4px, -1px); }
+  }
+
+  .fighters{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:12px;
+    margin-bottom:18px;
+    position:relative;
+    height:130px;
+  }
+
+  .fighter-col{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    position:relative;
+  }
+
+  .fighter-name{
+    font-size:13px;
+    color:var(--text-dim);
+    letter-spacing:1px;
+    margin-bottom:6px;
+    text-align:center;
+  }
+
+  canvas.sprite-canvas{
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+
+  #heroCanvas{
+    width:80px; height:96px;
+    transition:transform 0.12s ease;
+  }
+  #bossCanvas{
+    width:110px; height:100px;
+    transition:transform 0.12s ease;
+  }
+
+  .fighter-col.attacking #heroCanvas{ transform:translateX(18px) scale(1.05); }
+  .fighter-col.attacking #bossCanvas{ transform:translateX(-18px) scale(1.05); }
+  .fighter-col.hit canvas{ filter: brightness(2.4) saturate(0); }
+
+  .dmg-pop{
+    position:absolute;
+    top:10px;
+    font-family:'Press Start 2P', monospace;
+    font-size:14px;
+    color:var(--hp-yellow);
+    text-shadow:2px 2px 0 #000;
+    pointer-events:none;
+    animation:floatUp 0.9s ease forwards;
+  }
+  .dmg-pop.crit{ color:var(--hp-red); font-size:18px; }
+
+  @keyframes floatUp{
+    0%{ opacity:1; transform:translateY(0); }
+    100%{ opacity:0; transform:translateY(-46px); }
+  }
+
+  .mini-hp-track{
+    width:100%;
+    max-width:120px;
+    height:12px;
+    background:#000;
+    border:2px solid var(--line);
+    border-radius:2px;
+    padding:1px;
+    margin-top:8px;
+  }
+
+  .mini-hp-fill{
+    height:100%;
+    border-radius:1px;
+    transition:width 0.25s ease;
+  }
+  #heroHpFill{ background:linear-gradient(90deg, var(--accent-green), #7dffce); width:100%; }
+  #bossHpFill{ background:linear-gradient(90deg, var(--hp-red), var(--hp-yellow)); width:100%; }
+
+  .vs-badge{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    color:var(--hp-yellow);
+    text-shadow:0 0 10px rgba(255,210,63,0.8);
+    align-self:center;
+    margin-bottom:34px;
+  }
+
+  .log{
+    background:#000;
+    border:2px solid var(--line);
+    border-radius:4px;
+    padding:10px 12px;
+    height:74px;
+    overflow-y:auto;
+    font-size:15px;
+    color:var(--accent-cyan);
+    line-height:1.4;
+    margin-bottom:16px;
+  }
+  .log p{ margin:0 0 2px; }
+  .log p.system{ color:var(--text-dim); }
+  .log p.warn{ color:var(--hp-yellow); }
+
+  .action-row{
+    display:flex;
+    gap:10px;
+  }
+  .action-row .arcade-btn{
+    font-size:11px;
+    padding:14px 6px;
+  }
+  #attackBtn{ background:var(--accent-cyan); }
+  #attackBtn:hover{ background:#4dfaff; }
+  #defendBtn{ background:var(--accent-green); box-shadow:0 6px 0 #189e77, 0 10px 20px rgba(46,230,166,0.35); }
+  #defendBtn:hover{ background:#5cffce; }
+  #defendBtn:active{ box-shadow:0 0 0 #189e77, 0 4px 10px rgba(46,230,166,0.35); }
+
+  #retryBtn{ display:none; margin-top:12px; background:var(--hp-yellow); box-shadow:0 6px 0 #b8930a, 0 10px 20px rgba(255,210,63,0.35); }
+  #retryBtn:hover{ background:#ffdd66; }
+  #retryBtn:active{ box-shadow:0 0 0 #b8930a, 0 4px 10px rgba(255,210,63,0.35); }
+
+  .end-banner{
+    font-family:'Press Start 2P', monospace;
+    text-align:center;
+    font-size:16px;
+    display:none;
+    margin-bottom:10px;
+    letter-spacing:1px;
+  }
+  .end-banner.win{ color:var(--accent-green); text-shadow:2px 2px 0 #0a4a37; }
+  .end-banner.lose{ color:var(--hp-red); text-shadow:2px 2px 0 #5a0a1e; }
+</style>
 </head>
 <body>
 
-    <!-- The Hidden Audio Element -->
-    <audio id="myAudio">
-        <source src="https://pixelman.net/tbg.mp3" type="audio/mpeg">
-        Your browser does not support the audio element.
-    </audio>
+<audio id="myAudio" preload="none">
+  <source src="https://pixelman.net/tbg.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
 
-    <!-- The Play/Pause Button -->
-    <button id="playButton" onclick="togglePlay()">Play Music</button>
+<!-- ===== MUSIC PLAYER ===== -->
+<div class="cabinet">
+  <p class="eyebrow">NOW CHALLENGING</p>
+  <h1>PIXEL BOSS<br>BATTLE</h1>
 
-    <script>
-        // Get the audio element
-        const audio = document.getElementById("myAudio");
-        const button = document.getElementById("playButton");
+  <div class="hp-wrap">
+    <div class="hp-label">
+      <span id="timeCurrent">0:00</span>
+      <span id="timeTotal">--:--</span>
+    </div>
+    <div class="hp-track">
+      <div class="hp-fill idle" id="hpFill"></div>
+    </div>
+  </div>
 
-        function togglePlay() {
-            // Check if the audio is paused
-            if (audio.paused) {
-                audio.play();
-                button.innerText = "Pause Music";
-            } else {
-                audio.pause();
-                button.innerText = "Play Music";
-            }
+  <div class="sprite-row" id="spriteRow">
+    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+  </div>
+
+  <button id="playButton" class="arcade-btn" onclick="togglePlay()" aria-pressed="false">▶ PLAY THEME</button>
+  <p class="hint" id="hintText">Press play to hear the boss theme</p>
+</div>
+
+<!-- ===== BATTLE ARENA ===== -->
+<div class="cabinet arena" id="arena">
+  <h2 class="section-title">THE ARENA</h2>
+
+  <p class="end-banner win" id="winBanner">VICTORY!</p>
+  <p class="end-banner lose" id="loseBanner">GAME OVER</p>
+
+  <div class="fighters">
+    <div class="fighter-col" id="heroCol">
+      <span class="fighter-name">YOU</span>
+      <canvas class="sprite-canvas" id="heroCanvas" width="12" height="14"></canvas>
+      <div class="mini-hp-track"><div class="mini-hp-fill" id="heroHpFill"></div></div>
+    </div>
+    <span class="vs-badge">VS</span>
+    <div class="fighter-col" id="bossCol">
+      <span class="fighter-name">PIXEL BOSS</span>
+      <canvas class="sprite-canvas" id="bossCanvas" width="18" height="16"></canvas>
+      <div class="mini-hp-track"><div class="mini-hp-fill" id="bossHpFill"></div></div>
+    </div>
+  </div>
+
+  <div class="log" id="battleLog">
+    <p class="system">A challenger approaches the Pixel Boss...</p>
+  </div>
+
+  <div class="action-row">
+    <button class="arcade-btn" id="attackBtn" onclick="playerAttack()">⚔ ATTACK</button>
+    <button class="arcade-btn" id="defendBtn" onclick="playerDefend()">🛡 DEFEND</button>
+  </div>
+  <button class="arcade-btn" id="retryBtn" onclick="resetBattle()">↻ RETRY</button>
+</div>
+
+<script>
+  /* ================= MUSIC PLAYER ================= */
+  const audio = document.getElementById("myAudio");
+  const button = document.getElementById("playButton");
+  const hpFill = document.getElementById("hpFill");
+  const bars = document.querySelectorAll(".bar");
+  const hint = document.getElementById("hintText");
+  const timeCurrent = document.getElementById("timeCurrent");
+  const timeTotal = document.getElementById("timeTotal");
+
+  function formatTime(sec){
+    if (!isFinite(sec)) return "--:--";
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  }
+
+  function setPlayingState(isPlaying){
+    button.classList.toggle("is-playing", isPlaying);
+    button.setAttribute("aria-pressed", isPlaying ? "true" : "false");
+    button.innerText = isPlaying ? "⏸ PAUSE THEME" : "▶ PLAY THEME";
+    hpFill.classList.toggle("idle", !isPlaying);
+    bars.forEach(b => b.classList.toggle("playing", isPlaying));
+    hint.textContent = isPlaying ? "Boss theme in progress..." : "Press play to hear the boss theme";
+  }
+
+  function togglePlay(){
+    if (audio.paused){
+      audio.play().catch(() => { hint.textContent = "Track unavailable — check connection"; });
+      setPlayingState(true);
+    } else {
+      audio.pause();
+      setPlayingState(false);
+    }
+  }
+
+  audio.addEventListener("loadedmetadata", () => { timeTotal.textContent = formatTime(audio.duration); });
+  audio.addEventListener("timeupdate", () => {
+    timeCurrent.textContent = formatTime(audio.currentTime);
+    if (audio.duration) hpFill.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
+  });
+  audio.addEventListener("ended", () => { setPlayingState(false); hpFill.style.width = "0%"; });
+
+  /* ================= PIXEL SPRITES ================= */
+  // '.' = transparent, letters map to palette below
+  const heroArt = [
+    "....CCCC....",
+    "...CYYYYC...",
+    "...CYKYKYC..",
+    "...CYYYYC...",
+    "..CCCCCCCC..",
+    ".C.CCCCCC.C.",
+    "C..CCCCCC..C",
+    "C..CCCCCC..C",
+    "...CCCCCC...",
+    "...CC..CC...",
+    "...CC..CC...",
+    "..GGG..GGG..",
+  ];
+  const heroPalette = { C:"#08f7fe", Y:"#ffe9a8", K:"#0d0221", G:"#2ee6a6" };
+
+  const bossArt = [
+    "...M............M...",
+    "..MMM..........MMM..",
+    ".MMPPMM......MMPPMM.",
+    "MMPPPPMM....MMPPPPMM",
+    "MPPPYYPPMMMMPPYYPPPM",
+    "MPPPYYPP.MM.PPYYPPPM",
+    "MPPPPPPPMMMMPPPPPPPM",
+    ".MPPPPPPPPPPPPPPPPM.",
+    "..MPPPPKKKKPPPPPPM..",
+    "..MPPPPKKKKPPPPPPM..",
+    "...MPPPPPPPPPPPM....",
+    "...MM.MPPPPM.MM.....",
+    "..MM....MM....MM....",
+    ".MM.....MM.....MM...",
+  ];
+  const bossPalette = { M:"#3a1f6b", P:"#ff2e63", Y:"#ffd23f", K:"#170a35" };
+
+  function drawSprite(canvasId, art, palette){
+    const canvas = document.getElementById(canvasId);
+    const ctx = canvas.getContext("2d");
+    canvas.width = art[0].length;
+    canvas.height = art.length;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    art.forEach((row, y) => {
+      [...row].forEach((ch, x) => {
+        if (ch !== "." && palette[ch]){
+          ctx.fillStyle = palette[ch];
+          ctx.fillRect(x, y, 1, 1);
         }
-    </script>
+      });
+    });
+  }
+
+  drawSprite("heroCanvas", heroArt, heroPalette);
+  drawSprite("bossCanvas", bossArt, bossPalette);
+
+  /* ================= BATTLE GAME ================= */
+  const HERO_MAX = 100, BOSS_MAX = 140;
+  let heroHp = HERO_MAX, bossHp = BOSS_MAX;
+  let turn = 0;
+  let battleOver = false;
+  let playerDefending = false;
+
+  const heroHpFill = document.getElementById("heroHpFill");
+  const bossHpFill = document.getElementById("bossHpFill");
+  const heroCol = document.getElementById("heroCol");
+  const bossCol = document.getElementById("bossCol");
+  const battleLog = document.getElementById("battleLog");
+  const attackBtn = document.getElementById("attackBtn");
+  const defendBtn = document.getElementById("defendBtn");
+  const retryBtn = document.getElementById("retryBtn");
+  const arena = document.getElementById("arena");
+  const winBanner = document.getElementById("winBanner");
+  const loseBanner = document.getElementById("loseBanner");
+
+  function logMsg(text, cls){
+    const p = document.createElement("p");
+    if (cls) p.className = cls;
+    p.textContent = text;
+    battleLog.appendChild(p);
+    battleLog.scrollTop = battleLog.scrollHeight;
+  }
+
+  function rand(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+  function updateBars(){
+    heroHpFill.style.width = `${Math.max(0, heroHp / HERO_MAX * 100)}%`;
+    bossHpFill.style.width = `${Math.max(0, bossHp / BOSS_MAX * 100)}%`;
+  }
+
+  function popDamage(colEl, amount, crit){
+    const pop = document.createElement("span");
+    pop.className = "dmg-pop" + (crit ? " crit" : "");
+    pop.textContent = "-" + amount;
+    pop.style.left = "40%";
+    colEl.style.position = "relative";
+    colEl.appendChild(pop);
+    setTimeout(() => pop.remove(), 900);
+  }
+
+  function shakeArena(){
+    arena.classList.remove("shake");
+    void arena.offsetWidth;
+    arena.classList.add("shake");
+  }
+
+  function flashHit(colEl){
+    colEl.classList.add("hit");
+    setTimeout(() => colEl.classList.remove("hit"), 140);
+  }
+
+  function setButtonsEnabled(enabled){
+    attackBtn.disabled = !enabled;
+    defendBtn.disabled = !enabled;
+  }
+
+  function playerAttack(){
+    if (battleOver) return;
+    setButtonsEnabled(false);
+    playerDefending = false;
+    heroCol.classList.add("attacking");
+
+    setTimeout(() => {
+      heroCol.classList.remove("attacking");
+      const crit = rand(1, 10) === 10;
+      const dmg = crit ? rand(22, 30) : rand(10, 18);
+      bossHp = Math.max(0, bossHp - dmg);
+      updateBars();
+      popDamage(bossCol, dmg, crit);
+      flashHit(bossCol);
+      shakeArena();
+      logMsg(crit ? `CRITICAL HIT! You strike the boss for ${dmg} damage!` : `You strike the boss for ${dmg} damage.`);
+
+      if (bossHp <= 0){ return endBattle(true); }
+      setTimeout(bossTurn, 700);
+    }, 220);
+  }
+
+  function playerDefend(){
+    if (battleOver) return;
+    setButtonsEnabled(false);
+    playerDefending = true;
+    logMsg("You brace behind your guard.", "system");
+    setTimeout(bossTurn, 700);
+  }
+
+  function bossTurn(){
+    turn++;
+    const isCharge = turn % 4 === 0;
+    bossCol.classList.add("attacking");
+
+    setTimeout(() => {
+      bossCol.classList.remove("attacking");
+      let dmg = isCharge ? rand(24, 32) : rand(9, 16);
+      if (playerDefending) dmg = Math.round(dmg * 0.4);
+      heroHp = Math.max(0, heroHp - dmg);
+      updateBars();
+      popDamage(heroCol, dmg, isCharge);
+      flashHit(heroCol);
+      shakeArena();
+
+      if (isCharge && playerDefending){
+        logMsg(`The boss unleashes a devastating blow — your guard holds! Only ${dmg} damage taken.`, "warn");
+      } else if (isCharge){
+        logMsg(`The boss unleashes a devastating blow for ${dmg} damage!`, "warn");
+      } else if (playerDefending){
+        logMsg(`The boss attacks — your guard absorbs the hit. Only ${dmg} damage taken.`);
+      } else {
+        logMsg(`The boss retaliates for ${dmg} damage!`);
+      }
+
+      playerDefending = false;
+
+      if (heroHp <= 0){ return endBattle(false); }
+
+      if ((turn + 1) % 4 === 0){
+        logMsg("The boss is glowing... it's charging a heavy attack!", "warn");
+      }
+
+      setButtonsEnabled(true);
+    }, 220);
+  }
+
+  function endBattle(playerWon){
+    battleOver = true;
+    setButtonsEnabled(false);
+    retryBtn.style.display = "block";
+    if (playerWon){
+      winBanner.style.display = "block";
+      logMsg("The Pixel Boss shatters into fragments. You win!", "system");
+    } else {
+      loseBanner.style.display = "block";
+      logMsg("You have been defeated...", "system");
+    }
+  }
+
+  function resetBattle(){
+    heroHp = HERO_MAX; bossHp = BOSS_MAX; turn = 0; battleOver = false; playerDefending = false;
+    updateBars();
+    battleLog.innerHTML = "";
+    logMsg("A challenger approaches the Pixel Boss...", "system");
+    winBanner.style.display = "none";
+    loseBanner.style.display = "none";
+    retryBtn.style.display = "none";
+    setButtonsEnabled(true);
+  }
+
+  updateBars();
+</script>
 
 </body>
 </html>
