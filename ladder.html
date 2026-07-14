@@ -23,11 +23,30 @@
     --amber-dark:#a89440;
     --moss:#6aaa64;
     --moss-dark:#538d4e;
+    --hard:#7a3fc4;
+    --hard-dark:#5f2fa0;
     --rust:#1a1a1b;
     --muted:#787c7e;
     --muted-2:#9a9a9a;
     --cream:#1a1a1b;
     --line:#d3d6da;
+    --danger:#d3455b;
+  }
+  body.dark{
+    --bg:#121213;
+    --panel:#1b1b1c;
+    --panel-2:#232324;
+    --rail:#3a3a3c;
+    --rail-dark:#565656;
+    --rung:#3a3a3c;
+    --rung-dark:#565656;
+    --tile:#1b1b1c;
+    --tile-edge:#565656;
+    --ink:#f2f2f2;
+    --muted:#9a9a9a;
+    --muted-2:#767676;
+    --cream:#f2f2f2;
+    --line:#3a3a3c;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -39,6 +58,7 @@
     display:flex;
     justify-content:center;
     padding:0 0 60px;
+    transition:background .2s ease, color .2s ease;
   }
   #app{
     width:100%;
@@ -50,12 +70,12 @@
     align-items:center;
     padding:14px 14px 12px;
     border-bottom:1px solid var(--line);
-    margin-bottom:16px;
+    margin-bottom:10px;
     gap:10px;
   }
   .header-actions{
     display:flex;
-    gap:4px;
+    gap:2px;
     align-items:center;
   }
   .header-actions.left{justify-content:flex-start;}
@@ -97,14 +117,87 @@
     font-size:18px;
     transition:background .15s ease;
   }
+  .icon-btn svg{width:18px;height:18px;}
   .icon-btn:hover{background:var(--panel-2);}
   .icon-btn:active{transform:scale(0.92);}
+
+  .streaks-row{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin:0 16px 14px;
+  }
   .streak-pill{
-    display:flex;align-items:center;gap:4px;
+    display:flex;align-items:center;gap:6px;
     font-weight:700;
     font-size:14px;
-    color:var(--ink);
-    padding:0 6px;
+    padding:6px 12px;
+    border-radius:20px;
+    background:var(--panel-2);
+    transition:box-shadow .2s ease;
+  }
+  .streak-pill svg{width:16px;height:16px;}
+  .streak-pill.normal-streak{color:var(--amber-dark);}
+  .streak-pill.hard-streak{color:var(--hard);}
+  @keyframes popNormal{
+    0%{transform:scale(1);}
+    30%{transform:scale(1.32);}
+    60%{transform:scale(0.95);}
+    100%{transform:scale(1);}
+  }
+  @keyframes popHard{
+    0%{transform:scale(1) rotate(0deg);}
+    22%{transform:scale(1.3) rotate(-7deg);}
+    48%{transform:scale(1.12) rotate(7deg);}
+    75%{transform:scale(1.22) rotate(-3deg);}
+    100%{transform:scale(1) rotate(0deg);}
+  }
+  .streak-pill.pop-normal{animation:popNormal .6s ease;box-shadow:0 0 0 7px rgba(168,148,64,.22);}
+  .streak-pill.pop-hard{animation:popHard .7s ease;box-shadow:0 0 0 7px rgba(122,63,196,.28);}
+
+  .day-tabs{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin:0 16px 14px;
+  }
+  .day-tab{
+    background:none;
+    border:1.5px solid var(--line);
+    color:var(--muted);
+    font-family:'Libre Franklin',sans-serif;
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    padding:6px 16px;
+    border-radius:20px;
+    cursor:pointer;
+  }
+  .day-tab.active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
+
+  .mode-badge{
+    display:inline-block;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:#fff;
+    background:var(--hard);
+    padding:3px 8px;
+    border-radius:4px;
+    margin-left:8px;
+    vertical-align:middle;
+  }
+  .practice-badge{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--muted);
+    background:var(--panel-2);
+    border:1px dashed var(--line);
+    border-radius:6px;
+    padding:6px 10px;
+    margin:0 16px 14px;
   }
 
   .puzzle-meta{
@@ -170,15 +263,18 @@
     background:var(--bg);
   }
   .letter{
-    width:44px;height:44px;
+    width:46px;height:46px;
     background:var(--tile);
     border:2px solid var(--tile-edge);
     border-radius:2px;
     display:flex;align-items:center;justify-content:center;
     font-family:'Libre Franklin',sans-serif;
     font-weight:800;
-    font-size:20px;
+    font-size:19px;
     color:var(--ink);
+    overflow:hidden;
+    white-space:nowrap;
+    padding:0;
   }
   .letter.changed{
     background:var(--amber);
@@ -229,24 +325,31 @@
   .input-area{
     margin:18px 16px 0;
   }
+  .boxes-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    margin-bottom:14px;
+  }
   .boxes{
     display:flex;
     justify-content:center;
     gap:8px;
-    margin-bottom:14px;
   }
   .box-input{
-    width:48px;height:52px;
+    width:52px;height:56px;
     text-align:center;
     font-family:'Libre Franklin',sans-serif;
     font-weight:800;
-    font-size:24px;
+    font-size:22px;
     text-transform:uppercase;
     background:var(--panel);
     border:2px solid var(--tile-edge);
     border-radius:2px;
     color:var(--ink);
     outline:none;
+    padding:0;
     transition:border-color .12s ease, transform .12s ease;
   }
   .box-input:focus{border-color:var(--ink);}
@@ -257,17 +360,39 @@
     30%,50%,70%{transform:translateX(-7px);}
     40%,60%{transform:translateX(7px);}
   }
-  .box-input.invalid{border-color:#d3455b;}
+  .box-input.invalid{border-color:var(--danger);}
+  body.reduce-motion .boxes.shake{animation:none;}
+  body.reduce-motion .streak-pill.pop-normal,
+  body.reduce-motion .streak-pill.pop-hard{animation:none;}
+
+  .clear-link{
+    background:var(--panel);
+    border:2px solid var(--line);
+    border-radius:4px;
+    color:var(--muted);
+    font-family:'Libre Franklin',sans-serif;
+    font-size:12.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    cursor:pointer;
+    padding:8px 14px;
+    height:56px;
+    transition:border-color .12s ease, color .12s ease;
+  }
+  .clear-link:hover{color:var(--ink); border-color:var(--tile-edge);}
+  .clear-link:active{opacity:.8;}
 
   .action-row{
     display:flex;
     gap:10px;
     justify-content:center;
+    flex-wrap:wrap;
   }
   button.primary{
     background:var(--ink);
     border:2px solid var(--ink);
-    color:#ffffff;
+    color:var(--bg);
     font-weight:700;
     font-size:14px;
     letter-spacing:.3px;
@@ -280,7 +405,7 @@
   button.primary:active{opacity:.8;}
   button.primary:disabled{opacity:.35;cursor:not-allowed;}
   button.secondary{
-    background:#ffffff;
+    background:var(--panel);
     border:2px solid var(--tile-edge);
     color:var(--ink);
     font-weight:700;
@@ -291,9 +416,19 @@
     border-radius:4px;
     cursor:pointer;
     font-family:'Libre Franklin',sans-serif;
+    display:inline-flex;align-items:center;gap:6px;
   }
+  button.secondary svg{width:14px;height:14px;}
   button.secondary:hover{background:var(--panel-2);}
   button.secondary:disabled{opacity:.35;cursor:not-allowed;}
+
+  .hard-lock-note{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--hard);
+    font-weight:600;
+    margin:10px 16px 0;
+  }
 
   .status-bar{
     display:flex;
@@ -313,7 +448,7 @@
     top:18px;left:50%;
     transform:translate(-50%,-140%);
     background:var(--ink);
-    color:#fff;
+    color:var(--bg);
     padding:11px 20px;
     border-radius:5px;
     font-size:13.5px;
@@ -321,9 +456,11 @@
     z-index:100;
     transition:transform .25s ease;
     box-shadow:0 4px 14px rgba(0,0,0,.2);
+    max-width:88vw;
+    text-align:center;
   }
   .toast.show{transform:translate(-50%,0);}
-  .toast.ok{background:var(--moss-dark);}
+  .toast.ok{background:var(--moss-dark);color:#fff;}
 
   /* ---- modals ---- */
   .overlay{
@@ -336,7 +473,7 @@
   }
   .overlay.show{display:flex;}
   .modal{
-    background:#ffffff;
+    background:var(--panel);
     border:1px solid var(--line);
     border-radius:6px;
     padding:28px 24px;
@@ -346,6 +483,7 @@
     overflow-y:auto;
     position:relative;
     box-shadow:0 12px 40px rgba(0,0,0,.25);
+    color:var(--ink);
   }
   .modal h2{
     font-family:'Source Serif 4',Georgia,serif;
@@ -370,7 +508,7 @@
     border:1px solid var(--line);
   }
   .stat-box{
-    background:#ffffff;
+    background:var(--panel);
     padding:16px 10px;
     text-align:center;
   }
@@ -414,12 +552,108 @@
     color:var(--ink);
   }
 
+  .percentile-block{
+    text-align:center;
+    padding:14px;
+    margin-bottom:14px;
+    border-radius:6px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+  }
+  .percentile-block .pct-num{font-size:30px;font-weight:900;color:var(--moss-dark);}
+  .percentile-block .pct-lbl{font-size:12px;color:var(--muted);margin-top:2px;}
+
   .how-list{padding-left:18px;margin:0 0 4px;color:var(--muted);font-size:13.5px;line-height:1.6;}
   .how-list li{margin-bottom:6px;}
   .how-list b{color:var(--ink);}
   .example-mini{margin:14px 0;text-align:center;}
   .example-mini .word-tile-row{margin-bottom:8px;}
   .example-mini .letter{width:36px;height:36px;font-size:16px;}
+
+  /* settings */
+  .settings-section{margin-bottom:18px;}
+  .settings-section h3{
+    font-size:12px;letter-spacing:.6px;text-transform:uppercase;
+    color:var(--muted);margin:0 0 8px;font-weight:700;
+  }
+  .switch-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 0;border-bottom:1px solid var(--line);gap:12px;
+  }
+  .switch-row:last-child{border-bottom:none;}
+  .switch-row .lbl-main{font-weight:700;font-size:14px;color:var(--ink);}
+  .switch-row .lbl-sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .switch{position:relative;width:42px;height:24px;flex:none;}
+  .switch input{opacity:0;width:0;height:0;position:absolute;}
+  .slider{position:absolute;inset:0;background:var(--rail);border-radius:24px;transition:.2s;cursor:pointer;}
+  .slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+  .switch input:checked + .slider{background:var(--ink);}
+  .switch input:checked + .slider:before{transform:translateX(18px);}
+
+  .text-input{
+    width:100%;
+    padding:10px 12px;
+    border:2px solid var(--tile-edge);
+    border-radius:4px;
+    background:var(--panel);
+    color:var(--ink);
+    font-family:'Libre Franklin',sans-serif;
+    font-size:14px;
+    margin-bottom:8px;
+    outline:none;
+  }
+  .text-input:focus{border-color:var(--ink);}
+  .field-row{display:flex;gap:8px;}
+  .field-row .text-input{flex:1;}
+
+  .google-btn{
+    width:100%;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    background:var(--panel);
+    border:1.5px solid var(--tile-edge);
+    color:var(--ink);
+    font-weight:700;font-size:13.5px;
+    padding:11px;
+    border-radius:4px;
+    cursor:pointer;
+    margin-bottom:12px;
+    font-family:'Libre Franklin',sans-serif;
+  }
+  .google-btn:hover{background:var(--panel-2);}
+  .or-divider{
+    text-align:center;color:var(--muted-2);font-size:11px;
+    text-transform:uppercase;letter-spacing:1px;margin:6px 0 10px;
+  }
+  .acct-line{font-size:13.5px;color:var(--ink);margin-bottom:10px;}
+  .acct-line b{font-weight:800;}
+
+  .tab-row{display:flex;gap:6px;margin-bottom:14px;}
+  .tab-btn{
+    flex:1;
+    background:var(--panel-2);
+    border:1.5px solid var(--line);
+    color:var(--muted);
+    font-weight:700;font-size:12.5px;
+    text-transform:uppercase;letter-spacing:.3px;
+    padding:9px 6px;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .tab-btn.active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
+
+  .leaderboard-list{max-height:340px;overflow-y:auto;}
+  .lb-row{
+    display:flex;align-items:center;gap:10px;
+    padding:9px 4px;
+    border-bottom:1px solid var(--line);
+    font-size:13.5px;
+  }
+  .lb-row.me{background:var(--panel-2);border-radius:4px;}
+  .lb-rank{width:22px;color:var(--muted);font-weight:700;font-size:12px;}
+  .lb-name{flex:1;color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lb-streak{font-weight:800;color:var(--ink);display:flex;align-items:center;gap:4px;}
+  .lb-streak svg{width:13px;height:13px;}
+  .lb-loading, .lb-empty{color:var(--muted);font-size:13px;text-align:center;padding:20px 0;}
 
   footer{
     text-align:center;
@@ -443,8 +677,8 @@
   footer .credit a:hover{color:var(--amber-dark);border-color:var(--amber-dark);}
 
   @media (max-width:380px){
-    .letter{width:38px;height:38px;font-size:17px;}
-    .box-input{width:40px;height:46px;font-size:20px;}
+    .letter{width:40px;height:40px;font-size:16px;}
+    .box-input{width:44px;height:48px;font-size:18px;}
     .brand h1{font-size:24px;}
   }
 </style>
@@ -461,13 +695,26 @@
       <p class="byline">By <a href="https://pixelman.net" target="_blank" rel="noopener">PixelMan Games</a></p>
     </div>
     <div class="header-actions right">
-      <div class="streak-pill" id="streakPill"><span class="flame">🔥</span><span id="streakVal">0</span></div>
-      <button class="icon-btn" id="statsBtn" title="Statistics">📊</button>
+      <button class="icon-btn" id="leaderboardBtn" title="Leaderboard"></button>
+      <button class="icon-btn" id="statsBtn" title="Statistics"></button>
+      <button class="icon-btn" id="settingsBtn" title="Settings"></button>
     </div>
   </header>
 
+  <div class="streaks-row">
+    <div class="streak-pill normal-streak" id="normalStreakPill" title="Normal mode streak"></div>
+    <div class="streak-pill hard-streak" id="hardStreakPill" title="Hard mode streak"></div>
+  </div>
+
+  <div class="day-tabs">
+    <button class="day-tab active" id="tabToday" data-day="today">Today</button>
+    <button class="day-tab" id="tabYesterday" data-day="yesterday">Yesterday's Result</button>
+  </div>
+
+  <div class="practice-badge" id="recapNote" style="display:none;"></div>
+
   <div class="puzzle-meta">
-    <span>Ladder <b id="puzzleNum">#0</b></span>
+    <span>Ladder <b id="puzzleNum">#0</b><span class="mode-badge" id="modeBadge" style="display:none;">Hard Mode</span></span>
     <span id="puzzleDate">—</span>
   </div>
 
@@ -491,17 +738,21 @@
   </div>
 
   <div class="input-area" id="inputArea">
-    <div class="boxes" id="boxes">
-      <input class="box-input" maxlength="1" data-i="0">
-      <input class="box-input" maxlength="1" data-i="1">
-      <input class="box-input" maxlength="1" data-i="2">
-      <input class="box-input" maxlength="1" data-i="3">
+    <div class="boxes-row">
+      <div class="boxes" id="boxes">
+        <input class="box-input" maxlength="1" data-i="0" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <input class="box-input" maxlength="1" data-i="1" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <input class="box-input" maxlength="1" data-i="2" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <input class="box-input" maxlength="1" data-i="3" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      </div>
+      <button class="clear-link" id="clearBtn">Clear</button>
     </div>
     <div class="action-row">
-      <button class="secondary" id="undoBtn">↶ Undo</button>
+      <button class="secondary" id="undoBtn"></button>
       <button class="primary" id="submitBtn">Submit</button>
-      <button class="secondary" id="hintBtn">💡 Hint</button>
+      <button class="secondary" id="hintBtn"></button>
     </div>
+    <div class="hard-lock-note" id="hardLockNote" style="display:none;">Hard mode: hints and undo are turned off.</div>
   </div>
 
   <div class="status-bar">
@@ -510,7 +761,7 @@
   </div>
 
   <div class="action-row" id="resultRow" style="margin-top:16px; display:none;">
-    <button class="secondary" id="viewResultBtn">🏆 View today's result</button>
+    <button class="secondary" id="viewResultBtn"></button>
   </div>
 
   <footer>
@@ -524,13 +775,15 @@
 <!-- Stats modal -->
 <div class="overlay" id="statsOverlay">
   <div class="modal">
-    <button class="close" data-close="statsOverlay">×</button>
+    <button class="close" data-close="statsOverlay">&times;</button>
     <h2>Statistics</h2>
     <div class="sub">Your all-time ladder record.</div>
     <div class="stats-grid">
       <div class="stat-box"><div class="val" id="s-played">0</div><div class="lbl">Played</div></div>
-      <div class="stat-box"><div class="val" id="s-streak">0</div><div class="lbl">Current streak</div></div>
-      <div class="stat-box"><div class="val" id="s-maxstreak">0</div><div class="lbl">Best streak</div></div>
+      <div class="stat-box"><div class="val" id="s-normal-streak">0</div><div class="lbl">Normal streak</div></div>
+      <div class="stat-box"><div class="val" id="s-hard-streak">0</div><div class="lbl">Hard streak</div></div>
+      <div class="stat-box"><div class="val" id="s-normal-best">0</div><div class="lbl">Best normal streak</div></div>
+      <div class="stat-box"><div class="val" id="s-hard-best">0</div><div class="lbl">Best hard streak</div></div>
       <div class="stat-box"><div class="val" id="s-fastest">—</div><div class="lbl">Fastest solve</div></div>
       <div class="stat-box"><div class="val" id="s-fewest">—</div><div class="lbl">Fewest moves</div></div>
       <div class="stat-box"><div class="val" id="s-total">0</div><div class="lbl">Total climbs</div></div>
@@ -538,17 +791,95 @@
   </div>
 </div>
 
+<!-- Leaderboard modal -->
+<div class="overlay" id="leaderboardOverlay">
+  <div class="modal">
+    <button class="close" data-close="leaderboardOverlay">&times;</button>
+    <h2>Leaderboard</h2>
+    <div class="sub">Top streaks across all players.</div>
+    <div class="tab-row">
+      <button class="tab-btn active" id="lbTabNormal" data-lb="normal">Normal Mode</button>
+      <button class="tab-btn" id="lbTabHard" data-lb="hard">Hard Mode</button>
+    </div>
+    <div class="leaderboard-list" id="leaderboardList"><div class="lb-loading">Loading…</div></div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="overlay" id="settingsOverlay">
+  <div class="modal">
+    <button class="close" data-close="settingsOverlay">&times;</button>
+    <h2>Settings</h2>
+    <div class="sub">Your preferences sync to your account.</div>
+
+    <div class="settings-section">
+      <h3>Account</h3>
+      <div id="acctLinked" style="display:none;">
+        <div class="acct-line">Signed in as <b id="acctName">—</b></div>
+        <input class="text-input" id="displayNameInput" placeholder="Display name (shown on leaderboard)" maxlength="24">
+        <button class="secondary" id="saveNameBtn">Save name</button>
+        <button class="secondary" id="signOutBtn">Sign out</button>
+      </div>
+      <div id="acctGuest">
+        <button class="google-btn" id="googleSignInBtn">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.4-2.1 14.1-5.5l-6.5-5.5C29.6 34.9 26.9 36 24 36c-5.3 0-9.7-3.4-11.3-8.1l-6.5 5c3.3 6.5 10 11.1 17.8 11.1z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.5 5.5C41.5 35.8 44 30.3 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+          Continue with Google
+        </button>
+        <div class="or-divider">or use email</div>
+        <input class="text-input" id="authEmail" type="email" placeholder="Email" autocomplete="email">
+        <input class="text-input" id="authPassword" type="password" placeholder="Password (6+ characters)" autocomplete="current-password">
+        <div class="field-row">
+          <button class="secondary" id="authSignInBtn" style="flex:1;justify-content:center;">Sign in</button>
+          <button class="secondary" id="authRegisterBtn" style="flex:1;justify-content:center;">Create account</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>Appearance</h3>
+      <div class="switch-row">
+        <div><div class="lbl-main">Dark mode</div></div>
+        <label class="switch"><input type="checkbox" id="darkModeToggle"><span class="slider"></span></label>
+      </div>
+      <div class="switch-row">
+        <div><div class="lbl-main">Reduce motion</div><div class="lbl-sub">Turns off shake and streak animations</div></div>
+        <label class="switch"><input type="checkbox" id="reduceMotionToggle"><span class="slider"></span></label>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>Gameplay</h3>
+      <div class="switch-row">
+        <div><div class="lbl-main">Hard mode</div><div class="lbl-sub">No hints, no undo. Builds a separate streak.</div></div>
+        <label class="switch"><input type="checkbox" id="hardModeToggle"><span class="slider"></span></label>
+      </div>
+      <div class="switch-row">
+        <div><div class="lbl-main">Sound effects</div></div>
+        <label class="switch"><input type="checkbox" id="soundToggle"><span class="slider"></span></label>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>Weekly puzzle email</h3>
+      <div class="lbl-sub" style="margin-bottom:8px;">Get a link to the weekly puzzle and a reminder to play. Coming soon — subscribe now to be first in line.</div>
+      <input class="text-input" id="newsletterEmail" type="email" placeholder="you@example.com">
+      <button class="secondary" id="newsletterBtn">Subscribe</button>
+    </div>
+  </div>
+</div>
+
 <!-- Help modal -->
 <div class="overlay" id="helpOverlay">
   <div class="modal">
-    <button class="close" data-close="helpOverlay">×</button>
+    <button class="close" data-close="helpOverlay">&times;</button>
     <h2>How to play</h2>
     <div class="sub">Climb from the start word to the goal.</div>
     <ol class="how-list">
       <li>Each move, change <b>exactly one letter</b> to form a new rung.</li>
       <li>Every rung must be a <b>real word</b>.</li>
       <li>Reach the goal word to complete the day's ladder.</li>
-      <li>Come back daily to build your <b>streak</b>.</li>
+      <li>Come back daily to build your <b>streak</b> — miss a day and every streak resets.</li>
+      <li>Normal mode and hard mode each keep their own streak. Hard mode turns off hints and undo.</li>
     </ol>
     <div class="example-mini">
       <div class="word-tile-row"><div class="letter">C</div><div class="letter">O</div><div class="letter">L</div><div class="letter">D</div></div>
@@ -557,15 +888,15 @@
       <div class="word-tile-row"><div class="letter changed">W</div><div class="letter">A</div><div class="letter">R</div><div class="letter">D</div></div>
       <div class="word-tile-row"><div class="letter">W</div><div class="letter">A</div><div class="letter">R</div><div class="letter changed">M</div></div>
     </div>
-    <div class="sub" style="margin-top:6px;">Gold tiles mark the letter that changed. Hints (💡) nudge you toward the goal — you get two per day.</div>
+    <div class="sub" style="margin-top:6px;">Gold tiles mark the letter that changed. Hints nudge you toward the goal in normal mode — you get two per day.</div>
   </div>
 </div>
 
 <!-- Win modal -->
 <div class="overlay" id="winOverlay">
   <div class="modal">
-    <button class="close" data-close="winOverlay">×</button>
-    <h2 id="winTitle">Solved it! 🪜</h2>
+    <button class="close" data-close="winOverlay">&times;</button>
+    <h2 id="winTitle">Solved it!</h2>
     <div class="sub" id="winSub">You reached the top.</div>
     <div class="win-word-line">
       <span id="winStart"></span><span class="arrow">→</span><b id="winTarget"></b>
@@ -574,7 +905,11 @@
       <div class="stat-box"><div class="val" id="w-moves">0</div><div class="lbl">Your moves</div></div>
       <div class="stat-box"><div class="val" id="w-par">0</div><div class="lbl">Shortest path</div></div>
       <div class="stat-box"><div class="val" id="w-time">0:00</div><div class="lbl">Time</div></div>
-      <div class="stat-box"><div class="val" id="w-streak">0</div><div class="lbl">Streak</div></div>
+      <div class="stat-box"><div class="val" id="w-streak">0</div><div class="lbl" id="w-streak-lbl">Streak</div></div>
+    </div>
+    <div class="percentile-block" id="pctBlock" style="display:none;">
+      <div class="pct-num" id="pctNum">—</div>
+      <div class="pct-lbl">of players today you beat on move count</div>
     </div>
     <div class="share-block" id="shareText"></div>
     <div class="action-row">
@@ -583,9 +918,60 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+/* =========================================================================
+   Firebase setup
+   ========================================================================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, signInAnonymously, GoogleAuthProvider,
+  signInWithPopup, linkWithPopup, createUserWithEmailAndPassword,
+  signInWithEmailAndPassword, linkWithCredential, EmailAuthProvider,
+  signOut, updateProfile
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, collection, query, orderBy, limit,
+  getDocs, serverTimestamp, enableIndexedDbPersistence, runTransaction
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDbxSWSLe7rXOnsuxQUPrtpWX0OCjdzvVs",
+  authDomain: "ladder-dd811.firebaseapp.com",
+  projectId: "ladder-dd811",
+  storageBucket: "ladder-dd811.firebasestorage.app",
+  messagingSenderId: "360407278601",
+  appId: "1:360407278601:web:dd36549c3db5bebef884d8"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupported browser: fine, falls back to network-only */ }
+
 (function(){
   "use strict";
+
+  /* ---------------- Icons (no emoji anywhere) ---------------- */
+  const ICONS = {
+    settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
+    chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>',
+    award: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>',
+    undo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>',
+    sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
+    flame: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1.2 3.1-2.8 4.4-2.8 7.4a2.8 2.8 0 0 0 5.6 0c0-1-.4-1.9-.9-2.7 1 .6 2.9 2.6 2.9 5.6A5.8 5.8 0 0 1 5.9 12.3C5.9 7.3 9.1 5 12 2z"></path></svg>',
+    gem: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12l4 6-10 12L2 9z"></path></svg>'
+  };
+  function setIcon(el, name){ el.innerHTML = ICONS[name]; }
+
+  /* ---------------- DOM refs set up early ---------------- */
+  setIcon(document.getElementById("leaderboardBtn"), "award");
+  setIcon(document.getElementById("statsBtn"), "chart");
+  setIcon(document.getElementById("settingsBtn"), "settings");
+  document.getElementById("undoBtn").innerHTML = ICONS.undo + " Undo";
+  document.getElementById("hintBtn").innerHTML = ICONS.sun + " Hint";
+  document.getElementById("viewResultBtn").innerHTML = ICONS.award + " View today's result";
+  document.getElementById("normalStreakPill").innerHTML = ICONS.flame + '<span id="normalStreakVal">0</span>';
+  document.getElementById("hardStreakPill").innerHTML = ICONS.gem + '<span id="hardStreakVal">0</span>';
 
   /* ---------------- Word list ---------------- */
   const WORDS = ["ABLE", "ACHE", "ACID", "ACME", "ACNE", "ACRE", "ACTS", "ADDS", "AGED", "AGES", "AGUE", "AHOY", "AIDE", "AIDS", "AILS", "AIMS", "AIRS", "AIRY", "AJAR", "AKIN", "ALAS", "ALBS", "ALES", "ALGA", "ALIT", "ALLY", "ALMS", "ALOE", "ALSO", "ALTO", "AMBO", "AMEN", "AMID", "AMPS", "ANEW", "ANNO", "ANTE", "ANTS", "ANUS", "APED", "APES", "APEX", "APPS", "ARCH", "ARCS", "AREA", "ARES", "ARGO", "ARIA", "ARID", "ARIL", "ARKS", "ARMS", "ARMY", "ARSE", "ARTS", "ARTY", "ASHY", "ASIA", "ASKS", "ATOM", "ATOP", "AUNT", "AURA", "AUTO", "AVER", "AVID", "AWAY", "AWED", "AWES", "AWLS", "AWRY", "AXED", "AXES", "AXIS", "AXLE", "AYES", "BABE", "BABY", "BACK", "BADE", "BADS", "BAGS", "BAIL", "BAIT", "BAKE", "BALD", "BALE", "BALK", "BALL", "BALM", "BAND", "BANE", "BANG", "BANK", "BAPS", "BARB", "BARD", "BARE", "BARK", "BARN", "BARS", "BASE", "BASH", "BASK", "BASS", "BAST", "BATH", "BATS", "BAWD", "BAWL", "BAYS", "BEAD", "BEAK", "BEAM", "BEAN", "BEAR", "BEAT", "BEDS", "BEEF", "BEEN", "BEEP", "BEER", "BEES", "BEET", "BEGS", "BELL", "BELT", "BEND", "BENT", "BERM", "BEST", "BETA", "BETS", "BIAS", "BIBS", "BIDE", "BIDS", "BIER", "BIKE", "BILE", "BILK", "BILL", "BIND", "BINS", "BIRD", "BITE", "BITS", "BLAB", "BLAH", "BLED", "BLEW", "BLIP", "BLOB", "BLOC", "BLOG", "BLOT", "BLOW", "BLUE", "BLUR", "BOAR", "BOAT", "BODE", "BODY", "BOGS", "BOIL", "BOLD", "BOLE", "BOLT", "BOMB", "BOND", "BONE", "BONY", "BOOK", "BOOM", "BOON", "BOOR", "BOOT", "BORE", "BORN", "BOSS", "BOTH", "BOTS", "BOUT", "BOWL", "BOWS", "BOXY", "BRAG", "BRAN", "BRAS", "BRAT", "BRAY", "BRED", "BREW", "BRIG", "BRIM", "BRIT", "BROW", "BUCK", "BUDS", "BUFF", "BUGS", "BULB", "BULK", "BULL", "BUMP", "BUNK", "BUNS", "BUOY", "BURG", "BURN", "BURR", "BURY", "BUSH", "BUSK", "BUST", "BUSY", "BUTT", "BUYS", "BYTE", "CABS", "CADE", "CAFE", "CAGE", "CAGY", "CAKE", "CALF", "CALL", "CALM", "CAME", "CAMP", "CANE", "CANS", "CAPE", "CAPS", "CARD", "CARE", "CARP", "CARS", "CART", "CASE", "CASH", "CASK", "CAST", "CATS", "CAVE", "CAWS", "CEDE", "CELL", "CENT", "CHAP", "CHAR", "CHAT", "CHEF", "CHEW", "CHIC", "CHIN", "CHIP", "CHOP", "CHUG", "CHUM", "CITE", "CITY", "CLAD", "CLAM", "CLAN", "CLAP", "CLAW", "CLAY", "CLIP", "CLOD", "CLOG", "CLOP", "CLOT", "CLOY", "CLUB", "CLUE", "COAL", "COAT", "COAX", "CODE", "CODS", "COGS", "COIL", "COIN", "COKE", "COLA", "COLD", "COLT", "COMA", "COMB", "COME", "CONE", "CONS", "COOK", "COOL", "COOP", "COOT", "COPE", "COPS", "COPY", "CORD", "CORE", "CORK", "CORN", "COST", "COSY", "COTS", "COUP", "COVE", "COWL", "COWS", "COZY", "CRAB", "CRAG", "CRAM", "CRAP", "CRAW", "CRED", "CREW", "CRIB", "CROP", "CROW", "CRUD", "CRUX", "CUBE", "CUBS", "CUED", "CUES", "CUFF", "CULT", "CUPS", "CURB", "CURD", "CURE", "CURL", "CURS", "CURT", "CURY", "CUSP", "CUTE", "CUTS", "DABS", "DADO", "DADS", "DAFT", "DALE", "DAME", "DAMN", "DAMP", "DAMS", "DANK", "DARE", "DARK", "DARN", "DART", "DASH", "DATA", "DATE", "DAUB", "DAWN", "DAYS", "DAZE", "DEAD", "DEAF", "DEAL", "DEAN", "DEAR", "DEBT", "DECK", "DEED", "DEEM", "DEEP", "DEER", "DEFT", "DEFY", "DELI", "DELL", "DEMO", "DENS", "DENT", "DENY", "DEPT", "DESK", "DEWS", "DEWY", "DIAL", "DICE", "DIED", "DIES", "DIET", "DIGS", "DIKE", "DILL", "DIME", "DIMS", "DINE", "DING", "DINK", "DINO", "DINS", "DIRT", "DISC", "DISH", "DISK", "DIVA", "DIVE", "DOCK", "DOER", "DOES", "DOFF", "DOGS", "DOLE", "DOLL", "DOME", "DONE", "DONS", "DOOM", "DOOR", "DOPE", "DORK", "DOSE", "DOTS", "DOUR", "DOVE", "DOWN", "DOZE", "DRAB", "DRAG", "DRAM", "DRAT", "DRAW", "DREW", "DRIB", "DRIP", "DROP", "DRUB", "DRUG", "DRUM", "DUAL", "DUCK", "DUCT", "DUDE", "DUDS", "DUEL", "DUES", "DUET", "DUKE", "DULL", "DULY", "DUMB", "DUMP", "DUNE", "DUNG", "DUNK", "DUOS", "DUPE", "DUSK", "DUST", "DUTY", "EACH", "EARL", "EARN", "EARS", "EASE", "EAST", "EASY", "EATS", "EAVE", "EBBS", "ECHO", "EDDY", "EDGE", "EDGY", "EDIT", "EELS", "EGGS", "EGGY", "EGOS", "EKED", "EKES", "ELAN", "ELKS", "ELLE", "ELMS", "ELSE", "EMIT", "EMUS", "ENDS", "ENVY", "EONS", "EPIC", "ERAS", "ERGO", "ERGS", "ERRS", "ETCH", "EURO", "EVEN", "EVER", "EVIL", "EWES", "EXAM", "EXIT", "FACE", "FACT", "FADE", "FADS", "FAIL", "FAIR", "FAKE", "FALL", "FAME", "FANG", "FANS", "FARE", "FARM", "FAST", "FATE", "FATS", "FAUN", "FAWN", "FAZE", "FEAR", "FEAT", "FEED", "FEEL", "FEES", "FEET", "FELL", "FELT", "FEND", "FERN", "FEUD", "FIAT", "FIBS", "FIEF", "FIGS", "FILE", "FILL", "FILM", "FIND", "FINE", "FINS", "FIRE", "FIRM", "FIRS", "FISH", "FIST", "FITS", "FIVE", "FIZZ", "FLAB", "FLAG", "FLAK", "FLAN", "FLAP", "FLAT", "FLAW", "FLAX", "FLEA", "FLED", "FLEE", "FLEW", "FLEX", "FLIP", "FLIT", "FLOE", "FLOG", "FLOP", "FLOW", "FLUB", "FLUE", "FLUX", "FOAL", "FOAM", "FOES", "FOGS", "FOIL", "FOLD", "FOLK", "FOND", "FONT", "FOOD", "FOOL", "FOOT", "FORD", "FORE", "FORK", "FORM", "FORT", "FOUL", "FOUR", "FOWL", "FOXY", "FREE", "FRET", "FRIT", "FROG", "FROM", "FUEL", "FULL", "FUME", "FUND", "FUNK", "FUNS", "FUNY", "FURY", "FUSE", "FUSS", "FUZZ", "GABS", "GAGS", "GAIN", "GAIT", "GALA", "GALE", "GALL", "GAME", "GANG", "GAPE", "GAPS", "GARB", "GASH", "GASP", "GATE", "GAVE", "GAWK", "GAZE", "GEAR", "GEEK", "GEES", "GELS", "GENE", "GENT", "GERM", "GETS", "GHAT", "GHEE", "GIBE", "GIFT", "GILD", "GILL", "GILT", "GIMP", "GIRD", "GIRL", "GIRT", "GIST", "GIVE", "GLAD", "GLEN", "GLIB", "GLOB", "GLOW", "GLUE", "GLUM", "GLUT", "GNAT", "GNAW", "GOAD", "GOAL", "GOAT", "GOBS", "GODS", "GOES", "GOLD", "GOLF", "GONE", "GONG", "GOOD", "GOOF", "GOON", "GOOP", "GORE", "GORY", "GOSH", "GOWN", "GRAB", "GRAD", "GRAM", "GRAY", "GREW", "GREY", "GRID", "GRIM", "GRIN", "GRIP", "GRIT", "GROG", "GROW", "GRUB", "GULF", "GULL", "GULP", "GUMS", "GUNS", "GURU", "GUSH", "GUST", "GUTS", "GUYS", "GYMS", "GYRE", "HACK", "HAIL", "HAIR", "HALE", "HALF", "HALL", "HALO", "HALT", "HAND", "HANG", "HARD", "HARE", "HARK", "HARM", "HARP", "HART", "HASH", "HAST", "HATE", "HATH", "HATS", "HAUL", "HAVE", "HAWK", "HAYS", "HAZE", "HAZY", "HEAD", "HEAL", "HEAP", "HEAR", "HEAT", "HEED", "HEEL", "HEFT", "HEIR", "HELD", "HELL", "HELM", "HELP", "HEMP", "HENS", "HERB", "HERD", "HERE", "HERO", "HERS", "HEWN", "HEWS", "HIDE", "HIGH", "HIKE", "HILL", "HILT", "HIND", "HINT", "HIPS", "HIRE", "HISS", "HITS", "HIVE", "HOAX", "HOBO", "HOCK", "HOED", "HOES", "HOGS", "HOLD", "HOLE", "HOLY", "HOME", "HOMY", "HONE", "HONK", "HOOD", "HOOF", "HOOK", "HOOP", "HOOT", "HOPE", "HOPS", "HORN", "HOSE", "HOST", "HOTS", "HOUR", "HOWL", "HUBS", "HUED", "HUES", "HUFF", "HUGE", "HUGS", "HULK", "HULL", "HUMS", "HUNG", "HUNK", "HUNT", "HURL", "HURT", "HUSH", "HUSK", "HYMN", "HYPE", "ICED", "ICES", "ICON", "IDEA", "IDLE", "IDOL", "IKAT", "ILLS", "IMPS", "INCH", "INFO", "INKS", "INKY", "INTO", "IONS", "IOTA", "IRIS", "IRKS", "IRON", "ITCH", "ITEM", "IVES", "JABS", "JACK", "JADE", "JAIL", "JAMB", "JAMS", "JARS", "JAVA", "JAWS", "JAYS", "JAZZ", "JEAN", "JEER", "JEST", "JETS", "JIBE", "JIGS", "JILT", "JINX", "JOBS", "JOCK", "JOEY", "JOGS", "JOIN", "JOKE", "JOLT", "JOSH", "JOTS", "JOWL", "JOYS", "JUDO", "JUGS", "JULY", "JUMP", "JUNE", "JUNK", "JURY", "JUST", "JUTE", "KALE", "KAYO", "KEEL", "KEEN", "KEEP", "KEGS", "KELP", "KEPT", "KERB", "KEYS", "KICK", "KIDS", "KILL", "KILN", "KILO", "KIND", "KING", "KINK", "KISS", "KITE", "KITS", "KIWI", "KNEE", "KNEW", "KNIT", "KNOB", "KNOT", "KNOW", "LABS", "LACE", "LACK", "LACY", "LADS", "LADY", "LAID", "LAIN", "LAIR", "LAKE", "LAMB", "LAME", "LAMP", "LAND", "LANE", "LAPS", "LARD", "LARK", "LASH", "LAST", "LATE", "LAVA", "LAWN", "LAWS", "LAYS", "LAZY", "LEAD", "LEAF", "LEAK", "LEAN", "LEAP", "LEEK", "LEER", "LEFT", "LEGS", "LEND", "LENS", "LENT", "LESS", "LEST", "LETS", "LEVY", "LICE", "LICK", "LIED", "LIEN", "LIES", "LIFE", "LIFT", "LIKE", "LILY", "LIMB", "LIME", "LIMP", "LINE", "LINK", "LINT", "LION", "LIPS", "LISP", "LIST", "LITE", "LIVE", "LOAD", "LOAF", "LOAM", "LOAN", "LOBE", "LOCH", "LOCK", "LOFT", "LOGO", "LOGS", "LOIN", "LONE", "LONG", "LOOK", "LOOM", "LOON", "LOOP", "LOOT", "LOPE", "LORD", "LORE", "LOSE", "LOSS", "LOST", "LOTS", "LOUD", "LOUT", "LOVE", "LOWS", "LUCK", "LUGE", "LUGS", "LULL", "LUMP", "LUNG", "LURE", "LURK", "LUSH", "LUST", "LUTE", "LYNX", "LYRE", "MACE", "MADE", "MAID", "MAIL", "MAIM", "MAIN", "MAKE", "MALE", "MALL", "MALT", "MAMA", "MANE", "MANS", "MANY", "MAPS", "MARE", "MARK", "MARS", "MART", "MASH", "MASK", "MASS", "MAST", "MATE", "MATH", "MATS", "MAUL", "MAWS", "MAYO", "MAZE", "MEAD", "MEAL", "MEAN", "MEAT", "MEEK", "MEET", "MELD", "MELT", "MEMO", "MEND", "MENU", "MERE", "MESH", "MESS", "MICE", "MILD", "MILE", "MILK", "MILL", "MIME", "MIND", "MINE", "MINI", "MINK", "MINT", "MIRE", "MISS", "MIST", "MITE", "MOAN", "MOAT", "MOBS", "MOCK", "MODE", "MOLD", "MOLE", "MONK", "MOOD", "MOON", "MOOR", "MOOS", "MOOT", "MOPE", "MOPS", "MORE", "MOSS", "MOST", "MOTH", "MOVE", "MOWN", "MOWS", "MUCH", "MUCK", "MUDS", "MUFF", "MUGS", "MULE", "MULL", "MUMS", "MUNG", "MUSE", "MUSH", "MUSK", "MUST", "MUTE", "MUTT", "MYTH", "NABS", "NAGS", "NAIL", "NAME", "NAPE", "NAPS", "NARY", "NAVE", "NAVY", "NEAR", "NEAT", "NECK", "NEED", "NEON", "NERD", "NEST", "NETS", "NEWS", "NEWT", "NEXT", "NIBS", "NICE", "NICK", "NIGH", "NINE", "NIPS", "NODE", "NODS", "NONE", "NOOK", "NOON", "NOPE", "NORM", "NOSE", "NOSY", "NOTE", "NOUN", "NOVA", "NUDE", "NUKE", "NULL", "NUMB", "NUNS", "NUTS", "OAKS", "OARS", "OATH", "OATS", "OBEY", "OBOE", "ODDS", "ODOR", "OFFS", "OGLE", "OGRE", "OHMS", "OILS", "OILY", "OINK", "OKAY", "OKRA", "OMEN", "OMIT", "ONCE", "ONES", "ONLY", "ONTO", "ONUS", "ONYX", "OOZE", "OPAL", "OPEN", "OPTS", "ORAL", "ORBS", "ORCA", "ORES", "OUCH", "OUST", "OUTS", "OVAL", "OVEN", "OVER", "OWED", "OWES", "OWLS", "OWNS", "OXEN", "PACE", "PACK", "PACT", "PADS", "PAGE", "PAID", "PAIL", "PAIN", "PAIR", "PALE", "PALM", "PALS", "PANE", "PANG", "PANS", "PANT", "PARE", "PARK", "PART", "PASS", "PAST", "PATE", "PATH", "PATS", "PAVE", "PAWN", "PAWS", "PEAK", "PEAL", "PEAR", "PEAS", "PEAT", "PECK", "PEEK", "PEEL", "PEEP", "PEER", "PEGS", "PELT", "PENS", "PEPS", "PERK", "PERM", "PERT", "PESO", "PEST", "PETS", "PHEW", "PICK", "PIED", "PIER", "PIES", "PIGS", "PIKE", "PILE", "PILL", "PIMP", "PINE", "PING", "PINK", "PINS", "PINT", "PIPE", "PITH", "PITS", "PITY", "PIXY", "PLAN", "PLAT", "PLAY", "PLEA", "PLOD", "PLOP", "PLOT", "PLOW", "PLOY", "PLUG", "PLUM", "PLUS", "POCK", "PODS", "POEM", "POET", "POKE", "POLE", "POLL", "POLO", "POMP", "POND", "POOL", "POOP", "POOR", "PORE", "PORK", "PORT", "POSE", "POSH", "POSY", "POUR", "POUT", "PRAM", "PRAY", "PREP", "PREY", "PRIG", "PRIM", "PROD", "PROM", "PROP", "PROW", "PUBS", "PUCE", "PUCK", "PUFF", "PUGS", "PULL", "PULP", "PULS", "PUMA", "PUMP", "PUNK", "PUNS", "PUNT", "PUPA", "PUPS", "PURE", "PURR", "PUSH", "PUTT", "QUAD", "QUAY", "QUEY", "QUID", "QUIP", "QUIT", "QUIZ", "RACE", "RACK", "RAFT", "RAGE", "RAGS", "RAID", "RAIL", "RAIN", "RAKE", "RAMP", "RAMS", "RANG", "RANK", "RANT", "RAPS", "RARE", "RASH", "RASP", "RATE", "RATS", "RAVE", "RAWS", "RAYS", "RAZE", "READ", "REAL", "REAM", "REAP", "REAR", "REDO", "REDS", "REED", "REEF", "REEK", "REEL", "REIN", "RELY", "REND", "RENT", "REST", "RIBS", "RICE", "RICH", "RIDE", "RIFE", "RIFT", "RIGS", "RILE", "RIMS", "RIND", "RING", "RINK", "RINS", "RIOT", "RIPE", "RIPS", "RISE", "RISK", "RITE", "ROAD", "ROAM", "ROAN", "ROAR", "ROBE", "ROBS", "ROCK", "RODE", "RODS", "ROLE", "ROLL", "ROMP", "ROOF", "ROOK", "ROOM", "ROOT", "ROPE", "ROSE", "ROSY", "ROTS", "ROUT", "ROVE", "ROWS", "RUBS", "RUBY", "RUDE", "RUED", "RUES", "RUGS", "RUIN", "RULE", "RUMP", "RUNG", "RUNS", "RUNT", "RUSE", "RUSH", "RUST", "RUTS", "SACK", "SAFE", "SAGA", "SAGE", "SAGO", "SAID", "SAIL", "SAKE", "SALE", "SALT", "SAME", "SAND", "SANE", "SANG", "SANK", "SASH", "SAVE", "SAWN", "SAWS", "SAYS", "SCAB", "SCAN", "SCAR", "SCAT", "SCUM", "SEAL", "SEAM", "SEAR", "SEAS", "SEAT", "SECT", "SEED", "SEEK", "SEEM", "SEEN", "SEEP", "SEER", "SEES", "SELL", "SEND", "SENT", "SERF", "SETS", "SEWN", "SEWS", "SHAG", "SHAH", "SHAM", "SHED", "SHIM", "SHIN", "SHIP", "SHOD", "SHOE", "SHOO", "SHOP", "SHOT", "SHOW", "SHUN", "SHUT", "SICK", "SIDE", "SIFT", "SIGH", "SIGN", "SILK", "SILL", "SILO", "SILT", "SING", "SINK", "SIPS", "SIRE", "SITE", "SITS", "SIZE", "SKID", "SKIM", "SKIN", "SKIP", "SKIT", "SKUA", "SLAB", "SLAG", "SLAM", "SLAP", "SLAT", "SLAY", "SLED", "SLEW", "SLID", "SLIM", "SLIP", "SLIT", "SLOB", "SLOG", "SLOP", "SLOT", "SLOW", "SLUG", "SLUM", "SLUR", "SLUT", "SMOG", "SNAG", "SNAP", "SNIP", "SNIT", "SNOB", "SNOW", "SNUB", "SOAK", "SOAP", "SOAR", "SOBS", "SOCK", "SODA", "SOFA", "SOFT", "SOIL", "SOLD", "SOLE", "SOME", "SONG", "SONS", "SOOT", "SORE", "SORT", "SOUL", "SOUP", "SOUR", "SOWN", "SOWS", "SOYA", "SPAN", "SPAR", "SPAT", "SPAY", "SPED", "SPIN", "SPIT", "SPOT", "SPRY", "SPUD", "SPUR", "STAB", "STAG", "STAR", "STAY", "STEM", "STEP", "STEW", "STIR", "STOP", "STOW", "STUB", "STUD", "STUN", "STYE", "SUCH", "SUDS", "SUES", "SUIT", "SUMO", "SUMP", "SUMS", "SUNG", "SUNK", "SUNS", "SURE", "SURF", "SWAB", "SWAG", "SWAM", "SWAN", "SWAP", "SWAT", "SWAY", "SWIG", "SWIM", "SWUM", "SYNC", "TABS", "TACK", "TACO", "TACT", "TAGS", "TAIL", "TAKE", "TALC", "TALE", "TALK", "TALL", "TAME", "TAMP", "TANG", "TANK", "TAPE", "TAPS", "TARE", "TARN", "TARO", "TARP", "TART", "TASK", "TATS", "TAUT", "TAWS", "TAXI", "TEAK", "TEAL", "TEAM", "TEAR", "TEAS", "TEAT", "TECH", "TEEM", "TEEN", "TEES", "TELL", "TEMP", "TEND", "TENS", "TENT", "TERM", "TERN", "TEST", "TEXT", "THAN", "THAT", "THAW", "THAY", "THEE", "THEM", "THEN", "THEY", "THIN", "THIS", "THUD", "THUG", "TICK", "TIDE", "TIDY", "TIED", "TIER", "TIES", "TIKE", "TILE", "TILL", "TILT", "TIME", "TINE", "TING", "TINS", "TINT", "TINY", "TIRE", "TOAD", "TOFU", "TOGA", "TOIL", "TOLD", "TOLL", "TOMB", "TOME", "TONE", "TONG", "TONS", "TOOK", "TOOL", "TOON", "TOOT", "TOPS", "TORE", "TORN", "TORT", "TOSS", "TOTE", "TOUR", "TOUT", "TOWN", "TOYS", "TRAM", "TRAP", "TRAY", "TREE", "TREK", "TRIG", "TRIM", "TRIO", "TRIP", "TROD", "TROT", "TROY", "TRUE", "TSAR", "TUBA", "TUBE", "TUBS", "TUCK", "TUFT", "TUGS", "TUNA", "TUNE", "TURF", "TURN", "TUSK", "TWIG", "TWIN", "TWIT", "UGLY", "ULNA", "UMPS", "UNDO", "UNIT", "UNTO", "UPON", "URGE", "URIC", "URNS", "USED", "USER", "USES", "UTES", "VAIN", "VALE", "VANE", "VANS", "VARY", "VASE", "VAST", "VATS", "VEAL", "VEER", "VEIL", "VEIN", "VENT", "VERB", "VERY", "VEST", "VETO", "VETS", "VIAL", "VIBE", "VICE", "VIEW", "VILE", "VINE", "VISA", "VISE", "VOID", "VOLE", "VOTE", "WACK", "WADE", "WADS", "WAFT", "WAGE", "WAGS", "WAIF", "WAIL", "WAIT", "WAKE", "WALE", "WALK", "WALL", "WAND", "WANE", "WANT", "WARD", "WARE", "WARM", "WARN", "WARP", "WARS", "WART", "WARY", "WASH", "WASP", "WAST", "WATT", "WAVE", "WAVY", "WAXY", "WAYS", "WEAK", "WEAL", "WEAN", "WEAR", "WEDS", "WEED", "WEEK", "WEEP", "WEIR", "WELD", "WELL", "WELT", "WENT", "WEPT", "WERE", "WEST", "WETS", "WHAM", "WHAT", "WHEN", "WHET", "WHIG", "WHIM", "WHIP", "WHIT", "WHIZ", "WHOA", "WHOM", "WHOP", "WICK", "WIDE", "WIFE", "WIGS", "WILD", "WILE", "WILL", "WILT", "WIMP", "WIND", "WINE", "WING", "WINK", "WINO", "WINS", "WIPE", "WIRE", "WISE", "WISH", "WISP", "WITH", "WITS", "WOES", "WOKE", "WOLF", "WOMB", "WONT", "WOOD", "WOOF", "WOOL", "WORD", "WORE", "WORK", "WORM", "WORN", "WORT", "WOVE", "WRAP", "WREN", "WRIT", "YAKS", "YAMS", "YANK", "YARD", "YARN", "YAWL", "YAWN", "YEAR", "YELL", "YELP", "YENS", "YETI", "YIPE", "YOGA", "YOKE", "YOLK", "YORE", "YOUR", "YOWL", "YUCK", "YULE", "YURT", "ZAGS", "ZANY", "ZAPS", "ZEAL", "ZEBU", "ZERO", "ZEST", "ZINC", "ZING", "ZIPS", "ZITS", "ZONE", "ZOOM", "ZOOS"];
@@ -683,12 +1069,23 @@
     };
   }
 
-  function todayDateString(){
-    const d = new Date();
+  function dateStringFromDate(d){
     const y = d.getFullYear();
     const m = String(d.getMonth()+1).padStart(2,"0");
     const day = String(d.getDate()).padStart(2,"0");
     return y+"-"+m+"-"+day;
+  }
+  function todayDateString(){ return dateStringFromDate(new Date()); }
+  function yesterdayDateString(){
+    const d = new Date();
+    d.setDate(d.getDate()-1);
+    return dateStringFromDate(d);
+  }
+  function addDaysToDateStr(dateStr, delta){
+    const [y,m,d] = dateStr.split("-").map(Number);
+    const dt = new Date(y,m-1,d);
+    dt.setDate(dt.getDate()+delta);
+    return dateStringFromDate(dt);
   }
 
   const LAUNCH_DATE = new Date(2026,0,1); // Jan 1 2026, local
@@ -734,7 +1131,6 @@
       }
       radius++;
     }
-    // prefer entries closest to desired distance
     candidates.sort((a,b)=> Math.abs(a[1]-desired) - Math.abs(b[1]-desired));
     const topBand = candidates.filter(c => c[1] === candidates[0][1]);
     const pick = topBand[Math.floor(rng() * topBand.length)];
@@ -743,60 +1139,152 @@
     return { start, target, optimal, dateStr, number: puzzleNumber(dateStr) };
   }
 
-  /* ---------------- Storage helpers ----------------
-     Primary: window.storage (available inside the Claude.ai artifact panel).
-     Fallback: localStorage (so the game still remembers your streak if this
-     file is downloaded and opened directly in a normal browser, where
-     window.storage doesn't exist). We read from whichever has data and
-     write to both, so progress survives in either context. */
-  const LS_PREFIX = "ladder:";
-
-  function lsGet(key){
-    try{
-      const raw = localStorage.getItem(LS_PREFIX+key);
-      return raw ? JSON.parse(raw) : null;
-    }catch(e){ return null; }
-  }
-  function lsSet(key, value){
-    try{ localStorage.setItem(LS_PREFIX+key, JSON.stringify(value)); }
-    catch(e){ /* ignore (e.g. storage disabled) */ }
-  }
-
-  async function storageGet(key){
-    let remote = null;
-    if(typeof window.storage !== "undefined" && window.storage){
-      try{
-        const r = await window.storage.get(key, false);
-        remote = r ? JSON.parse(r.value) : null;
-      }catch(e){ remote = null; }
-    }
-    if(remote != null) return remote;
-    return lsGet(key);
-  }
-  async function storageSet(key, value){
-    if(typeof window.storage !== "undefined" && window.storage){
-      try{ await window.storage.set(key, JSON.stringify(value), false); }
-      catch(e){ /* fall through to local backup */ }
-    }
-    lsSet(key, value);
-  }
-
+  /* =========================================================================
+     Firestore-backed persistence (with automatic browser-side IndexedDB
+     caching via Firestore offline persistence — no localStorage is used).
+     ========================================================================= */
+  const DEFAULT_SETTINGS = {
+    darkMode:false, hardMode:false, reduceMotion:false, sound:false
+  };
   const DEFAULT_STATS = {
-    currentStreak:0, longestStreak:0, totalSolved:0,
-    fastestSolveSeconds:null, fewestMoves:null, lastCompletedDate:null
+    normalStreak:0, normalLongest:0, hardStreak:0, hardLongest:0,
+    lastNormalDate:null, lastHardDate:null, lastAnyDate:null,
+    totalSolved:0, fastestSolveSeconds:null, fewestMoves:null
   };
 
-  /* ---------------- Game state ---------------- */
-  let puzzle = null;
-  let chain = [];
-  let solved = false;
-  let startTimestamp = null;
-  let timerHandle = null;
-  let solveSeconds = null;
-  let hintsUsed = 0;
-  let stats = null;
+  let currentUser = null;
+  let userDoc = null; // { displayName, settings, stats, progress }
+  let userDocRef = null;
+  let docLoaded = false;
 
+  function freshUserDoc(){
+    return {
+      displayName: "Player" + Math.floor(1000 + Math.random()*9000),
+      settings: Object.assign({}, DEFAULT_SETTINGS),
+      stats: Object.assign({}, DEFAULT_STATS),
+      progress: {}
+    };
+  }
+
+  async function loadUserDoc(uid){
+    userDocRef = doc(db, "users", uid);
+    const snap = await getDoc(userDocRef);
+    if(snap.exists()){
+      const data = snap.data();
+      userDoc = {
+        displayName: data.displayName || freshUserDoc().displayName,
+        settings: Object.assign({}, DEFAULT_SETTINGS, data.settings || {}),
+        stats: Object.assign({}, DEFAULT_STATS, data.stats || {}),
+        progress: data.progress || {}
+      };
+    } else {
+      userDoc = freshUserDoc();
+      await setDoc(userDocRef, userDoc);
+    }
+    docLoaded = true;
+  }
+
+  let saveTimer = null;
+  function persistUserDoc(){
+    if(!userDocRef || !userDoc) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async ()=>{
+      try{ await setDoc(userDocRef, userDoc, {merge:true}); }
+      catch(e){ console.error("save failed", e); }
+    }, 250);
+  }
+
+  async function persistLeaderboard(){
+    if(!currentUser || !userDoc) return;
+    try{
+      await setDoc(doc(db, "leaderboard", currentUser.uid), {
+        displayName: userDoc.displayName,
+        normalStreak: userDoc.stats.normalStreak,
+        normalLongest: userDoc.stats.normalLongest,
+        hardStreak: userDoc.stats.hardStreak,
+        hardLongest: userDoc.stats.hardLongest,
+        updatedAt: serverTimestamp()
+      }, {merge:true});
+    }catch(e){ console.error("leaderboard save failed", e); }
+  }
+
+  /* Records this player's move count against the day's aggregate and
+     returns "what percent of today's other players took MORE moves than
+     you" — i.e. the percent of players you beat. Uses a transaction so
+     concurrent solvers don't clobber each other's counts. */
+  async function recordPuzzleResult(dateStr, mode, movesUsed){
+    const ref = doc(db, "puzzleStats", dateStr + "_" + mode);
+    try{
+      return await runTransaction(db, async (tx)=>{
+        const snap = await tx.get(ref);
+        let total = 0, counts = {};
+        if(snap.exists()){
+          const d = snap.data();
+          total = d.total || 0;
+          counts = Object.assign({}, d.counts || {});
+        }
+        let more = 0;
+        for(const k in counts){ if(Number(k) > movesUsed) more += counts[k]; }
+        const pct = total > 0 ? Math.round((more/total)*100) : null;
+        counts[String(movesUsed)] = (counts[String(movesUsed)]||0) + 1;
+        total += 1;
+        tx.set(ref, {total, counts}, {merge:true});
+        return pct;
+      });
+    }catch(e){ console.error("percentile save failed", e); return null; }
+  }
+  async function getPercentileReadOnly(dateStr, mode, movesUsed){
+    try{
+      const snap = await getDoc(doc(db, "puzzleStats", dateStr + "_" + mode));
+      if(!snap.exists()) return null;
+      const d = snap.data();
+      const total = d.total || 0;
+      const counts = d.counts || {};
+      let more = 0;
+      for(const k in counts){ if(Number(k) > movesUsed) more += counts[k]; }
+      return total > 0 ? Math.round((more/total)*100) : null;
+    }catch(e){ return null; }
+  }
+
+  function pruneOldProgress(){
+    const today = todayDateString();
+    const yest = yesterdayDateString();
+    const keep = new Set([
+      today+"_normal", today+"_hard", yest+"_normal", yest+"_hard"
+    ]);
+    for(const key of Object.keys(userDoc.progress)){
+      if(!keep.has(key)) delete userDoc.progress[key];
+    }
+  }
+
+  /* ---------------- Game state ---------------- */
+  let viewDay = "today"; // "today" | "yesterday"
+  let puzzleToday = null, puzzleYesterday = null;
+  let timerHandle = null;
   const HINT_LIMIT = 2;
+
+  function currentMode(){ return userDoc.settings.hardMode ? "hard" : "normal"; }
+  function currentDateStr(){ return viewDay === "today" ? todayDateString() : yesterdayDateString(); }
+  function currentPuzzle(){ return viewDay === "today" ? puzzleToday : puzzleYesterday; }
+  function stateKey(){ return currentDateStr() + "_" + currentMode(); }
+
+  function getState(){
+    const key = stateKey();
+    if(!userDoc.progress[key]){
+      userDoc.progress[key] = {
+        chain: [currentPuzzle().start],
+        solved: false,
+        startTimestamp: Date.now(),
+        solveSeconds: null,
+        hintsUsed: 0
+      };
+    }
+    return userDoc.progress[key];
+  }
+  function saveProgress(){
+    pruneOldProgress();
+    persistUserDoc();
+  }
 
   const els = {
     puzzleNum: document.getElementById("puzzleNum"),
@@ -810,12 +1298,20 @@
     submitBtn: document.getElementById("submitBtn"),
     undoBtn: document.getElementById("undoBtn"),
     hintBtn: document.getElementById("hintBtn"),
+    clearBtn: document.getElementById("clearBtn"),
     moveCount: document.getElementById("moveCount"),
     timeCount: document.getElementById("timeCount"),
-    streakVal: document.getElementById("streakVal"),
     toast: document.getElementById("toast"),
     inputArea: document.getElementById("inputArea"),
+    normalStreakVal: null, hardStreakVal: null,
+    normalStreakPill: document.getElementById("normalStreakPill"),
+    hardStreakPill: document.getElementById("hardStreakPill"),
+    modeBadge: document.getElementById("modeBadge"),
+    recapNote: document.getElementById("recapNote"),
+    hardLockNote: document.getElementById("hardLockNote"),
   };
+  els.normalStreakVal = document.getElementById("normalStreakVal");
+  els.hardStreakVal = document.getElementById("hardStreakVal");
 
   function fmtTime(totalSeconds){
     const s = Math.max(0, Math.floor(totalSeconds));
@@ -850,45 +1346,68 @@
     }
   }
 
+  function updateStreakPills(){
+    els.normalStreakVal.textContent = String(userDoc.stats.normalStreak);
+    els.hardStreakVal.textContent = String(userDoc.stats.hardStreak);
+  }
+
+  function popStreak(mode){
+    const pill = mode === "hard" ? els.hardStreakPill : els.normalStreakPill;
+    if(userDoc.settings.reduceMotion) return;
+    pill.classList.remove("pop-normal","pop-hard");
+    void pill.offsetWidth;
+    pill.classList.add(mode === "hard" ? "pop-hard" : "pop-normal");
+    setTimeout(()=> pill.classList.remove("pop-normal","pop-hard"), 800);
+  }
+
+  function getYesterdayState(){
+    const key = yesterdayDateString() + "_" + currentMode();
+    return userDoc.progress[key] || null;
+  }
+
   function render(){
+    if(viewDay === "yesterday"){ renderYesterdayRecap(); return; }
+    const puzzle = currentPuzzle();
+    const state = getState();
+    const mode = currentMode();
+
     els.puzzleNum.textContent = "#" + puzzle.number;
     els.puzzleDate.textContent = new Date(puzzle.dateStr+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
     els.startWordLabel.textContent = puzzle.start;
     els.targetWordLabel.textContent = puzzle.target;
+    els.modeBadge.style.display = mode === "hard" ? "inline-block" : "none";
+    els.recapNote.style.display = "none";
+    els.hardLockNote.style.display = mode === "hard" ? "" : "none";
 
-    // goal row
-    const reachedGoal = chain[chain.length-1] === puzzle.target;
+    const reachedGoal = state.chain[state.chain.length-1] === puzzle.target;
     renderTileRow(els.goalRow, puzzle.target, -1, reachedGoal ? "solved" : "ghost");
 
-    // ladder scroll: render chain excluding start (start rendered separately below),
-    // most recent at top due to column-reverse, so append in natural order.
     els.ladderScroll.innerHTML = "";
-    for(let i=1;i<chain.length;i++){
+    for(let i=1;i<state.chain.length;i++){
       const row = document.createElement("div");
       row.className = "rung-item";
       const tileRow = document.createElement("div");
       tileRow.className = "word-tile-row";
       row.appendChild(tileRow);
-      const {idx} = diffIndex(chain[i-1], chain[i]);
-      const isFinal = solved && i === chain.length-1;
-      renderTileRow(tileRow, chain[i], idx, isFinal ? "solved" : null);
+      const {idx} = diffIndex(state.chain[i-1], state.chain[i]);
+      const isFinal = state.solved && i === state.chain.length-1;
+      renderTileRow(tileRow, state.chain[i], idx, isFinal ? "solved" : null);
       els.ladderScroll.appendChild(row);
     }
 
-    // start rung, rendered once beneath scroll area (in the DOM this is the .start-rung block)
     let startRow = document.getElementById("startTileRow");
-    if(!startRow){
-      const wrap = document.querySelector(".start-rung");
-      startRow = document.createElement("div");
-      startRow.className = "word-tile-row";
-      startRow.id = "startTileRow";
-      wrap.insertBefore(startRow, wrap.firstChild.nextSibling);
-      const label = document.createElement("div");
-      label.className = "start-label";
-      label.textContent = "START";
-      wrap.appendChild(label);
-    }
-    startRow.innerHTML = "";
+    if(startRow) startRow.remove();
+    const wrap = document.querySelector(".start-rung");
+    let oldLabel = wrap.querySelector(".start-label");
+    if(oldLabel) oldLabel.remove();
+    startRow = document.createElement("div");
+    startRow.className = "word-tile-row";
+    startRow.id = "startTileRow";
+    wrap.appendChild(startRow);
+    const label = document.createElement("div");
+    label.className = "start-label";
+    label.textContent = "START";
+    wrap.appendChild(label);
     for(let i=0;i<4;i++){
       const div = document.createElement("div");
       div.className = "letter start-tile";
@@ -896,28 +1415,99 @@
       startRow.appendChild(div);
     }
 
-    els.moveCount.textContent = String(chain.length - 1);
+    els.moveCount.textContent = String(state.chain.length - 1);
     updateTimerDisplay();
+    updateStreakPills();
 
-    // input area
     const resultRow = document.getElementById("resultRow");
-    if(solved){
+    if(state.solved){
       els.inputArea.style.display = "none";
       resultRow.style.display = "";
     } else {
       els.inputArea.style.display = "";
       resultRow.style.display = "none";
-      els.undoBtn.disabled = chain.length <= 1;
-      els.hintBtn.disabled = hintsUsed >= HINT_LIMIT;
-      els.hintBtn.textContent = "💡 Hint (" + (HINT_LIMIT - hintsUsed) + ")";
+      const hardOn = mode === "hard";
+      els.undoBtn.style.display = hardOn ? "none" : "inline-flex";
+      els.hintBtn.style.display = hardOn ? "none" : "inline-flex";
+      els.undoBtn.disabled = state.chain.length <= 1;
+      els.hintBtn.disabled = state.hintsUsed >= HINT_LIMIT;
+      els.hintBtn.innerHTML = ICONS.sun + " Hint (" + (HINT_LIMIT - state.hintsUsed) + ")";
+    }
+  }
+
+  function renderYesterdayRecap(){
+    const puzzle = puzzleYesterday;
+    const mode = currentMode();
+    const state = getYesterdayState();
+
+    els.puzzleNum.textContent = "#" + puzzle.number;
+    els.puzzleDate.textContent = new Date(puzzle.dateStr+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
+    els.startWordLabel.textContent = puzzle.start;
+    els.targetWordLabel.textContent = puzzle.target;
+    els.modeBadge.style.display = mode === "hard" ? "inline-block" : "none";
+    els.hardLockNote.style.display = "none";
+
+    els.inputArea.style.display = "none";
+    document.getElementById("resultRow").style.display = "none";
+
+    const reachedGoal = !!(state && state.solved);
+    renderTileRow(els.goalRow, puzzle.target, -1, reachedGoal ? "solved" : "ghost");
+
+    els.ladderScroll.innerHTML = "";
+    if(state && state.chain){
+      for(let i=1;i<state.chain.length;i++){
+        const row = document.createElement("div");
+        row.className = "rung-item";
+        const tileRow = document.createElement("div");
+        tileRow.className = "word-tile-row";
+        row.appendChild(tileRow);
+        const {idx} = diffIndex(state.chain[i-1], state.chain[i]);
+        const isFinal = state.solved && i === state.chain.length-1;
+        renderTileRow(tileRow, state.chain[i], idx, isFinal ? "solved" : null);
+        els.ladderScroll.appendChild(row);
+      }
+    }
+
+    let startRow = document.getElementById("startTileRow");
+    if(startRow) startRow.remove();
+    const wrap = document.querySelector(".start-rung");
+    let oldLabel = wrap.querySelector(".start-label");
+    if(oldLabel) oldLabel.remove();
+    startRow = document.createElement("div");
+    startRow.className = "word-tile-row";
+    startRow.id = "startTileRow";
+    wrap.appendChild(startRow);
+    const label = document.createElement("div");
+    label.className = "start-label";
+    label.textContent = "START";
+    wrap.appendChild(label);
+    for(let i=0;i<4;i++){
+      const div = document.createElement("div");
+      div.className = "letter start-tile";
+      div.textContent = puzzle.start[i];
+      startRow.appendChild(div);
+    }
+
+    els.moveCount.textContent = state && state.chain ? String(state.chain.length - 1) : "0";
+    els.timeCount.textContent = (state && state.solveSeconds != null) ? fmtTime(state.solveSeconds) : "—";
+
+    els.recapNote.style.display = "";
+    const modeLbl = mode === "hard" ? "hard" : "normal";
+    if(state && state.solved){
+      els.recapNote.textContent = "Yesterday's result (" + modeLbl + " mode) — solved in " + (state.chain.length-1) + " moves, " + fmtTime(state.solveSeconds||0) + ".";
+    } else if(state && state.chain && state.chain.length > 1){
+      els.recapNote.textContent = "You started yesterday's ladder in " + modeLbl + " mode but didn't reach the goal.";
+    } else {
+      els.recapNote.textContent = "You didn't play yesterday's ladder in " + modeLbl + " mode.";
     }
   }
 
   function updateTimerDisplay(){
-    if(solved && solveSeconds != null){
-      els.timeCount.textContent = fmtTime(solveSeconds);
-    } else if(startTimestamp){
-      els.timeCount.textContent = fmtTime((Date.now() - startTimestamp)/1000);
+    const state = getState();
+    if(state.solved && state.solveSeconds != null){
+      els.timeCount.textContent = fmtTime(state.solveSeconds);
+    } else if(state.startTimestamp){
+      els.timeCount.textContent = fmtTime((Date.now() - state.startTimestamp)/1000);
     }
   }
 
@@ -927,12 +1517,6 @@
   }
   function stopTimer(){
     if(timerHandle){ clearInterval(timerHandle); timerHandle = null; }
-  }
-
-  async function saveProgress(){
-    await storageSet("progress:"+puzzle.dateStr, {
-      chain, solved, startTimestamp, solveSeconds, hintsUsed
-    });
   }
 
   function clearBoxes(){
@@ -945,20 +1529,41 @@
   }
 
   function flashInvalid(){
-    els.boxes.classList.remove("shake");
-    void els.boxes.offsetWidth;
-    els.boxes.classList.add("shake");
+    if(!userDoc.settings.reduceMotion){
+      els.boxes.classList.remove("shake");
+      void els.boxes.offsetWidth;
+      els.boxes.classList.add("shake");
+    }
     els.boxInputs.forEach(b=>b.classList.add("invalid"));
     setTimeout(()=> els.boxInputs.forEach(b=>b.classList.remove("invalid")), 500);
   }
 
+  function playTone(freq, dur){
+    if(!userDoc.settings.sound) return;
+    try{
+      const ctx = playTone._ctx || (playTone._ctx = new (window.AudioContext||window.webkitAudioContext)());
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = freq;
+      osc.type = "sine";
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + dur);
+    }catch(e){ /* audio unsupported, ignore */ }
+  }
+
   async function handleSubmit(){
-    if(solved) return;
+    if(viewDay !== "today") return;
+    const state = getState();
+    if(state.solved) return;
+    const puzzle = currentPuzzle();
     const word = currentInputWord();
     if(word.length < 4 || !/^[A-Z]{4}$/.test(word)){
       flashInvalid(); showToast("Enter 4 letters"); return;
     }
-    const prev = chain[chain.length-1];
+    const prev = state.chain[state.chain.length-1];
     if(word === prev){
       flashInvalid(); showToast("That's the rung you're on"); return;
     }
@@ -969,103 +1574,150 @@
     if(!WORD_SET.has(word)){
       flashInvalid(); showToast("Not a real word"); return;
     }
-    if(chain.includes(word)){
+    if(state.chain.includes(word)){
       flashInvalid(); showToast("Already used that rung"); return;
     }
 
-    chain.push(word);
+    state.chain.push(word);
     clearBoxes();
+    playTone(660, 0.12);
 
     if(word === puzzle.target){
-      solved = true;
+      state.solved = true;
       stopTimer();
-      solveSeconds = (Date.now() - startTimestamp)/1000;
-      await saveProgress();
+      state.solveSeconds = (Date.now() - state.startTimestamp)/1000;
+      saveProgress();
       render();
-      await finishGame();
+      await finishGame(state);
       return;
     }
 
-    await saveProgress();
+    saveProgress();
     render();
     els.ladderScroll.scrollTop = 0;
   }
 
-  async function handleUndo(){
-    if(chain.length <= 1) return;
-    chain.pop();
-    await saveProgress();
+  function handleUndo(){
+    if(viewDay !== "today") return;
+    const state = getState();
+    if(currentMode() === "hard") return;
+    if(state.chain.length <= 1) return;
+    state.chain.pop();
+    saveProgress();
     render();
     clearBoxes();
   }
 
-  async function handleHint(){
-    if(hintsUsed >= HINT_LIMIT || solved) return;
-    const cur = chain[chain.length-1];
+  function handleHint(){
+    if(viewDay !== "today") return;
+    const state = getState();
+    if(currentMode() === "hard") return;
+    if(state.hintsUsed >= HINT_LIMIT || state.solved) return;
+    const puzzle = currentPuzzle();
+    const cur = state.chain[state.chain.length-1];
     const path = shortestPath(cur, puzzle.target);
     if(path && path.length > 1){
-      hintsUsed++;
+      state.hintsUsed++;
       const next = path[1];
       els.boxInputs.forEach((b,i)=> b.value = next[i]);
       showToast("Hint: try the highlighted word", true);
-      await saveProgress();
+      saveProgress();
       render();
     } else {
       showToast("No hint available from here");
     }
   }
 
-  async function finishGame(){
-    const today = puzzle.dateStr;
-    const yesterday = (function(){
-      const [y,m,d] = today.split("-").map(Number);
-      const dt = new Date(y,m-1,d);
-      dt.setDate(dt.getDate()-1);
-      return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
-    })();
-
-    if(stats.lastCompletedDate === today){
-      // already counted (shouldn't normally happen)
-    } else if(stats.lastCompletedDate === yesterday){
-      stats.currentStreak += 1;
-    } else {
-      stats.currentStreak = 1;
+  function maybeResetStreaksForNewDay(){
+    const stats = userDoc.stats;
+    const today = todayDateString();
+    const yest = yesterdayDateString();
+    if(stats.lastAnyDate && stats.lastAnyDate !== today && stats.lastAnyDate !== yest){
+      const hadStreak = stats.normalStreak > 0 || stats.hardStreak > 0;
+      stats.normalStreak = 0;
+      stats.hardStreak = 0;
+      if(hadStreak) showToast("Your streak reset — a day was missed", false);
+      persistUserDoc();
+      persistLeaderboard();
     }
-    stats.longestStreak = Math.max(stats.longestStreak, stats.currentStreak);
-    stats.lastCompletedDate = today;
-    stats.totalSolved += 1;
+  }
 
-    const movesUsed = chain.length - 1;
-    if(stats.fastestSolveSeconds == null || solveSeconds < stats.fastestSolveSeconds){
-      stats.fastestSolveSeconds = solveSeconds;
+  async function finishGame(state){
+    const mode = currentMode();
+    const puzzle = currentPuzzle();
+    const stats = userDoc.stats;
+    playTone(880, 0.18);
+    let pct = null;
+
+    const today = puzzle.dateStr;
+    const yest = yesterdayDateString();
+    if(mode === "normal"){
+      if(stats.lastNormalDate !== today){
+        stats.normalStreak = (stats.lastNormalDate === yest) ? stats.normalStreak + 1 : 1;
+        stats.normalLongest = Math.max(stats.normalLongest, stats.normalStreak);
+        stats.lastNormalDate = today;
+      }
+    } else {
+      if(stats.lastHardDate !== today){
+        stats.hardStreak = (stats.lastHardDate === yest) ? stats.hardStreak + 1 : 1;
+        stats.hardLongest = Math.max(stats.hardLongest, stats.hardStreak);
+        stats.lastHardDate = today;
+      }
+    }
+    stats.lastAnyDate = today;
+
+    const movesUsed = state.chain.length - 1;
+    if(stats.fastestSolveSeconds == null || state.solveSeconds < stats.fastestSolveSeconds){
+      stats.fastestSolveSeconds = state.solveSeconds;
     }
     if(stats.fewestMoves == null || movesUsed < stats.fewestMoves){
       stats.fewestMoves = movesUsed;
     }
-    await storageSet("stats", stats);
-    els.streakVal.textContent = String(stats.currentStreak);
+    stats.totalSolved += 1;
+    persistUserDoc();
+    persistLeaderboard();
+    updateStreakPills();
+    popStreak(mode);
 
-    showWinModal(movesUsed);
+    pct = await recordPuzzleResult(today, mode, movesUsed);
+    showWinModal(state, false, pct);
   }
 
-  function showWinModal(movesUsed){
+  function showWinModal(state, isPractice, pct){
+    const puzzle = currentPuzzle();
+    const mode = currentMode();
+    const movesUsed = state.chain.length - 1;
     document.getElementById("winStart").textContent = puzzle.start;
     document.getElementById("winTarget").textContent = puzzle.target;
     document.getElementById("w-moves").textContent = String(movesUsed);
     document.getElementById("w-par").textContent = String(puzzle.optimal);
-    document.getElementById("w-time").textContent = fmtTime(solveSeconds);
-    document.getElementById("w-streak").textContent = String(stats.currentStreak) + " 🔥";
+    document.getElementById("w-time").textContent = fmtTime(state.solveSeconds || 0);
 
-    const title = movesUsed <= puzzle.optimal ? "Perfect climb! 🪜" : "Solved it! 🪜";
+    const streakVal = mode === "hard" ? userDoc.stats.hardStreak : userDoc.stats.normalStreak;
+    document.getElementById("w-streak").textContent = isPractice ? "—" : String(streakVal);
+    document.getElementById("w-streak-lbl").textContent = isPractice ? "Practice (no streak)" : (mode === "hard" ? "Hard streak" : "Normal streak");
+
+    const title = movesUsed <= puzzle.optimal ? "Perfect climb!" : "Solved it!";
     document.getElementById("winTitle").textContent = title;
     document.getElementById("winSub").textContent =
-      movesUsed <= puzzle.optimal ? "You found the shortest path." : "You made it to the top.";
+      (isPractice ? "Practice complete. " : "") +
+      (movesUsed <= puzzle.optimal ? "You found the shortest path." : "You made it to the top.");
+
+    const pctBlock = document.getElementById("pctBlock");
+    if(pct != null){
+      pctBlock.style.display = "";
+      document.getElementById("pctNum").textContent = pct + "%";
+    } else {
+      pctBlock.style.display = "none";
+    }
 
     let squares = "";
-    for(let i=0;i<movesUsed;i++) squares += (i < puzzle.optimal ? "🟩" : "🟧");
-    const shareText = "Ladder #"+puzzle.number+"\n"+puzzle.start+" → "+puzzle.target+"\n"+
-      movesUsed+" moves (best "+puzzle.optimal+") · "+fmtTime(solveSeconds)+"\n"+
-      squares+"\n🔥 "+stats.currentStreak+"-day streak";
+    for(let i=0;i<movesUsed;i++) squares += (i < puzzle.optimal ? "🟩" : "-");
+    const streakLine = isPractice ? "Practice puzzle (no streak)" : (mode === "hard" ? ("Hard streak: "+streakVal) : ("Normal streak: "+streakVal));
+    const pctLine = pct != null ? ("Beat "+pct+"% of players today\n") : "";
+    const shareText = "Ladder #"+puzzle.number+"\n"+puzzle.start+" -> "+puzzle.target+"\n"+
+      movesUsed+" moves (best "+puzzle.optimal+") - "+fmtTime(state.solveSeconds||0)+"\n"+
+      squares+"\n"+pctLine+streakLine;
     document.getElementById("shareText").textContent = shareText;
     document.getElementById("shareBtn").onclick = async ()=>{
       try{
@@ -1080,9 +1732,12 @@
   }
 
   function refreshStatsModal(){
-    document.getElementById("s-played").textContent = String(stats.totalSolved > 0 ? (stats.totalSolved) : 0);
-    document.getElementById("s-streak").textContent = String(stats.currentStreak);
-    document.getElementById("s-maxstreak").textContent = String(stats.longestStreak);
+    const stats = userDoc.stats;
+    document.getElementById("s-played").textContent = String(stats.totalSolved);
+    document.getElementById("s-normal-streak").textContent = String(stats.normalStreak);
+    document.getElementById("s-hard-streak").textContent = String(stats.hardStreak);
+    document.getElementById("s-normal-best").textContent = String(stats.normalLongest);
+    document.getElementById("s-hard-best").textContent = String(stats.hardLongest);
     document.getElementById("s-fastest").textContent = stats.fastestSolveSeconds != null ? fmtTime(stats.fastestSolveSeconds) : "—";
     document.getElementById("s-fewest").textContent = stats.fewestMoves != null ? String(stats.fewestMoves) : "—";
     document.getElementById("s-total").textContent = String(stats.totalSolved);
@@ -1102,6 +1757,8 @@
       });
       box.addEventListener("keydown", (e)=>{
         if(e.key === "Backspace" && !box.value && i > 0){
+          e.preventDefault();
+          els.boxInputs[i-1].value = "";
           els.boxInputs[i-1].focus();
         }
         if(e.key === "Enter"){
@@ -1114,10 +1771,14 @@
   document.getElementById("submitBtn").addEventListener("click", handleSubmit);
   document.getElementById("undoBtn").addEventListener("click", handleUndo);
   document.getElementById("hintBtn").addEventListener("click", handleHint);
+  document.getElementById("clearBtn").addEventListener("click", clearBoxes);
   document.getElementById("statsBtn").addEventListener("click", ()=>{ refreshStatsModal(); openOverlay("statsOverlay"); });
-  document.getElementById("viewResultBtn").addEventListener("click", ()=>{
-    if(solveSeconds == null) solveSeconds = 0;
-    showWinModal(chain.length - 1);
+  document.getElementById("viewResultBtn").addEventListener("click", async ()=>{
+    if(viewDay !== "today") return;
+    const state = getState();
+    const puzzle = currentPuzzle();
+    const pct = await getPercentileReadOnly(puzzle.dateStr, currentMode(), state.chain.length - 1);
+    showWinModal(state, false, pct);
   });
   document.getElementById("helpBtn").addEventListener("click", ()=> openOverlay("helpOverlay"));
   document.querySelectorAll("[data-close]").forEach(btn=>{
@@ -1127,44 +1788,265 @@
     ov.addEventListener("click", (e)=>{ if(e.target === ov) ov.classList.remove("show"); });
   });
 
-  /* ---------------- Boot ---------------- */
-  async function boot(){
-    wireBoxes();
-    const dateStr = todayDateString();
-    puzzle = generatePuzzle(dateStr);
-
-    stats = await storageGet("stats");
-    if(!stats) stats = Object.assign({}, DEFAULT_STATS);
-
-    const saved = await storageGet("progress:"+dateStr);
-    if(saved){
-      chain = saved.chain || [puzzle.start];
-      solved = !!saved.solved;
-      startTimestamp = saved.startTimestamp || Date.now();
-      solveSeconds = saved.solveSeconds || null;
-      hintsUsed = saved.hintsUsed || 0;
-    } else {
-      chain = [puzzle.start];
-      solved = false;
-      startTimestamp = Date.now();
-      solveSeconds = null;
-      hintsUsed = 0;
-      await saveProgress();
+  document.getElementById("tabToday").addEventListener("click", ()=> switchDay("today"));
+  document.getElementById("tabYesterday").addEventListener("click", ()=> switchDay("yesterday"));
+  function switchDay(day){
+    viewDay = day;
+    document.getElementById("tabToday").classList.toggle("active", day==="today");
+    document.getElementById("tabYesterday").classList.toggle("active", day==="yesterday");
+    stopTimer();
+    if(day === "today"){
+      const state = getState();
+      if(!state.solved){ startTimer(); }
     }
-
-    els.streakVal.textContent = String(stats.currentStreak);
     render();
+  }
 
-    if(!solved){
+  /* ---------------- Settings wiring ---------------- */
+  const darkModeToggle = document.getElementById("darkModeToggle");
+  const hardModeToggle = document.getElementById("hardModeToggle");
+  const reduceMotionToggle = document.getElementById("reduceMotionToggle");
+  const soundToggle = document.getElementById("soundToggle");
+
+  function applySettingsToDOM(){
+    document.body.classList.toggle("dark", !!userDoc.settings.darkMode);
+    document.body.classList.toggle("reduce-motion", !!userDoc.settings.reduceMotion);
+    darkModeToggle.checked = !!userDoc.settings.darkMode;
+    hardModeToggle.checked = !!userDoc.settings.hardMode;
+    reduceMotionToggle.checked = !!userDoc.settings.reduceMotion;
+    soundToggle.checked = !!userDoc.settings.sound;
+  }
+
+  darkModeToggle.addEventListener("change", ()=>{
+    userDoc.settings.darkMode = darkModeToggle.checked;
+    document.body.classList.toggle("dark", userDoc.settings.darkMode);
+    persistUserDoc();
+  });
+  reduceMotionToggle.addEventListener("change", ()=>{
+    userDoc.settings.reduceMotion = reduceMotionToggle.checked;
+    document.body.classList.toggle("reduce-motion", userDoc.settings.reduceMotion);
+    persistUserDoc();
+  });
+  soundToggle.addEventListener("change", ()=>{
+    userDoc.settings.sound = soundToggle.checked;
+    persistUserDoc();
+  });
+  hardModeToggle.addEventListener("change", ()=>{
+    userDoc.settings.hardMode = hardModeToggle.checked;
+    persistUserDoc();
+    render();
+    clearBoxes();
+  });
+
+  document.getElementById("settingsBtn").addEventListener("click", ()=>{
+    applySettingsToDOM();
+    document.getElementById("displayNameInput").value = userDoc.displayName || "";
+    refreshAccountPanel();
+    openOverlay("settingsOverlay");
+  });
+
+  /* ---------------- Account / auth wiring ---------------- */
+  function refreshAccountPanel(){
+    const linked = currentUser && !currentUser.isAnonymous;
+    document.getElementById("acctLinked").style.display = linked ? "" : "none";
+    document.getElementById("acctGuest").style.display = linked ? "none" : "";
+    if(linked){
+      document.getElementById("acctName").textContent = currentUser.displayName || currentUser.email || "Signed in";
+    }
+  }
+
+  document.getElementById("googleSignInBtn").addEventListener("click", async ()=>{
+    const provider = new GoogleAuthProvider();
+    try{
+      if(currentUser && currentUser.isAnonymous){
+        try{ await linkWithPopup(currentUser, provider); }
+        catch(err){
+          if(err.code === "auth/credential-already-in-use"){
+            await signInWithPopup(auth, provider);
+          } else throw err;
+        }
+      } else {
+        await signInWithPopup(auth, provider);
+      }
+      showToast("Signed in with Google", true);
+    }catch(err){
+      showToast(err.message || "Google sign-in failed");
+    }
+  });
+
+  document.getElementById("authRegisterBtn").addEventListener("click", async ()=>{
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+    if(!email || password.length < 6){ showToast("Enter an email and a 6+ character password"); return; }
+    try{
+      if(currentUser && currentUser.isAnonymous){
+        const cred = EmailAuthProvider.credential(email, password);
+        try{ await linkWithCredential(currentUser, cred); }
+        catch(err){
+          if(err.code === "auth/credential-already-in-use" || err.code === "auth/email-already-in-use"){
+            await signInWithEmailAndPassword(auth, email, password);
+          } else throw err;
+        }
+      } else {
+        await createUserWithEmailAndPassword(auth, email, password);
+      }
+      showToast("Account created", true);
+    }catch(err){
+      showToast(err.message || "Could not create account");
+    }
+  });
+
+  document.getElementById("authSignInBtn").addEventListener("click", async ()=>{
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+    if(!email || !password){ showToast("Enter your email and password"); return; }
+    try{
+      await signInWithEmailAndPassword(auth, email, password);
+      showToast("Signed in", true);
+    }catch(err){
+      showToast(err.message || "Sign-in failed");
+    }
+  });
+
+  document.getElementById("saveNameBtn").addEventListener("click", async ()=>{
+    const name = document.getElementById("displayNameInput").value.trim().slice(0,24);
+    if(!name){ showToast("Enter a display name"); return; }
+    userDoc.displayName = name;
+    persistUserDoc();
+    persistLeaderboard();
+    if(currentUser && !currentUser.isAnonymous){
+      try{ await updateProfile(currentUser, {displayName:name}); }catch(e){}
+    }
+    showToast("Display name saved", true);
+  });
+
+  document.getElementById("signOutBtn").addEventListener("click", async ()=>{
+    try{ await signOut(auth); showToast("Signed out", true); }
+    catch(e){ showToast("Could not sign out"); }
+  });
+
+  document.getElementById("newsletterBtn").addEventListener("click", async ()=>{
+    const email = document.getElementById("newsletterEmail").value.trim();
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ showToast("Enter a valid email"); return; }
+    try{
+      await setDoc(doc(collection(db,"newsletter")), { email, createdAt: serverTimestamp() });
+      showToast("Subscribed — you'll hear from us soon", true);
+      document.getElementById("newsletterEmail").value = "";
+    }catch(e){
+      showToast("Could not subscribe right now");
+    }
+  });
+
+  /* ---------------- Leaderboard ---------------- */
+  let lbMode = "normal";
+  document.getElementById("leaderboardBtn").addEventListener("click", ()=>{
+    openOverlay("leaderboardOverlay");
+    loadLeaderboard();
+  });
+  document.getElementById("lbTabNormal").addEventListener("click", ()=>{ lbMode="normal"; setLbTabs(); loadLeaderboard(); });
+  document.getElementById("lbTabHard").addEventListener("click", ()=>{ lbMode="hard"; setLbTabs(); loadLeaderboard(); });
+  function setLbTabs(){
+    document.getElementById("lbTabNormal").classList.toggle("active", lbMode==="normal");
+    document.getElementById("lbTabHard").classList.toggle("active", lbMode==="hard");
+  }
+  async function loadLeaderboard(){
+    const list = document.getElementById("leaderboardList");
+    list.innerHTML = '<div class="lb-loading">Loading…</div>';
+    try{
+      const field = lbMode === "hard" ? "hardStreak" : "normalStreak";
+      const q = query(collection(db,"leaderboard"), orderBy(field,"desc"), limit(50));
+      const snap = await getDocs(q);
+      if(snap.empty){
+        list.innerHTML = '<div class="lb-empty">No streaks yet — be the first.</div>';
+        return;
+      }
+      list.innerHTML = "";
+      let rank = 0;
+      snap.forEach(docSnap=>{
+        rank++;
+        const d = docSnap.data();
+        const streakVal = lbMode === "hard" ? (d.hardStreak||0) : (d.normalStreak||0);
+        const row = document.createElement("div");
+        row.className = "lb-row" + (currentUser && docSnap.id === currentUser.uid ? " me" : "");
+        row.innerHTML = '<div class="lb-rank">'+rank+'</div>'+
+          '<div class="lb-name">'+escapeHtml(d.displayName || "Player")+'</div>'+
+          '<div class="lb-streak">'+(lbMode==="hard"?ICONS.gem:ICONS.flame)+'<span>'+streakVal+'</span></div>';
+        list.appendChild(row);
+      });
+    }catch(e){
+      list.innerHTML = '<div class="lb-empty">Could not load the leaderboard.</div>';
+    }
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  /* ---------------- Boot ---------------- */
+  wireBoxes();
+  puzzleToday = generatePuzzle(todayDateString());
+  puzzleYesterday = generatePuzzle(yesterdayDateString());
+
+  let offlineMode = false;
+  let bootedLocally = false;
+
+  // Start the puzzle immediately from an in-memory local doc so the game is
+  // always playable, even if Firebase never responds. If a real signed-in
+  // user shows up later, startWithUser() runs instead and takes over.
+  function bootLocallyIfNeeded(){
+    if(bootedLocally) return;
+    bootedLocally = true;
+    offlineMode = true;
+    userDoc = freshUserDoc();
+    docLoaded = true;
+    maybeResetStreaksForNewDay();
+    applySettingsToDOM();
+    refreshAccountPanel();
+    render();
+    const state = getState();
+    if(!state.solved){
       startTimer();
       els.boxInputs[0].focus();
     } else {
-      // show a quiet confirmation rather than re-popping the win modal on reload
       showToast("Today's ladder is complete — see you tomorrow", true);
     }
   }
 
-  boot();
+  async function startWithUser(user){
+    offlineMode = false;
+    currentUser = user;
+    await loadUserDoc(user.uid);
+    maybeResetStreaksForNewDay();
+    applySettingsToDOM();
+    refreshAccountPanel();
+    render();
+    const state = getState();
+    if(!state.solved){
+      startTimer();
+      els.boxInputs[0].focus();
+    } else {
+      showToast("Today's ladder is complete — see you tomorrow", true);
+    }
+  }
+
+  // Failsafe: if Firebase hasn't told us anything within 2.5s (slow network,
+  // blocked request, misconfigured project, etc.), stop waiting and let the
+  // person play locally. Cloud sync/leaderboard just won't be available yet.
+  const bootTimeout = setTimeout(bootLocallyIfNeeded, 2500);
+
+  onAuthStateChanged(auth, async (user)=>{
+    if(!user){
+      try{
+        await signInAnonymously(auth);
+        // onAuthStateChanged will fire again with the new user; nothing else to do here.
+      }catch(e){
+        clearTimeout(bootTimeout);
+        bootLocallyIfNeeded();
+      }
+      return;
+    }
+    clearTimeout(bootTimeout);
+    await startWithUser(user);
+  });
 })();
 </script>
 </body>
