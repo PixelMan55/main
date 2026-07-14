@@ -1166,6 +1166,27 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     };
   }
 
+  /* Local (offline) persistence — used only when we're not signed in to
+     Firebase, so play still saves across reloads on this device. If the
+     player later gets a real cloud account, this local doc is merged in. */
+  const LOCAL_KEY = "ladder_offline_doc_v1";
+  function loadLocalDoc(){
+    try{
+      const raw = localStorage.getItem(LOCAL_KEY);
+      if(!raw) return null;
+      const data = JSON.parse(raw);
+      return {
+        displayName: data.displayName || freshUserDoc().displayName,
+        settings: Object.assign({}, DEFAULT_SETTINGS, data.settings || {}),
+        stats: Object.assign({}, DEFAULT_STATS, data.stats || {}),
+        progress: data.progress || {}
+      };
+    }catch(e){ return null; }
+  }
+  function saveLocalDoc(){
+    try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(userDoc)); }catch(e){ /* storage disabled/full: fine, just won't persist */ }
+  }
+
   async function loadUserDoc(uid){
     userDocRef = doc(db, "users", uid);
     const snap = await getDoc(userDocRef);
@@ -1186,7 +1207,13 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
 
   let saveTimer = null;
   function persistUserDoc(){
-    if(!userDocRef || !userDoc) return;
+    if(!userDoc) return;
+    if(offlineMode){
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveLocalDoc, 250);
+      return;
+    }
+    if(!userDocRef) return;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(async ()=>{
       try{ await setDoc(userDocRef, userDoc, {merge:true}); }
@@ -1213,6 +1240,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
      you" — i.e. the percent of players you beat. Uses a transaction so
      concurrent solvers don't clobber each other's counts. */
   async function recordPuzzleResult(dateStr, mode, movesUsed){
+    if(offlineMode) return null;
     const ref = doc(db, "puzzleStats", dateStr + "_" + mode);
     try{
       return await runTransaction(db, async (tx)=>{
@@ -1234,6 +1262,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     }catch(e){ console.error("percentile save failed", e); return null; }
   }
   async function getPercentileReadOnly(dateStr, mode, movesUsed){
+    if(offlineMode) return null;
     try{
       const snap = await getDoc(doc(db, "puzzleStats", dateStr + "_" + mode));
       if(!snap.exists()) return null;
@@ -1712,7 +1741,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     }
 
     let squares = "";
-    for(let i=0;i<movesUsed;i++) squares += (i < puzzle.optimal ? "🟩" : "-");
+    for(let i=0;i<movesUsed;i++) squares += (i < puzzle.optimal ? "#" : "-");
     const streakLine = isPractice ? "Practice puzzle (no streak)" : (mode === "hard" ? ("Hard streak: "+streakVal) : ("Normal streak: "+streakVal));
     const pctLine = pct != null ? ("Beat "+pct+"% of players today\n") : "";
     const shareText = "Ladder #"+puzzle.number+"\n"+puzzle.start+" -> "+puzzle.target+"\n"+
@@ -1996,7 +2025,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     if(bootedLocally) return;
     bootedLocally = true;
     offlineMode = true;
-    userDoc = freshUserDoc();
+    userDoc = loadLocalDoc() || freshUserDoc();
     docLoaded = true;
     maybeResetStreaksForNewDay();
     applySettingsToDOM();
