@@ -182,9 +182,10 @@
     font-weight:800;
     letter-spacing:1px;
     text-transform:uppercase;
-    color:#fff;
-    background:var(--hard);
-    padding:3px 8px;
+    color:var(--hard);
+    background:transparent;
+    border:1.5px solid var(--hard);
+    padding:2px 7px;
     border-radius:4px;
     margin-left:8px;
     vertical-align:middle;
@@ -305,8 +306,11 @@
     position:relative;
     padding:2px 0;
     scrollbar-width:thin;
+    mask-image:linear-gradient(to bottom, transparent 0, black 14px, black calc(100% - 14px), transparent 100%);
+    -webkit-mask-image:linear-gradient(to bottom, transparent 0, black 14px, black calc(100% - 14px), transparent 100%);
   }
   .ladder-scroll::-webkit-scrollbar{width:6px;}
+  .ladder-scroll::-webkit-scrollbar-button{display:none;width:0;height:0;}
   .ladder-scroll::-webkit-scrollbar-thumb{background:var(--rail);border-radius:3px;}
 
   .rung-item{position:relative;z-index:2;padding:7px 0;}
@@ -418,6 +422,7 @@
     font-family:'Libre Franklin',sans-serif;
     display:inline-flex;align-items:center;gap:6px;
   }
+  button.primary svg{width:14px;height:14px;}
   button.secondary svg{width:14px;height:14px;}
   button.secondary:hover{background:var(--panel-2);}
   button.secondary:disabled{opacity:.35;cursor:not-allowed;}
@@ -467,9 +472,11 @@
     position:fixed;inset:0;
     background:rgba(0,0,0,.55);
     display:none;
-    align-items:center;justify-content:center;
+    align-items:flex-start;justify-content:center;
+    padding:max(20px, 5vh) 20px 20px;
     z-index:50;
-    padding:20px;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
   }
   .overlay.show{display:flex;}
   .modal{
@@ -761,7 +768,7 @@
   </div>
 
   <div class="action-row" id="resultRow" style="margin-top:16px; display:none;">
-    <button class="secondary" id="viewResultBtn"></button>
+    <button class="primary" id="viewResultBtn" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;"></button>
   </div>
 
   <footer>
@@ -1774,6 +1781,39 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
 
   function openOverlay(id){ document.getElementById(id).classList.add("show"); }
   function closeOverlay(id){ document.getElementById(id).classList.remove("show"); }
+
+  /* Mobile keyboard handling: iOS/Android don't shrink `position:fixed`
+     elements when the on-screen keyboard opens, so a centered modal can end
+     up partly hidden behind it. We use the visualViewport API (where
+     available) to keep open overlays sized to the actually-visible area,
+     and scroll the focused field into view once the keyboard has settled. */
+  if(window.visualViewport){
+    const vv = window.visualViewport;
+    function syncOverlaysToViewport(){
+      const activeOverlay = document.querySelector(".overlay.show");
+      if(!activeOverlay) return;
+      activeOverlay.style.height = vv.height + "px";
+      activeOverlay.style.top = vv.offsetTop + "px";
+    }
+    vv.addEventListener("resize", syncOverlaysToViewport);
+    vv.addEventListener("scroll", syncOverlaysToViewport);
+  }
+  document.addEventListener("focusin", (e)=>{
+    if(!(e.target instanceof HTMLElement)) return;
+    if(e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") return;
+    const overlay = e.target.closest(".overlay");
+    if(!overlay) return;
+    setTimeout(()=>{
+      e.target.scrollIntoView({block:"center", behavior:"smooth"});
+    }, 300); // wait for the keyboard's open animation
+  });
+  document.addEventListener("focusout", ()=>{
+    // Reset any inline sizing once the keyboard closes and nothing is focused.
+    setTimeout(()=>{
+      if(document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA")) return;
+      document.querySelectorAll(".overlay").forEach(ov=>{ ov.style.height = ""; ov.style.top = ""; });
+    }, 50);
+  });
 
   /* ---------------- Input wiring ---------------- */
   function wireBoxes(){
