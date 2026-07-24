@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ember & Stone — Build Your Civilization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void: #0a0e13;
+    --void-2: #101720;
+    --panel: #151d27;
+    --panel-2: #1b2530;
+    --line: #2a3644;
+    --parchment: #ece2c8;
+    --parchment-dim: #b9ae93;
+    --bronze: #cb9f4e;
+    --bronze-dim: #8a6c2f;
+    --forest: #5a8a5e;
+    --clay: #b1583f;
+    --sky: #5b95ab;
+    --danger: #c1503f;
+    --good: #6fa876;
+    --shadow: rgba(0,0,0,.45);
+    --era-a: #6b7f8e;
+    --era-b: #cb9f4e;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(203,159,78,.08), transparent 45%),
+      radial-gradient(ellipse at 100% 100%, rgba(91,149,171,.07), transparent 50%),
+      var(--void);
+    color: var(--parchment);
+    font-family:'Spectral', serif;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.display{ font-family:'Cinzel', serif; letter-spacing:.03em; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  /* ---------- START SCREEN ---------- */
+  #startScreen{
+    position:fixed; inset:0; z-index:100;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(circle at 50% 20%, rgba(203,159,78,.10), transparent 55%),
+      var(--void);
+    padding:24px;
+  }
+  .start-card{
+    max-width:560px; width:100%;
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:44px 40px;
+    box-shadow: 0 30px 80px var(--shadow);
+    position:relative;
+    overflow:hidden;
+  }
+  .start-card::before{
+    content:""; position:absolute; top:0; left:0; right:0; height:3px;
+    background: linear-gradient(90deg, transparent, var(--bronze), transparent);
+  }
+  .eyebrow{
+    color:var(--bronze); font-size:.72rem; letter-spacing:.28em; text-transform:uppercase;
+    margin-bottom:10px; font-family:'JetBrains Mono',monospace;
+  }
+  .start-card h1{ font-size:2.1rem; color:var(--parchment); margin-bottom:8px; line-height:1.15;}
+  .start-card p.sub{ color:var(--parchment-dim); font-size:.95rem; margin-bottom:28px; line-height:1.5;}
+  label.field-label{ display:block; font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--parchment-dim); margin-bottom:8px;}
+  input#civName{
+    width:100%; padding:13px 14px; background:var(--void-2); border:1px solid var(--line);
+    color:var(--parchment); font-family:'Spectral',serif; font-size:1.05rem; border-radius:3px;
+    margin-bottom:24px; outline:none; transition:border-color .15s;
+  }
+  input#civName:focus{ border-color:var(--bronze); }
+  .path-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:30px;}
+  .path-card{
+    background:var(--void-2); border:1px solid var(--line); border-radius:3px; padding:14px 12px;
+    cursor:pointer; transition:.15s; text-align:left;
+  }
+  .path-card:hover{ border-color:var(--bronze-dim); transform:translateY(-2px); }
+  .path-card.selected{ border-color:var(--bronze); background:rgba(203,159,78,.08); }
+  .path-card .picon{ font-size:1.4rem; margin-bottom:6px; display:block;}
+  .path-card h3{ font-size:.85rem; color:var(--parchment); margin-bottom:4px;}
+  .path-card p{ font-size:.72rem; color:var(--parchment-dim); line-height:1.35;}
+  button.cta{
+    width:100%; padding:15px; background:linear-gradient(180deg, var(--bronze), var(--bronze-dim));
+    border:none; color:#1a1206; font-family:'Cinzel',serif; font-weight:700; letter-spacing:.06em;
+    font-size:.95rem; border-radius:3px; cursor:pointer; text-transform:uppercase;
+    transition:filter .15s, transform .1s;
+  }
+  button.cta:hover{ filter:brightness(1.08); }
+  button.cta:active{ transform:scale(.98); }
+
+  /* ---------- GAME LAYOUT ---------- */
+  #game{ display:none; min-height:100vh; }
+  #game.active{ display:block; }
+
+  header.topbar{
+    position:sticky; top:0; z-index:20;
+    background:rgba(10,14,19,.92); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+    padding:10px 20px;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .topbar-row{ display:flex; align-items:center; gap:16px; }
+  .civ-id{ display:flex; flex-direction:column; margin-right:8px; flex-shrink:0;}
+  .civ-id .name{ font-family:'Cinzel',serif; font-size:1.05rem; color:var(--parchment);}
+  .civ-id .era{ font-size:.7rem; color:var(--bronze); letter-spacing:.1em; text-transform:uppercase;}
+  .resbar{
+    display:flex; gap:10px; flex-wrap:nowrap; width:100%;
+    overflow-x:auto; padding-bottom:2px; scrollbar-width:thin;
+  }
+  .res{
+    display:flex; align-items:center; gap:7px; background:var(--panel);
+    border:1px solid var(--line); padding:6px 11px; border-radius:20px;
+    font-family:'JetBrains Mono',monospace; font-size:.82rem; min-width:96px; flex-shrink:0;
+    transition:box-shadow .2s;
+  }
+  .res .ic{ font-size:.95rem; }
+  .res .val{ color:var(--parchment); font-weight:500;}
+  .res .rate{ color:var(--parchment-dim); font-size:.68rem; margin-left:2px;}
+  .res.flash{ box-shadow:0 0 0 1px var(--good) inset; }
+  .res.flash-bad{ box-shadow:0 0 0 1px var(--danger) inset; }
+
+  main.layout{
+    display:grid;
+    grid-template-columns: minmax(300px,430px) 1fr;
+    gap:20px; padding:20px; max-width:1400px; margin:0 auto;
+  }
+  @media (max-width:880px){ main.layout{ grid-template-columns:1fr; } }
+
+  .panel{
+    background:linear-gradient(180deg, var(--panel), var(--panel-2));
+    border:1px solid var(--line); border-radius:5px; padding:18px;
+  }
+  .panel h2{ font-size:.95rem; color:var(--parchment); margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+  .panel h2 .bar{ flex:1; height:1px; background:var(--line); }
+
+  /* Monument */
+  #monumentWrap{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+  #monumentSvg{ width:100%; max-width:400px; height:auto; }
+  .pop-readout{ text-align:center; }
+  .pop-readout .num{ font-family:'Cinzel',serif; font-size:1.8rem; color:var(--parchment);}
+  .pop-readout .cap{ color:var(--parchment-dim); font-size:.85rem;}
+  .growth-bar{ width:100%; height:6px; background:var(--void-2); border-radius:3px; overflow:hidden; margin-top:6px;}
+  .growth-bar > div{ height:100%; background:linear-gradient(90deg, var(--forest), var(--good)); transition:width .4s; }
+
+  .gather-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px;}
+  .gather-btn{
+    background:var(--void-2); border:1px solid var(--line); color:var(--parchment);
+    padding:12px 8px; border-radius:4px; cursor:pointer; font-family:'Spectral',serif; font-size:.85rem;
+    display:flex; flex-direction:column; align-items:center; gap:4px; transition:.12s; position:relative; overflow:hidden;
+  }
+  .gather-btn:hover{ border-color:var(--bronze-dim); background:#20293380; }
+  .gather-btn:active{ transform:scale(.95); }
+  .gather-btn .gic{ font-size:1.3rem; }
+  .gather-btn .glabel{ font-size:.68rem; color:var(--parchment-dim); text-transform:uppercase; letter-spacing:.05em;}
+
+  /* Tabs */
+  .tabs{ display:flex; gap:4px; margin-bottom:16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .tab{
+    padding:9px 16px; cursor:pointer; font-family:'Cinzel',serif; font-size:.78rem; letter-spacing:.05em;
+    color:var(--parchment-dim); border-bottom:2px solid transparent; text-transform:uppercase; transition:.15s;
+  }
+  .tab.active{ color:var(--bronze); border-color:var(--bronze); }
+  .tab:hover{ color:var(--parchment); }
+  .tabpage{ display:none; }
+  .tabpage.active{ display:block; }
+
+  .building-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; }
+  .bcard{
+    background:var(--void-2); border:1px solid var(--line); border-radius:5px; padding:14px;
+    display:flex; flex-direction:column; gap:8px; transition:.15s;
+  }
+  .bcard.locked{ opacity:.45; }
+  .bcard-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .bcard-head .bname{ font-family:'Cinzel',serif; font-size:.88rem; color:var(--parchment);}
+  .bcard-head .bcount{ font-family:'JetBrains Mono',monospace; color:var(--bronze); font-size:.85rem; background:rgba(203,159,78,.1); padding:1px 8px; border-radius:10px;}
+  .bdesc{ font-size:.78rem; color:var(--parchment-dim); line-height:1.4; min-height:32px;}
+  .bcost{ display:flex; gap:8px; flex-wrap:wrap; font-family:'JetBrains Mono',monospace; font-size:.72rem; color:var(--parchment-dim); }
+  .bcost span.afford{ color:var(--good); }
+  .bcost span.short{ color:var(--danger); }
+  .bcost span b, .ecost span b{ font-weight:600; opacity:.85; }
+  .buy-btn{
+    margin-top:2px; background:linear-gradient(180deg, var(--bronze), var(--bronze-dim)); border:none;
+    color:#1a1206; font-family:'Cinzel',serif; font-weight:700; font-size:.75rem; letter-spacing:.05em;
+    padding:9px; border-radius:3px; cursor:pointer; text-transform:uppercase; transition:.12s;
+  }
+  .buy-btn:disabled{ background:var(--void-2); color:var(--parchment-dim); cursor:not-allowed; border:1px solid var(--line);}
+  .buy-btn:not(:disabled):hover{ filter:brightness(1.1); }
+  .locked-tag{ font-size:.68rem; color:var(--parchment-dim); font-style:italic; }
+
+  .era-track{ display:flex; flex-direction:column; gap:10px; }
+  .era-item{
+    background:var(--void-2); border:1px solid var(--line); border-radius:5px; padding:14px 16px;
+    display:flex; align-items:center; gap:14px; position:relative;
+  }
+  .era-item.current{ border-color:var(--bronze); background:rgba(203,159,78,.06); }
+  .era-item.past{ opacity:.55; }
+  .era-num{ font-family:'Cinzel',serif; font-size:1.1rem; color:var(--bronze); width:26px; }
+  .era-info{ flex:1; }
+  .era-info .ename{ font-family:'Cinzel',serif; font-size:.92rem; color:var(--parchment);}
+  .era-info .ecost{ font-family:'JetBrains Mono',monospace; font-size:.72rem; color:var(--parchment-dim); margin-top:4px;}
+  .era-info .ecost span.short{ color:var(--danger); }
+  .era-info .ecost span.afford{ color:var(--good); }
+  .adv-btn{
+    background:linear-gradient(180deg, var(--bronze), var(--bronze-dim)); border:none; color:#1a1206;
+    font-family:'Cinzel',serif; font-weight:700; font-size:.72rem; padding:10px 14px; border-radius:3px;
+    cursor:pointer; text-transform:uppercase; letter-spacing:.05em;
+  }
+  .adv-btn:disabled{ background:var(--void-2); color:var(--parchment-dim); cursor:not-allowed; border:1px solid var(--line);}
+
+  #log{ display:flex; flex-direction:column-reverse; gap:6px; max-height:240px; overflow-y:auto; padding-right:4px; }
+  #log::-webkit-scrollbar{ width:6px; }
+  #log::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+  .logline{ font-size:.8rem; padding:7px 10px; border-radius:3px; background:var(--void-2); border-left:3px solid var(--line); color:var(--parchment-dim); }
+  .logline.good{ border-color:var(--good); }
+  .logline.bad{ border-color:var(--danger); }
+  .logline.era{ border-color:var(--bronze); color:var(--parchment); }
+  .logline .t{ color:var(--bronze); font-family:'JetBrains Mono',monospace; font-size:.68rem; margin-right:6px;}
+
+  /* toasts */
+  #toasts{ position:fixed; top:80px; right:20px; z-index:60; display:flex; flex-direction:column; gap:10px; max-width:300px;}
+  .toast{
+    background:var(--panel-2); border:1px solid var(--bronze-dim); border-left:4px solid var(--bronze);
+    padding:12px 14px; border-radius:4px; font-size:.82rem; box-shadow:0 10px 30px var(--shadow);
+    animation: slidein .3s ease-out;
+  }
+  .toast.bad{ border-left-color:var(--danger); }
+  .toast.good{ border-left-color:var(--good); }
+  @keyframes slidein{ from{ transform:translateX(30px); opacity:0;} to{ transform:translateX(0); opacity:1;} }
+  .toast .ttitle{ font-family:'Cinzel',serif; font-size:.78rem; color:var(--bronze); margin-bottom:3px; text-transform:uppercase; letter-spacing:.04em;}
+
+  /* modal */
+  #modalOverlay{
+    position:fixed; inset:0; background:rgba(4,6,9,.75); z-index:80; display:none;
+    align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(2px);
+  }
+  #modalOverlay.show{ display:flex; }
+  .modal-card{
+    max-width:460px; width:100%; background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--clay); border-radius:5px; padding:28px; box-shadow:0 30px 80px var(--shadow);
+  }
+  .modal-card h3{ font-size:1.15rem; color:var(--parchment); margin-bottom:10px;}
+  .modal-card p{ font-size:.88rem; color:var(--parchment-dim); line-height:1.5; margin-bottom:20px;}
+  .modal-actions{ display:flex; flex-direction:column; gap:10px; }
+  .modal-actions button{
+    background:var(--void-2); border:1px solid var(--line); color:var(--parchment); padding:12px 14px;
+    border-radius:4px; cursor:pointer; text-align:left; font-family:'Spectral',serif; font-size:.88rem;
+    transition:.12s;
+  }
+  .modal-actions button:hover{ border-color:var(--bronze); background:rgba(203,159,78,.08); }
+  .modal-actions button .mlabel{ font-family:'Cinzel',serif; font-size:.8rem; color:var(--bronze); display:block; margin-bottom:3px;}
+
+  ::-webkit-scrollbar{ width:8px; }
+  ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:4px; }
+
+  .footer-credit{ text-align:center; color:var(--parchment-dim); font-size:.7rem; padding:20px; opacity:.5; }
+
+  /* speed control */
+  .speed-control{ display:flex; gap:2px; background:var(--panel); border:1px solid var(--line); border-radius:20px; padding:3px; }
+  .speed-control button{
+    background:transparent; border:none; color:var(--parchment-dim); font-family:'JetBrains Mono',monospace;
+    font-size:.78rem; padding:6px 10px; border-radius:16px; cursor:pointer; transition:.15s;
+  }
+  .speed-control button:hover{ color:var(--parchment); }
+  .speed-control button.active{ background:var(--bronze); color:#1a1206; font-weight:700; }
+
+  /* expedition */
+  .expedition-btn{
+    width:100%; margin-top:8px; background:var(--void-2); border:1px solid var(--line); color:var(--parchment);
+    padding:11px 8px; border-radius:4px; cursor:pointer; font-family:'Spectral',serif; font-size:.85rem;
+    display:flex; align-items:center; justify-content:center; gap:8px; transition:.12s;
+  }
+  .expedition-btn:hover:not(:disabled){ border-color:var(--bronze-dim); background:#20293380; }
+  .expedition-btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .expedition-btn .glabel{ font-size:.72rem; color:var(--parchment-dim); text-transform:uppercase; letter-spacing:.05em;}
+
+  /* empire stats + achievements */
+  .stat-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; margin-bottom:22px; }
+  .stat{ background:var(--void-2); border:1px solid var(--line); border-radius:5px; padding:12px; text-align:center; }
+  .stat .sval{ font-family:'Cinzel',serif; font-size:1.3rem; color:var(--bronze); }
+  .stat .slabel{ font-size:.68rem; color:var(--parchment-dim); text-transform:uppercase; letter-spacing:.05em; margin-top:3px;}
+  .subhead{ font-size:.85rem; color:var(--parchment); margin:6px 0 12px; display:flex; align-items:center; gap:8px;}
+  .subhead .bar{ flex:1; height:1px; background:var(--line); }
+  .ach-list{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px; max-height:340px; overflow-y:auto; padding-right:4px;}
+  .ach{ display:flex; gap:10px; align-items:flex-start; background:var(--void-2); border:1px solid var(--line); border-radius:5px; padding:10px 12px; opacity:.5; }
+  .ach.unlocked{ opacity:1; border-color:var(--bronze-dim); }
+  .ach .aico{ font-size:1.1rem; }
+  .ach .atitle{ font-family:'Cinzel',serif; font-size:.8rem; color:var(--parchment); }
+  .ach .adesc{ font-size:.72rem; color:var(--parchment-dim); margin-top:2px; }
+  .tab-intro{ font-size:.8rem; color:var(--parchment-dim); margin-bottom:14px; font-style:italic; }
+
+  /* politics */
+  .leader-card{
+    background:linear-gradient(180deg, var(--void-2), var(--panel-2)); border:1px solid var(--bronze-dim);
+    border-radius:6px; padding:18px; display:flex; gap:16px; align-items:center; margin-bottom:22px;
+  }
+  .leader-card .lico{ font-size:2.4rem; line-height:1; }
+  .leader-card .lname{ font-family:'Cinzel',serif; font-size:1.05rem; color:var(--parchment); }
+  .leader-card .ltitle{ font-size:.75rem; color:var(--bronze); text-transform:uppercase; letter-spacing:.06em; margin:2px 0 6px;}
+  .leader-card .ltrait{ font-size:.8rem; color:var(--parchment-dim); line-height:1.4; }
+  .leader-card .lterm{ font-size:.68rem; color:var(--parchment-dim); margin-top:8px; font-family:'JetBrains Mono',monospace;}
+  .gov-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; }
+  .gov-card{
+    background:var(--void-2); border:1px solid var(--line); border-radius:5px; padding:14px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .gov-card.locked{ opacity:.45; }
+  .gov-card.current{ border-color:var(--bronze); background:rgba(203,159,78,.07); }
+  .gov-card .gname{ font-family:'Cinzel',serif; font-size:.88rem; color:var(--parchment); display:flex; justify-content:space-between; align-items:center;}
+  .gov-card .gdesc{ font-size:.76rem; color:var(--parchment-dim); line-height:1.4; min-height:30px;}
+  .gov-card .gtag{ font-size:.72rem; font-family:'JetBrains Mono',monospace; }
+  .gov-card .gtag .plus{ color:var(--good); }
+  .gov-card .gtag .minus{ color:var(--danger); }
+  .gov-card .current-badge{ font-size:.65rem; color:var(--bronze); text-transform:uppercase; letter-spacing:.05em; }
+
+  /* market */
+  .market-row{ display:flex; gap:8px; }
+  .market-row .buy-btn{ flex:1; font-size:.7rem; padding:9px 4px; }
+
+  /* golden age */
+  .golden-banner{
+    margin-top:16px; background:linear-gradient(135deg, rgba(203,159,78,.12), rgba(203,159,78,.03));
+    border:1px solid var(--bronze-dim); border-radius:6px; padding:16px; display:flex; align-items:center;
+    gap:14px; flex-wrap:wrap; font-size:.85rem; color:var(--parchment-dim);
+  }
+  .golden-banner button{ margin-left:auto; }
+</style>
+</head>
+<body>
+
+<div id="startScreen">
+  <div class="start-card">
+    <div class="eyebrow">Ember &amp; Stone</div>
+    <h1>Found a civilization.</h1>
+    <p class="sub">Gather what the land gives you, raise a people, and carry them from bare stone to a golden age of their own making. Every choice compounds.</p>
+    <label class="field-label" for="civName">Name your people</label>
+    <input id="civName" type="text" placeholder="e.g. The Ashwood Kinship" maxlength="28" />
+    <label class="field-label">Choose your founding trait</label>
+    <div class="path-grid" id="pathGrid">
+      <div class="path-card selected" data-path="farmer">
+        <span class="picon">🌾</span>
+        <h3>Sowers</h3>
+        <p>+25% food from the start. Your people never go hungry easily.</p>
+      </div>
+      <div class="path-card" data-path="builder">
+        <span class="picon">🪨</span>
+        <h3>Stoneworkers</h3>
+        <p>Buildings cost 15% less stone and wood forever.</p>
+      </div>
+      <div class="path-card" data-path="scholar">
+        <span class="picon">📜</span>
+        <h3>Scribes</h3>
+        <p>+50% knowledge generation. Ages arrive faster.</p>
+      </div>
+    </div>
+    <button class="cta" id="beginBtn">Found Your Civilization</button>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<div id="modalOverlay">
+  <div class="modal-card" id="modalCard"></div>
+</div>
+
+<div id="game">
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="civ-id">
+        <div class="name" id="civNameDisplay">—</div>
+        <div class="era" id="eraDisplay">Stone Age</div>
+      </div>
+      <div class="speed-control" id="speedControl" style="margin-left:auto;">
+        <button data-speed="0" title="Pause">⏸</button>
+        <button data-speed="1" class="active" title="Normal speed">1×</button>
+        <button data-speed="2" title="Double speed">2×</button>
+        <button data-speed="3" title="Triple speed">3×</button>
+      </div>
+    </div>
+    <div class="topbar-row">
+      <div class="resbar" id="resbar"></div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel" id="monumentPanel">
+      <h2>Your Settlement <span class="bar"></span></h2>
+      <div id="monumentWrap">
+        <svg id="monumentSvg" viewBox="0 0 320 300"></svg>
+        <div class="pop-readout">
+          <div class="num"><span id="popNum">0</span></div>
+          <div class="cap">of <span id="popCap">0</span> housed</div>
+          <div class="growth-bar"><div id="growthFill" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="gather-grid">
+        <button class="gather-btn" data-gather="food"><span class="gic">🌾</span><span class="glabel">Forage +1</span></button>
+        <button class="gather-btn" data-gather="wood"><span class="gic">🪵</span><span class="glabel">Chop +1</span></button>
+        <button class="gather-btn" data-gather="stone"><span class="gic">⛏️</span><span class="glabel">Mine +1</span></button>
+        <button class="gather-btn" data-gather="gold"><span class="gic">🪙</span><span class="glabel">Trade +1</span></button>
+      </div>
+      <button class="expedition-btn" id="expeditionBtn">
+        <span class="gic">🧭</span><span class="glabel">Send Expedition</span>
+      </button>
+    </section>
+
+    <section class="panel">
+      <div class="tabs">
+        <div class="tab active" data-tab="build">Build</div>
+        <div class="tab" data-tab="wonders">Wonders</div>
+        <div class="tab" data-tab="market">Market</div>
+        <div class="tab" data-tab="politics">Politics</div>
+        <div class="tab" data-tab="age">Advance</div>
+        <div class="tab" data-tab="empire">Empire</div>
+        <div class="tab" data-tab="log">Chronicle</div>
+      </div>
+
+      <div class="tabpage active" id="tab-build">
+        <div class="building-grid" id="buildingGrid"></div>
+      </div>
+
+      <div class="tabpage" id="tab-wonders">
+        <p class="tab-intro">One legendary Wonder per age — costly, permanent, unforgettable.</p>
+        <div class="building-grid" id="wonderGrid"></div>
+      </div>
+
+      <div class="tabpage" id="tab-market">
+        <p class="tab-intro">Short on one resource but flush with another? Trade through the market.</p>
+        <div class="building-grid" id="marketGrid"></div>
+      </div>
+
+      <div class="tabpage" id="tab-politics">
+        <div id="leaderCard" class="leader-card"></div>
+        <h3 class="subhead">Government <span class="bar"></span></h3>
+        <div class="gov-grid" id="govGrid"></div>
+      </div>
+
+      <div class="tabpage" id="tab-age">
+        <div class="era-track" id="eraTrack"></div>
+      </div>
+
+      <div class="tabpage" id="tab-empire">
+        <div id="empireStats"></div>
+        <h3 class="subhead">Achievements <span class="bar"></span></h3>
+        <div id="achList" class="ach-list"></div>
+      </div>
+
+      <div class="tabpage" id="tab-log">
+        <div id="log"></div>
+      </div>
+    </section>
+  </main>
+  <div class="footer-credit">Ember &amp; Stone — a civilization grows one season at a time.</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------- DATA ----------------
+  const ERAS = [
+    { key:"stone", name:"Stone Age", cost:null, popBonus:0 },
+    { key:"bronze", name:"Bronze Age", cost:{wood:150, stone:100, food:100, gold:30}, popBonus:5 },
+    { key:"iron", name:"Iron Age", cost:{wood:400, stone:350, gold:150, knowledge:50}, popBonus:8 },
+    { key:"classical", name:"Classical Age", cost:{stone:800, gold:400, knowledge:200}, popBonus:12 },
+    { key:"medieval", name:"Medieval Age", cost:{stone:1500, gold:900, knowledge:500}, popBonus:16 },
+    { key:"renaissance", name:"Renaissance", cost:{gold:2000, knowledge:1200}, popBonus:20 },
+    { key:"industrial", name:"Industrial Age", cost:{gold:4000, knowledge:2500}, popBonus:26 },
+    { key:"modern", name:"Modern Age", cost:{gold:8000, knowledge:5000}, popBonus:34 },
+    { key:"information", name:"Information Age", cost:{gold:14000, knowledge:9000}, popBonus:40 },
+    { key:"space", name:"Space Age", cost:{gold:24000, knowledge:16000, stone:6000}, popBonus:46 },
+    { key:"galactic", name:"Galactic Age", cost:{gold:38000, knowledge:26000, stone:10000}, popBonus:54 },
+    { key:"ascendant", name:"Ascendant Age", cost:{gold:60000, knowledge:42000, stone:16000}, popBonus:64 },
+  ];
+
+  const BUILDINGS = [
+    { id:"hut", name:"Hut", era:0, desc:"Simple shelter. Houses 5 more people.", baseCost:{wood:15}, housing:5 },
+    { id:"farm", name:"Farm", era:0, desc:"Tills the soil for a steady food supply.", baseCost:{wood:20}, prod:{food:1} },
+    { id:"lumber", name:"Lumber Camp", era:0, desc:"Fells timber from the nearby woods.", baseCost:{food:15}, prod:{wood:1} },
+    { id:"quarry", name:"Quarry", era:0, desc:"Cuts stone from the hillside.", baseCost:{wood:25}, prod:{stone:0.8} },
+    { id:"tradingpost", name:"Trading Post", era:1, desc:"Sells surplus goods for gold.", baseCost:{wood:40, stone:20}, prod:{gold:0.5} },
+    { id:"library", name:"Library", era:1, desc:"Records the wisdom of your people.", baseCost:{wood:60, stone:40}, prod:{knowledge:0.4} },
+    { id:"temple", name:"Temple", era:1, desc:"Raises morale and softens hard times.", baseCost:{stone:60, gold:20}, morale:1 },
+    { id:"walls", name:"Walls", era:2, desc:"Stone ramparts that blunt any raid.", baseCost:{stone:150}, defense:2 },
+    { id:"barracks", name:"Barracks", era:2, desc:"Trains defenders for your civilization.", baseCost:{wood:100, gold:80}, defense:3 },
+    { id:"workshop", name:"Workshop", era:3, desc:"Tools that make every hand more productive.", baseCost:{stone:200, gold:150}, allMult:0.08 },
+    { id:"university", name:"University", era:4, desc:"Deeper study, faster than any library.", baseCost:{gold:300, knowledge:100}, prod:{knowledge:1.5} },
+    { id:"bank", name:"Bank", era:5, desc:"Compounds your people's wealth.", baseCost:{gold:500}, prod:{gold:2} },
+    { id:"factory", name:"Factory", era:6, desc:"Industrial output across every good.", baseCost:{gold:800, stone:300}, prod:{wood:1.5, stone:1.5, gold:1.5} },
+  ];
+
+  const RESOURCE_META = {
+    food:{ic:"🌾", name:"Food"}, wood:{ic:"🪵", name:"Wood"}, stone:{ic:"⛏️", name:"Stone"},
+    gold:{ic:"🪙", name:"Gold"}, knowledge:{ic:"📜", name:"Knowledge"}
+  };
+
+  // Market lets surplus goods flow into whatever's actually short, using gold as the hub currency.
+  const TRADE_RATES = {
+    food:  { qty:20, sellGold:7,  buyGold:11 },
+    wood:  { qty:20, sellGold:7,  buyGold:11 },
+    stone: { qty:20, sellGold:9,  buyGold:13 },
+  };
+
+  const PATHS = {
+    farmer:{foodMult:1.25}, builder:{buildCostMult:0.85}, scholar:{knowledgeMult:1.5}
+  };
+
+  // Achievements are checked every tick; each fires its toast/log line exactly once.
+  const ACHIEVEMENTS = [
+    { id:"pop10", title:"Growing Village", desc:"Reach a population of 10.", check:s=>s.population>=10 },
+    { id:"pop30", title:"Thriving Town", desc:"Reach a population of 30.", check:s=>s.population>=30 },
+    { id:"pop60", title:"Bustling City", desc:"Reach a population of 60.", check:s=>s.population>=60 },
+    { id:"gold500", title:"Wealthy Coffers", desc:"Amass 500 gold.", check:s=>s.resources.gold>=500 },
+    { id:"gold5000", title:"Vault of Riches", desc:"Amass 5,000 gold.", check:s=>s.resources.gold>=5000 },
+    { id:"knowledge1000", title:"Enlightened", desc:"Amass 1,000 knowledge.", check:s=>s.resources.knowledge>=1000 },
+    { id:"era_modern", title:"A New World", desc:"Reach the Modern Age.", check:s=>s.era>=7 },
+    { id:"first_wonder", title:"Wonder of the Age", desc:"Complete your first Wonder.", check:s=>WONDERS.some(w=>s.wonders[w.id]) },
+    { id:"all_wonders", title:"Eternal Legacy", desc:"Complete every Wonder.", check:s=>WONDERS.every(w=>s.wonders[w.id]) },
+    { id:"survive_raid", title:"Unbroken Walls", desc:"Successfully repel a raid.", check:s=>s.stats.raidsWon>=1 },
+    { id:"builder25", title:"Master Builder", desc:"Construct 25 buildings in total.", check:s=>s.stats.buildingsBuilt>=25 },
+    { id:"explorer5", title:"Well-Travelled", desc:"Send 5 expeditions.", check:s=>s.stats.expeditions>=5 },
+    { id:"golden_age", title:"A Golden Age", desc:"Declare your civilization's Golden Age.", check:s=>s.goldenAge },
+  ];
+  BUILDINGS.forEach(b=>{
+    ACHIEVEMENTS.push({ id:"first_"+b.id, title:"First "+b.name, desc:"Build your first "+b.name+".", check:s=>s.buildingCounts[b.id]>=1 });
+  });
+
+  // Small hand-drawn SVG shapes so each constructed building actually looks like itself.
+  // Each is drawn in a local ~40x38 box, placed via a wrapping <g transform="translate(...)">.
+  const BUILDING_ICON_SVG = {
+    hut: `<polygon points="4,16 20,2 36,16" fill="#b1583f"/><rect x="8" y="16" width="24" height="18" rx="1" fill="#8a6c4a"/><rect x="17" y="24" width="7" height="10" fill="#241a12"/>`,
+    farm: `<rect x="2" y="14" width="36" height="20" rx="1" fill="#3f5b3a"/><line x1="2" y1="20" x2="38" y2="20" stroke="#6fa876" stroke-width="1.4" stroke-dasharray="3,2"/><line x1="2" y1="26" x2="38" y2="26" stroke="#6fa876" stroke-width="1.4" stroke-dasharray="3,2"/><rect x="0" y="30" width="3" height="8" fill="#6b4a2e"/><rect x="37" y="30" width="3" height="8" fill="#6b4a2e"/>`,
+    lumber: `<ellipse cx="12" cy="28" rx="9" ry="5" fill="#7a5330"/><circle cx="4" cy="27" r="4.2" fill="#5a3d22"/><ellipse cx="25" cy="26" rx="9" ry="5" fill="#8a6236"/><circle cx="17" cy="25" r="4.2" fill="#5a3d22"/><polygon points="20,4 34,4 40,18 14,18" fill="#4a3a2a" opacity=".85"/>`,
+    quarry: `<polygon points="2,34 10,18 20,24 16,34" fill="#8b8f96"/><polygon points="18,34 26,14 38,22 34,34" fill="#6f747c"/><line x1="28" y1="20" x2="36" y2="8" stroke="#c9c9c9" stroke-width="2"/><polygon points="34,7 40,5 38,11" fill="#8b8f96"/>`,
+    tradingpost: `<rect x="8" y="20" width="24" height="14" fill="#8a6c4a"/><polygon points="4,20 20,6 36,20" fill="#cb9f4e"/><polygon points="10,19 20,10 20,19" fill="#ece2c8" opacity=".5"/><rect x="6" y="32" width="28" height="3" fill="#5a3d22"/>`,
+    library: `<rect x="6" y="16" width="28" height="18" fill="#c8c2ab"/><polygon points="2,16 20,4 38,16" fill="#8a6c4a"/><rect x="10" y="20" width="3" height="14" fill="#948a6a"/><rect x="18" y="20" width="3" height="14" fill="#948a6a"/><rect x="26" y="20" width="3" height="14" fill="#948a6a"/>`,
+    temple: `<rect x="4" y="16" width="32" height="18" fill="#d8d2ba"/><polygon points="0,16 20,3 40,16" fill="#cb9f4e"/><rect x="8" y="20" width="3" height="14" fill="#a89a70"/><rect x="15" y="20" width="3" height="14" fill="#a89a70"/><rect x="22" y="20" width="3" height="14" fill="#a89a70"/><rect x="29" y="20" width="3" height="14" fill="#a89a70"/><circle cx="20" cy="10" r="1.6" fill="#b1583f"/>`,
+    walls: `<rect x="2" y="20" width="36" height="14" fill="#7d8188"/><rect x="2" y="14" width="6" height="6" fill="#7d8188"/><rect x="12" y="14" width="6" height="6" fill="#7d8188"/><rect x="22" y="14" width="6" height="6" fill="#7d8188"/><rect x="32" y="14" width="6" height="6" fill="#7d8188"/>`,
+    barracks: `<polygon points="4,34 20,8 36,34" fill="#a5583f"/><rect x="19.2" y="4" width="1.6" height="8" fill="#4a3a2a"/><polygon points="20.8,4 28,7 20.8,10" fill="#cb9f4e"/><path d="M14,34 Q20,24 26,34 Z" fill="#241a12"/>`,
+    workshop: `<rect x="6" y="18" width="26" height="16" fill="#6a5a48"/><polygon points="2,18 19,6 36,18" fill="#5b95ab"/><rect x="26" y="4" width="5" height="14" fill="#4a4038"/><circle cx="28.5" cy="4" r="3" fill="#8a8a8a" opacity=".6"/><circle cx="19" cy="26" r="5" fill="none" stroke="#cb9f4e" stroke-width="1.6"/><circle cx="19" cy="26" r="1.4" fill="#cb9f4e"/>`,
+    university: `<rect x="6" y="20" width="28" height="14" fill="#c8c2ab"/><path d="M8,20 a12,12 0 0 1 24,0 Z" fill="#5b95ab"/><rect x="10" y="24" width="3" height="10" fill="#948a6a"/><rect x="18" y="24" width="3" height="10" fill="#948a6a"/><rect x="27" y="24" width="3" height="10" fill="#948a6a"/>`,
+    bank: `<polygon points="0,18 20,2 40,18" fill="#cb9f4e"/><rect x="4" y="18" width="32" height="14" fill="#d8d2ba"/><rect x="8" y="21" width="3" height="11" fill="#a5893f"/><rect x="14" y="21" width="3" height="11" fill="#a5893f"/><rect x="20" y="21" width="3" height="11" fill="#a5893f"/><rect x="26" y="21" width="3" height="11" fill="#a5893f"/><rect x="32" y="21" width="3" height="11" fill="#a5893f"/><polygon points="0,34 40,34 40,37 0,37" fill="#948a6a"/>`,
+    factory: `<rect x="4" y="18" width="32" height="16" fill="#4a4d52"/><rect x="8" y="4" width="5" height="16" fill="#3a3d40"/><rect x="18" y="8" width="5" height="12" fill="#3a3d40"/><circle cx="10.5" cy="2" r="3" fill="#8b8f96" opacity=".55"/><circle cx="20.5" cy="6" r="2.6" fill="#8b8f96" opacity=".5"/><rect x="12" y="22" width="4" height="4" fill="#e8c96a"/><rect x="20" y="22" width="4" height="4" fill="#e8c96a"/><rect x="28" y="22" width="4" height="4" fill="#e8c96a"/>`
+  };
+
+  // The civilization's own seat/landmark evolves in appearance with each age.
+  const ERA_LANDMARK_SVG = [
+    `<polygon points="6,40 20,40 13,26" fill="#5a4a38"/><polygon points="20,40 34,40 27,24" fill="#4a3a2a"/><path d="M20,34 q-4,-8 0,-14 q4,6 0,14 Z" fill="#cb9f4e"/><path d="M20,30 q-2,-5 0,-9 q2,4 0,9 Z" fill="#e8b04a"/>`,
+    `<polygon points="6,40 20,12 34,40" fill="#a5583f"/><rect x="19.2" y="4" width="1.6" height="10" fill="#4a3a2a"/><polygon points="20.8,4 28,7 20.8,10" fill="#cb9f4e"/><path d="M14,40 Q20,30 26,40 Z" fill="#241a12"/>`,
+    `<rect x="8" y="20" width="24" height="20" fill="#7d8188"/><polygon points="4,20 20,6 36,20" fill="#5a4a38"/><rect x="16" y="30" width="8" height="4" fill="#2b2b2b"/><rect x="18" y="26" width="4" height="4" fill="#2b2b2b"/>`,
+    `<rect x="6" y="22" width="28" height="18" fill="#d8d2ba"/><polygon points="2,22 20,8 38,22" fill="#cb9f4e"/><rect x="10" y="26" width="3" height="14" fill="#a89a70"/><rect x="18" y="26" width="3" height="14" fill="#a89a70"/><rect x="26" y="26" width="3" height="14" fill="#a89a70"/>`,
+    `<rect x="12" y="14" width="16" height="26" fill="#7d8188"/><rect x="10" y="8" width="4" height="6" fill="#7d8188"/><rect x="18" y="8" width="4" height="6" fill="#7d8188"/><rect x="26" y="8" width="4" height="6" fill="#7d8188"/><rect x="19.2" y="2" width="1.4" height="7" fill="#4a3a2a"/><polygon points="20.6,2 27,4.5 20.6,7" fill="#b1583f"/>`,
+    `<rect x="8" y="24" width="24" height="16" fill="#c8c2ab"/><path d="M10,24 a10,12 0 0 1 20,0 Z" fill="#5b95ab"/><circle cx="20" cy="8" r="2" fill="#cb9f4e"/>`,
+    `<rect x="10" y="16" width="20" height="24" fill="#4a4d52"/><rect x="14" y="4" width="6" height="14" fill="#3a3d40"/><circle cx="17" cy="3" r="3" fill="#9aa0a6" opacity=".5"/><rect x="16" y="22" width="4" height="4" fill="#e8c96a"/><rect x="22" y="22" width="4" height="4" fill="#e8c96a"/>`,
+    `<rect x="10" y="4" width="20" height="36" fill="#3a4550"/><rect x="14" y="8" width="3" height="3" fill="#e8c96a"/><rect x="20" y="8" width="3" height="3" fill="#e8c96a"/><rect x="14" y="14" width="3" height="3" fill="#e8c96a"/><rect x="20" y="14" width="3" height="3" fill="#e8c96a"/><rect x="14" y="20" width="3" height="3" fill="#e8c96a"/><rect x="20" y="20" width="3" height="3" fill="#e8c96a"/>`
+  ];
+
+  // One legendary Wonder unlocks per age — expensive, one-time, and permanently powerful.
+  const WONDERS = [
+    { id:"hearth", name:"Great Hearth", era:0, desc:"An eternal communal fire that keeps every belly fed.", cost:{food:150, wood:100}, effect:{foodMult:0.25}, tag:"+25% food" },
+    { id:"colossus", name:"Bronze Colossus", era:1, desc:"A towering figure that draws traders from every horizon.", cost:{wood:250, stone:180, gold:100}, effect:{goldMult:0.25}, tag:"+25% gold" },
+    { id:"forge", name:"Iron Forge", era:2, desc:"A master forge that sharpens every trade in the settlement.", cost:{stone:350, gold:200}, effect:{allMult:0.15}, tag:"+15% all output" },
+    { id:"greatlibrary", name:"Grand Library", era:3, desc:"A vast archive that quickens every discovery.", cost:{stone:600, gold:350, knowledge:150}, effect:{knowledgeMult:0.75}, tag:"+75% knowledge" },
+    { id:"cathedral", name:"Cathedral of Ages", era:4, desc:"Its bells call new families to settle here.", cost:{stone:1000, gold:600}, effect:{popCap:20, growth:0.02}, tag:"+20 housing, faster growth" },
+    { id:"academy", name:"Renaissance Academy", era:5, desc:"Where art, coin, and science intersect.", cost:{gold:1800, knowledge:900}, effect:{goldMult:0.2, knowledgeMult:0.2}, tag:"+20% gold & knowledge" },
+    { id:"exchange", name:"Industrial Exchange", era:6, desc:"Rail and ledger bind your whole economy together.", cost:{gold:3200, stone:900}, effect:{allMult:0.25}, tag:"+25% all output" },
+    { id:"spire", name:"Modern Spire", era:7, desc:"A gleaming capstone to everything your people built.", cost:{gold:6500, knowledge:3200}, effect:{allMult:0.4}, tag:"+40% all output" },
+  ];
+
+  const WONDER_ICON_SVG = {
+    hearth: `<polygon points="10,44 30,44 20,10" fill="#cb9f4e" opacity=".22"/><polygon points="14,44 26,44 20,20" fill="#5a4a38"/><path d="M20,36 q-6,-10 0,-20 q6,8 0,20 Z" fill="#e8b04a"/><path d="M20,32 q-3,-6 0,-11 q3,4 0,11 Z" fill="#ffe08a"/>`,
+    colossus: `<rect x="14" y="18" width="12" height="26" fill="#8a6c3a"/><circle cx="20" cy="10" r="7" fill="#a5893f"/><rect x="8" y="20" width="4" height="16" fill="#8a6c3a"/><rect x="28" y="20" width="4" height="16" fill="#8a6c3a"/><circle cx="17.5" cy="8.5" r="1.2" fill="#241a12"/><circle cx="22.5" cy="8.5" r="1.2" fill="#241a12"/>`,
+    forge: `<rect x="6" y="24" width="28" height="20" fill="#4a3a2a"/><polygon points="2,24 20,8 38,24" fill="#5a4a38"/><rect x="24" y="4" width="6" height="18" fill="#3a2f22"/><circle cx="27" cy="3" r="3.4" fill="#e8763f" opacity=".8"/><rect x="12" y="30" width="14" height="8" fill="#7d8188"/>`,
+    greatlibrary: `<rect x="4" y="20" width="36" height="20" fill="#d8d2ba"/><polygon points="0,20 20,4 40,20" fill="#8a6c4a"/><rect x="9" y="24" width="3" height="16" fill="#a89a70"/><rect x="16" y="24" width="3" height="16" fill="#a89a70"/><rect x="23" y="24" width="3" height="16" fill="#a89a70"/><rect x="30" y="24" width="3" height="16" fill="#a89a70"/><circle cx="20" cy="12" r="2" fill="#cb9f4e"/>`,
+    cathedral: `<rect x="10" y="18" width="20" height="26" fill="#c8c2ab"/><path d="M14,18 a6,8 0 0 1 12,0 Z" fill="#5b95ab"/><rect x="6" y="10" width="8" height="14" fill="#b9b19a"/><rect x="26" y="10" width="8" height="14" fill="#b9b19a"/><rect x="19" y="2" width="2" height="8" fill="#4a3a2a"/><path d="M17,4 h6 M20,2 v6" stroke="#cb9f4e" stroke-width="1.6"/>`,
+    academy: `<rect x="6" y="22" width="32" height="18" fill="#d8d2ba"/><path d="M9,22 a15,14 0 0 1 30,0 Z" fill="#5b95ab"/><rect x="12" y="26" width="3" height="14" fill="#a89a70"/><rect x="19" y="26" width="3" height="14" fill="#a89a70"/><rect x="26" y="26" width="3" height="14" fill="#a89a70"/><circle cx="24" cy="10" r="1.8" fill="#cb9f4e"/>`,
+    exchange: `<rect x="4" y="20" width="36" height="20" fill="#4a4d52"/><rect x="8" y="4" width="6" height="18" fill="#3a3d40"/><rect x="18" y="8" width="6" height="14" fill="#3a3d40"/><rect x="28" y="2" width="6" height="20" fill="#3a3d40"/><circle cx="11" cy="2" r="3" fill="#9aa0a6" opacity=".5"/><circle cx="31" cy="0" r="3" fill="#9aa0a6" opacity=".5"/><rect x="14" y="26" width="4" height="4" fill="#e8c96a"/><rect x="22" y="26" width="4" height="4" fill="#e8c96a"/>`,
+    spire: `<polygon points="20,0 26,10 14,10" fill="#e8c96a"/><rect x="12" y="10" width="16" height="34" fill="#3a4550"/><rect x="16" y="14" width="3" height="3" fill="#e8c96a"/><rect x="21" y="14" width="3" height="3" fill="#e8c96a"/><rect x="16" y="20" width="3" height="3" fill="#e8c96a"/><rect x="21" y="20" width="3" height="3" fill="#e8c96a"/><rect x="16" y="26" width="3" height="3" fill="#e8c96a"/><rect x="21" y="26" width="3" height="3" fill="#e8c96a"/>`
+  };
+
+  // ---------------- POLITICS ----------------
+  // Governments trade one strength for another instead of being strictly better —
+  // there's no single "correct" pick, which is the point.
+  const GOVERNMENTS = [
+    { id:"tribal", name:"Tribal Council", era:0, desc:"Elders decide together. Simple, steady, unremarkable.", effects:{} },
+    { id:"chiefdom", name:"Chiefdom", era:1, desc:"A single chief speaks for the people, quick to rally them.", effects:{growth:0.10, goldMult:-0.10} },
+    { id:"monarchy", name:"Monarchy", era:2, desc:"A crown organizes labor efficiently, but change comes slowly.", effects:{allMult:0.15, growth:-0.10} },
+    { id:"republic", name:"Republic", era:3, desc:"Elected voices favor trade and learning over standing armies.", effects:{goldMult:0.20, knowledgeMult:0.10, defense:-2} },
+    { id:"theocracy", name:"Theocracy", era:4, desc:"Faith fills bellies and hearts, if not always coffers.", effects:{growth:0.20, foodMult:0.15, goldMult:-0.10} },
+    { id:"oligarchy", name:"Oligarchy", era:5, desc:"A wealthy few run things briskly — for those already in the room.", effects:{goldMult:0.25, allMult:0.10, growth:-0.15} },
+    { id:"democracy", name:"Democracy", era:6, desc:"Broad participation sharpens ideas, if not the sword.", effects:{knowledgeMult:0.20, growth:0.15, defense:-1} },
+    { id:"technocracy", name:"Technocracy", era:7, desc:"Experts optimize everything except the dinner table.", effects:{knowledgeMult:0.30, allMult:0.20, foodMult:-0.10} },
+  ];
+
+  // A rotating cast of leaders offers a real trade-off every term — pick a lane, then live with it.
+  const LEADER_TRAITS = [
+    { key:"visionary", icon:"🧙", title:"The Visionary", desc:"Knowledge flows swiftly under her watch.", effects:{knowledgeMult:0.20} },
+    { key:"merchant", icon:"💰", title:"The Merchant Prince", desc:"Every trade tips slightly in your favor.", effects:{goldMult:0.20} },
+    { key:"sower", icon:"🌾", title:"The Sower", desc:"The harvest never fails while he reigns.", effects:{foodMult:0.20} },
+    { key:"fortifier", icon:"🛡️", title:"The Fortifier", desc:"Walls rise higher, watches stand longer.", effects:{defense:3} },
+    { key:"zealot", icon:"🔥", title:"The Zealot", desc:"Fervor draws newcomers, but empties pockets.", effects:{growth:0.15, goldMult:-0.10} },
+    { key:"ironfist", icon:"⚔️", title:"The Iron Fist", desc:"Order is absolute; enthusiasm is not.", effects:{defense:4, growth:-0.10} },
+    { key:"diplomat", icon:"🕊️", title:"The Diplomat", desc:"Hardship, when it comes, comes gently.", effects:{eventSoftening:0.3} },
+    { key:"builder", icon:"🔨", title:"The Builder", desc:"Every foundation costs a little less stone.", effects:{buildDiscount:0.10} },
+    { key:"unifier", icon:"🤝", title:"The Unifier", desc:"A steady hand, modest gains in every direction.", effects:{allMult:0.08} },
+    { key:"herald", icon:"📯", title:"The Herald", desc:"Word of your civilization travels far and wide.", effects:{goldMult:0.10, knowledgeMult:0.10} },
+  ];
+
+  function randomLeader(){
+    const t = LEADER_TRAITS[Math.floor(Math.random()*LEADER_TRAITS.length)];
+    const names = ["Alaric","Meret","Bao","Ilse","Kwame","Sana","Thora","Oren","Yuki","Ravi","Ines","Njeri"];
+    const name = names[Math.floor(Math.random()*names.length)];
+    return { name, ...t };
+  }
+
+  // ---------------- STATE ----------------
+  let state = {
+    civName:"",
+    path:"farmer",
+    era:0,
+    resources:{food:20, wood:20, stone:10, gold:5, knowledge:0},
+    buildingCounts:{},
+    wonders:{},
+    government:"tribal",
+    govReformCooldown:0,
+    leader:null,
+    leaderTermRemaining:0,
+    population:3,
+    housingBase:5,
+    growthProgress:0,
+    milestones:{},
+    nextEventIn: 22,
+    started:false,
+    speed:1,
+    expeditionCooldown:0,
+    festivalTicks:0,
+    goldenAge:false,
+    stats:{ buildingsBuilt:0, wondersBuilt:0, raidsWon:0, raidsLost:0, expeditions:0, peakPopulation:3,
+            totalGained:{food:0, wood:0, stone:0, gold:0, knowledge:0}, startTime:Date.now() },
+  };
+
+  BUILDINGS.forEach(b=> state.buildingCounts[b.id]=0);
+  WONDERS.forEach(w=> state.wonders[w.id]=false);
+
+  // ---------------- HELPERS ----------------
+  function fmt(n){
+    if(n===undefined||n===null) return "0";
+    const sign = n<0?"-":"";
+    n = Math.abs(n);
+    if(n>=1e6) return sign+(n/1e6).toFixed(2)+"M";
+    if(n>=1e3) return sign+(n/1e3).toFixed(2)+"K";
+    if(n>=10) return sign+Math.floor(n).toString();
+    return sign+n.toFixed(1);
+  }
+
+  // Shared cost-chip renderer: shows the icon + amount, and — if the player is short —
+  // exactly how much more of that resource is needed, so "why can't I afford this?" has an answer.
+  function costChips(cost){
+    return Object.keys(cost).map(k=>{
+      const have = state.resources[k]||0;
+      const need = cost[k];
+      const short = have < need-1e-6;
+      const meta = RESOURCE_META[k];
+      return `<span class="${short?'short':'afford'}" title="${meta.name}">${meta.ic} ${fmt(need)}${short? ` <b>(need ${fmt(need-have)} more)</b>`:""}</span>`;
+    }).join("");
+  }
+  function currentGovernment(){ return GOVERNMENTS.find(g=>g.id===state.government) || GOVERNMENTS[0]; }
+  function leaderEffects(){ return (state.leader && state.leader.effects) || {}; }
+  function eventSoftening(){ return leaderEffects().eventSoftening || 0; }
+
+  function costFor(building){
+    const owned = state.buildingCounts[building.id];
+    const scale = Math.pow(1.15, owned);
+    const mult = (state.path==="builder" ? PATHS.builder.buildCostMult : 1) * (1-(leaderEffects().buildDiscount||0));
+    const c = {};
+    for(const k in building.baseCost){
+      let v = building.baseCost[k]*scale;
+      if(k==="wood"||k==="stone") v*=mult;
+      c[k]=v;
+    }
+    return c;
+  }
+  function canAfford(cost){
+    for(const k in cost){ if((state.resources[k]||0) < cost[k]-1e-6) return false; }
+    return true;
+  }
+  function pay(cost){ for(const k in cost){ state.resources[k]-=cost[k]; } }
+  function popCap(){
+    let cap = state.housingBase;
+    BUILDINGS.forEach(b=>{ if(b.housing) cap += b.housing*state.buildingCounts[b.id]; });
+    cap += ERAS.slice(0,state.era+1).reduce((s,e)=>s+(e.popBonus||0),0);
+    WONDERS.forEach(w=>{ if(state.wonders[w.id] && w.effect.popCap) cap += w.effect.popCap; });
+    return cap;
+  }
+  function bonusMultiplier(resourceKey){
+    let m = 1;
+    BUILDINGS.forEach(b=>{ if(b.allMult) m += b.allMult*state.buildingCounts[b.id]; });
+    WONDERS.forEach(w=>{
+      if(!state.wonders[w.id]) return;
+      if(w.effect.allMult) m += w.effect.allMult;
+      if(resourceKey==="food" && w.effect.foodMult) m += w.effect.foodMult;
+      if(resourceKey==="gold" && w.effect.goldMult) m += w.effect.goldMult;
+      if(resourceKey==="knowledge" && w.effect.knowledgeMult) m += w.effect.knowledgeMult;
+    });
+    const gov = currentGovernment().effects;
+    if(gov.allMult) m += gov.allMult;
+    if(resourceKey==="food" && gov.foodMult) m += gov.foodMult;
+    if(resourceKey==="gold" && gov.goldMult) m += gov.goldMult;
+    if(resourceKey==="knowledge" && gov.knowledgeMult) m += gov.knowledgeMult;
+    const lead = leaderEffects();
+    if(lead.allMult) m += lead.allMult;
+    if(resourceKey==="food" && lead.foodMult) m += lead.foodMult;
+    if(resourceKey==="gold" && lead.goldMult) m += lead.goldMult;
+    if(resourceKey==="knowledge" && lead.knowledgeMult) m += lead.knowledgeMult;
+    if(state.festivalTicks>0) m += 0.2;
+    if(state.goldenAge) m += 0.15;
+    return Math.max(0.1, m);
+  }
+  function wonderGrowthBonus(){
+    let g = 0;
+    WONDERS.forEach(w=>{ if(state.wonders[w.id] && w.effect.growth) g += w.effect.growth; });
+    g += currentGovernment().effects.growth || 0;
+    g += leaderEffects().growth || 0;
+    return g;
+  }
+  function productionRates(){
+    const rates = {food:0, wood:0, stone:0, gold:0, knowledge:0};
+    BUILDINGS.forEach(b=>{
+      const n = state.buildingCounts[b.id];
+      if(n>0 && b.prod){
+        for(const k in b.prod){ rates[k]+= b.prod[k]*n; }
+      }
+    });
+    for(const k in rates){ rates[k] *= bonusMultiplier(k); }
+    if(state.path==="farmer") rates.food *= PATHS.farmer.foodMult;
+    if(state.path==="scholar") rates.knowledge *= PATHS.scholar.knowledgeMult;
+    rates.food -= state.population*0.45;
+    return rates;
+  }
+  function defenseTotal(){
+    let d=0;
+    BUILDINGS.forEach(b=>{ if(b.defense) d += b.defense*state.buildingCounts[b.id]; });
+    d += currentGovernment().effects.defense || 0;
+    d += leaderEffects().defense || 0;
+    return Math.max(0, d);
+  }
+  function hasMorale(){ return state.buildingCounts.temple>0; }
+  function wonderCostFor(w){
+    const mult = (state.path==="builder" ? PATHS.builder.buildCostMult : 1) * (1-(leaderEffects().buildDiscount||0));
+    const c = {};
+    for(const k in w.cost){
+      let v = w.cost[k];
+      if(k==="wood"||k==="stone") v*=mult;
+      c[k]=v;
+    }
+    return c;
+  }
+
+  // ---------------- RENDER ----------------
+  const $ = sel=>document.querySelector(sel);
+  const $$ = sel=>document.querySelectorAll(sel);
+
+  function renderResbar(){
+    const bar = $("#resbar");
+    const rates = productionRates();
+    bar.innerHTML = "";
+    for(const key of ["food","wood","stone","gold","knowledge"]){
+      const meta = RESOURCE_META[key];
+      const rate = rates[key];
+      const div = document.createElement("div");
+      div.className="res";
+      div.id="res-"+key;
+      div.innerHTML = `<span class="ic">${meta.ic}</span><span class="val">${fmt(state.resources[key])}</span><span class="rate">${rate>=0?"+":""}${rate.toFixed(1)}/s</span>`;
+      bar.appendChild(div);
+    }
+  }
+
+  function flashRes(key, good){
+    const el = document.getElementById("res-"+key);
+    if(!el) return;
+    el.classList.remove("flash","flash-bad");
+    void el.offsetWidth;
+    el.classList.add(good? "flash":"flash-bad");
+    setTimeout(()=>el.classList.remove("flash","flash-bad"), 500);
+  }
+
+  function renderTop(){
+    $("#civNameDisplay").textContent = state.civName || "Unnamed Civilization";
+    $("#eraDisplay").textContent = ERAS[state.era].name;
+  }
+
+  function renderPop(){
+    $("#popNum").textContent = Math.floor(state.population);
+    $("#popCap").textContent = popCap();
+    $("#growthFill").style.width = Math.min(100, state.growthProgress*100)+"%";
+  }
+
+  function renderBuildings(){
+    const grid = $("#buildingGrid");
+    grid.innerHTML="";
+    BUILDINGS.forEach(b=>{
+      const unlocked = state.era >= b.era;
+      const card = document.createElement("div");
+      card.className = "bcard"+(unlocked?"":" locked");
+      const owned = state.buildingCounts[b.id];
+      let costHtml = "";
+      let affordable = false;
+      if(unlocked){
+        const cost = costFor(b);
+        affordable = canAfford(cost);
+        costHtml = costChips(cost);
+      }
+      let effectText = [];
+      if(b.prod) effectText.push(Object.keys(b.prod).map(k=>`+${b.prod[k]} ${RESOURCE_META[k].name.toLowerCase()}/s`).join(", "));
+      if(b.housing) effectText.push(`+${b.housing} housing`);
+      if(b.defense) effectText.push(`+${b.defense} defense`);
+      if(b.allMult) effectText.push(`+${Math.round(b.allMult*100)}% all output`);
+      if(b.morale) effectText.push(`raises morale`);
+
+      card.innerHTML = `
+        <div class="bcard-head">
+          <span class="bname">${b.name}</span>
+          <span class="bcount">${owned}</span>
+        </div>
+        <div class="bdesc">${b.desc}<br><em>${effectText.join(" · ")}</em></div>
+        ${unlocked
+          ? `<div class="bcost">${costHtml}</div><button class="buy-btn" data-build="${b.id}" ${affordable?"":"disabled"}>Build</button>`
+          : `<div class="locked-tag">Unlocks in the ${ERAS[b.era].name}</div>`
+        }
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function renderEras(){
+    const track = $("#eraTrack");
+    track.innerHTML="";
+    ERAS.forEach((e,i)=>{
+      const div = document.createElement("div");
+      const state_cls = i<state.era ? "past" : (i===state.era ? "current" : "future");
+      div.className = "era-item "+state_cls;
+      let inner = `<div class="era-num">${i+1}</div><div class="era-info"><div class="ename">${e.name}</div>`;
+      if(i===state.era+1 && e.cost){
+        const affordable = canAfford(e.cost);
+        const costStr = costChips(e.cost);
+        inner += `<div class="ecost">${costStr}</div></div><button class="adv-btn" id="advanceBtn" ${affordable?"":"disabled"}>Advance</button>`;
+      } else if(i===state.era){
+        inner += `<div class="ecost">Current age</div></div>`;
+      } else if(i<state.era){
+        inner += `<div class="ecost">Achieved</div></div>`;
+      } else {
+        inner += `<div class="ecost">Locked</div></div>`;
+      }
+      div.innerHTML = inner;
+      track.appendChild(div);
+    });
+  }
+
+  function renderSettlement(){
+    const svg = $("#monumentSvg");
+    const ns = "http://www.w3.org/2000/svg";
+    const cols = 6, cellW = 58, cellH = 60, startX = 10, startY = 46;
+
+    // Build the ordered list of slots: the civilization's core landmark first,
+    // then any completed Wonders, then up to 3 real icons per constructed building type
+    // (extra copies show as a count badge).
+    const slots = [{ kind:"landmark" }];
+    WONDERS.forEach(w=>{
+      if(state.wonders[w.id]) slots.push({ kind:"wonder", id:w.id, name:w.name });
+    });
+    BUILDINGS.forEach(b=>{
+      const owned = state.buildingCounts[b.id];
+      if(owned<=0) return;
+      const visible = Math.min(owned,3);
+      for(let i=0;i<visible;i++){
+        slots.push({ kind:"building", id:b.id, name:b.name, badge:(i===visible-1 && owned>visible)? owned : 0 });
+      }
+    });
+
+    const rows = Math.max(1, Math.ceil(slots.length/cols));
+    const width = startX*2 + cols*cellW;
+    const height = startY + rows*cellH + 18;
+
+    const skyColors   = ["#141a22","#181f27","#1b222a","#1e242d","#212630","#232a35","#26303c","#2a3542"];
+    const groundColors= ["#232620","#282a1e","#2c2c1c","#31301c","#35331b","#3a361a","#3f3a19","#453e18"];
+    const sky = skyColors[state.era] || skyColors[0];
+    const ground = groundColors[state.era] || groundColors[0];
+
+    let html = "";
+    html += `<rect x="0" y="0" width="${width}" height="${height}" fill="${sky}"/>`;
+    html += `<polygon points="0,${height-30} ${width*0.22},${height-58} ${width*0.4},${height-30}" fill="${ground}" opacity=".55"/>`;
+    html += `<polygon points="${width*0.55},${height-26} ${width*0.78},${height-64} ${width},${height-26}" fill="${ground}" opacity=".4"/>`;
+    html += `<rect x="0" y="${height-22}" width="${width}" height="22" fill="${ground}"/>`;
+
+    slots.forEach((slot, i)=>{
+      const row = Math.floor(i/cols), col = i%cols;
+      const x = startX + col*cellW, y = startY + row*cellH;
+      const delay = (i*0.03).toFixed(2);
+      if(slot.kind==="landmark"){
+        const icon = ERA_LANDMARK_SVG[state.era] || ERA_LANDMARK_SVG[0];
+        html += `<g transform="translate(${x+3},${y+2})"><g class="bicon" style="transition-delay:${delay}s">
+          <title>${ERAS[state.era].name} — your civilization's seat</title>
+          ${icon}
+        </g></g>`;
+      } else if(slot.kind==="wonder"){
+        const icon = WONDER_ICON_SVG[slot.id] || "";
+        html += `<g transform="translate(${x+2},${y})"><g class="bicon" style="transition-delay:${delay}s">
+          <title>${slot.name} (Wonder)</title>
+          ${icon}
+        </g></g>`;
+      } else {
+        const icon = BUILDING_ICON_SVG[slot.id] || "";
+        html += `<g transform="translate(${x+9},${y+10})"><g class="bicon" style="transition-delay:${delay}s">
+          <title>${slot.name}</title>
+          ${icon}
+        </g></g>`;
+        if(slot.badge){
+          html += `<g transform="translate(${x+cellW-20},${y+6})">
+            <rect x="0" y="0" width="20" height="14" rx="7" fill="#0a0e13" opacity=".85"/>
+            <text x="10" y="10.5" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#cb9f4e">x${slot.badge}</text>
+          </g>`;
+        }
+      }
+    });
+
+    // population figures walking along the foreground
+    const walkCount = Math.min(10, Math.max(2, Math.floor(state.population/4)));
+    for(let i=0;i<walkCount;i++){
+      const cx = 16 + i*((width-32)/Math.max(1,walkCount-1||1));
+      const cy = height-11;
+      html += `<g style="animation: walk${i%3} ${4+(i%3)}s ease-in-out infinite; transform-origin:${cx}px ${cy}px;">
+        <circle cx="${cx}" cy="${cy-5}" r="2.1" fill="${i%2===0?'#ece2c8':'#cb9f4e'}"/>
+        <rect x="${cx-1.6}" y="${cy-3.2}" width="3.2" height="6" rx="1" fill="${i%2===0?'#ece2c8':'#cb9f4e'}"/>
+      </g>`;
+    }
+
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg.innerHTML = html;
+
+    requestAnimationFrame(()=>{
+      $$("#monumentSvg .bicon").forEach(g=> g.classList.add("show"));
+    });
+
+    if(!document.getElementById("walkKeyframes")){
+      const style = document.createElement("style");
+      style.id="walkKeyframes";
+      style.textContent = `
+        @keyframes walk0{0%,100%{transform:translateX(0)}50%{transform:translateX(10px)}}
+        @keyframes walk1{0%,100%{transform:translateX(0)}50%{transform:translateX(-8px)}}
+        @keyframes walk2{0%,100%{transform:translateX(0)}50%{transform:translateX(6px)}}
+        .bicon{ opacity:0; transform-box:fill-box; transform-origin:center; transform:translateY(4px) scale(.9); transition:opacity .4s ease, transform .4s ease; }
+        .bicon.show{ opacity:1; transform:translateY(0) scale(1); }
+      `;
+      document.head.appendChild(style);
+    }
+  }
+
+  function renderWonders(){
+    const grid = $("#wonderGrid");
+    grid.innerHTML="";
+    WONDERS.forEach(w=>{
+      const unlocked = state.era >= w.era;
+      const built = state.wonders[w.id];
+      const card = document.createElement("div");
+      card.className = "bcard"+(unlocked?"":" locked");
+      let costHtml = "", affordable = false;
+      if(unlocked && !built){
+        const cost = wonderCostFor(w);
+        affordable = canAfford(cost);
+        costHtml = costChips(cost);
+      }
+      card.innerHTML = `
+        <div class="bcard-head">
+          <span class="bname">${w.name}</span>
+          ${built? `<span class="bcount">✓ Built</span>` : ""}
+        </div>
+        <div class="bdesc">${w.desc}<br><em>${w.tag}</em></div>
+        ${built
+          ? ""
+          : unlocked
+            ? `<div class="bcost">${costHtml}</div><button class="buy-btn" data-wonder="${w.id}" ${affordable?"":"disabled"}>Build Wonder</button>`
+            : `<div class="locked-tag">Unlocks in the ${ERAS[w.era].name}</div>`
+        }
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function renderEmpire(){
+    const statsEl = $("#empireStats");
+    const secs = Math.floor((Date.now()-state.stats.startTime)/1000);
+    const h = Math.floor(secs/3600), m = Math.floor((secs%3600)/60), s = secs%60;
+    const timeStr = (h>0? h+"h ":"")+(m>0||h>0? m+"m ":"")+s+"s";
+    const wondersBuiltCount = WONDERS.filter(w=>state.wonders[w.id]).length;
+    statsEl.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat"><div class="sval">${timeStr}</div><div class="slabel">Time Played</div></div>
+        <div class="stat"><div class="sval">${Math.floor(state.stats.peakPopulation)}</div><div class="slabel">Peak Population</div></div>
+        <div class="stat"><div class="sval">${state.stats.buildingsBuilt}</div><div class="slabel">Buildings Built</div></div>
+        <div class="stat"><div class="sval">${wondersBuiltCount}/${WONDERS.length}</div><div class="slabel">Wonders Complete</div></div>
+        <div class="stat"><div class="sval">${state.stats.raidsWon}</div><div class="slabel">Raids Repelled</div></div>
+        <div class="stat"><div class="sval">${state.stats.expeditions}</div><div class="slabel">Expeditions Sent</div></div>
+      </div>
+      ${state.era>=7 ? (
+        state.goldenAge
+          ? `<div class="golden-banner">✨ Your civilization has entered its Golden Age — all output +15%, permanently.</div>`
+          : `<div class="golden-banner"><span>Your people have reached the Modern Age. Declare a Golden Age to crown everything you've built.</span><button class="buy-btn" id="declareGoldenBtn">Declare Golden Age</button></div>`
+      ) : ""}
+    `;
+    const list = $("#achList");
+    list.innerHTML = ACHIEVEMENTS.map(a=>{
+      const unlocked = !!state.milestones[a.id];
+      return `<div class="ach ${unlocked?"unlocked":""}">
+        <span class="aico">${unlocked?"🏆":"🔒"}</span>
+        <div><div class="atitle">${a.title}</div><div class="adesc">${a.desc}</div></div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderExpedition(){
+    const btn = $("#expeditionBtn");
+    if(!btn) return;
+    const hasBarracks = state.buildingCounts.barracks>0;
+    btn.disabled = !hasBarracks || state.expeditionCooldown>0;
+    btn.querySelector(".glabel").textContent = !hasBarracks
+      ? "Needs Barracks"
+      : state.expeditionCooldown>0
+        ? `Ready in ${state.expeditionCooldown}s`
+        : "Send Expedition";
+  }
+
+  function renderSpeed(){
+    $$("#speedControl button").forEach(b=>{
+      b.classList.toggle("active", Number(b.dataset.speed)===state.speed);
+    });
+  }
+
+  function renderPolitics(){
+    const lc = $("#leaderCard");
+    if(state.leader){
+      const l = state.leader;
+      lc.innerHTML = `
+        <div class="lico">${l.icon}</div>
+        <div>
+          <div class="lname">${l.name}</div>
+          <div class="ltitle">${l.title}</div>
+          <div class="ltrait">${l.desc}</div>
+          <div class="lterm">Term ends in ${Math.max(0,Math.ceil(state.leaderTermRemaining))}s</div>
+        </div>
+      `;
+    } else {
+      lc.innerHTML = `<div class="lico">👤</div><div><div class="lname">No leader yet</div><div class="ltrait">A successor will be chosen shortly.</div></div>`;
+    }
+
+    const grid = $("#govGrid");
+    grid.innerHTML = GOVERNMENTS.map(g=>{
+      const unlocked = state.era >= g.era;
+      const current = state.government===g.id;
+      const tags = [];
+      for(const k in g.effects){
+        const v = g.effects[k];
+        const label = {allMult:"all output", foodMult:"food", goldMult:"gold", knowledgeMult:"knowledge", growth:"growth", defense:"defense"}[k] || k;
+        const pct = (k==="defense") ? `${v>0?"+":""}${v}` : `${v>0?"+":""}${Math.round(v*100)}%`;
+        tags.push(`<span class="${v>0?'plus':'minus'}">${pct} ${label}</span>`);
+      }
+      return `<div class="gov-card ${unlocked?"":"locked"} ${current?"current":""}">
+        <div class="gname">${g.name} ${current?'<span class="current-badge">Current</span>':""}</div>
+        <div class="gdesc">${g.desc}</div>
+        <div class="gtag">${tags.length? tags.join(" &nbsp; ") : "No modifiers — a clean slate."}</div>
+        ${unlocked && !current ? `<button class="buy-btn" data-gov="${g.id}" ${state.govReformCooldown>0?"disabled":""}>${state.govReformCooldown>0? "Reforming… "+state.govReformCooldown+"s":"Adopt"}</button>` : ""}
+        ${!unlocked ? `<div class="locked-tag">Unlocks in the ${ERAS[g.era].name}</div>` : ""}
+      </div>`;
+    }).join("");
+  }
+
+  function renderMarket(){
+    const grid = $("#marketGrid");
+    if(!grid) return;
+    grid.innerHTML = Object.keys(TRADE_RATES).map(k=>{
+      const r = TRADE_RATES[k];
+      const meta = RESOURCE_META[k];
+      const canSell = state.resources[k] >= r.qty-1e-6;
+      const canBuy = state.resources.gold >= r.buyGold-1e-6;
+      return `
+        <div class="bcard">
+          <div class="bcard-head"><span class="bname">${meta.ic} ${meta.name}</span></div>
+          <div class="bdesc">You hold <strong>${fmt(state.resources[k])}</strong> ${meta.name.toLowerCase()}.</div>
+          <div class="market-row">
+            <button class="buy-btn" data-trade="sell:${k}" ${canSell?"":"disabled"}>Sell ${r.qty} → ${r.sellGold} 🪙</button>
+            <button class="buy-btn" data-trade="buy:${k}" ${canBuy?"":"disabled"}>Buy ${r.qty} for ${r.buyGold} 🪙</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function declareGoldenAge(){
+    if(state.era<7 || state.goldenAge) return;
+    state.goldenAge = true;
+    const overlay = $("#modalOverlay");
+    const card = $("#modalCard");
+    const secs = Math.floor((Date.now()-state.stats.startTime)/1000);
+    const h = Math.floor(secs/3600), m = Math.floor((secs%3600)/60);
+    card.innerHTML = `
+      <h3>✨ A Golden Age Dawns</h3>
+      <p><strong>${state.civName}</strong> has risen from bare stone to the Modern Age in ${h>0? h+"h ":""}${m}m, ${state.stats.buildingsBuilt} buildings and ${WONDERS.filter(w=>state.wonders[w.id]).length} Wonders strong, with a population of ${Math.floor(state.population)}. From this moment, every field, forge, and ledger works fifteen percent harder in honor of what your people built.</p>
+      <div class="modal-actions"><button id="closeGoldenBtn"><span class="mlabel">Continue the Legacy</span>Keep building — there's no limit to how far this civilization can go.</button></div>
+    `;
+    overlay.classList.add("show");
+    $("#closeGoldenBtn").onclick = ()=>{ overlay.classList.remove("show"); };
+    checkAchievements();
+    renderAll();
+  }
+
+  function tradeResource(action, key){
+    const r = TRADE_RATES[key];
+    if(!r) return;
+    if(action==="sell"){
+      if(state.resources[key] < r.qty-1e-6) return;
+      state.resources[key] -= r.qty;
+      state.resources.gold += r.sellGold;
+      toast("Trade Complete", `Sold ${r.qty} ${RESOURCE_META[key].name.toLowerCase()} for ${r.sellGold} gold.`, "");
+    } else {
+      if(state.resources.gold < r.buyGold-1e-6) return;
+      state.resources.gold -= r.buyGold;
+      state.resources[key] += r.qty;
+      toast("Trade Complete", `Bought ${r.qty} ${RESOURCE_META[key].name.toLowerCase()} for ${r.buyGold} gold.`, "");
+    }
+    renderAll();
+  }
+
+  function renderAll(){
+    renderTop(); renderResbar(); renderPop(); renderBuildings(); renderEras(); renderSettlement();
+    renderWonders(); renderEmpire(); renderExpedition(); renderSpeed(); renderPolitics(); renderMarket();
+  }
+
+  // ---------------- LOG / TOASTS ----------------
+  function timeStr(){
+    const d = new Date();
+    return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  }
+  function log(msg, cls){
+    const wrap = $("#log");
+    const div = document.createElement("div");
+    div.className = "logline"+(cls?(" "+cls):"");
+    div.innerHTML = `<span class="t">${timeStr()}</span>${msg}`;
+    wrap.appendChild(div);
+    while(wrap.children.length>60) wrap.removeChild(wrap.firstChild);
+  }
+  function toast(title, msg, cls){
+    const wrap = $("#toasts");
+    const div = document.createElement("div");
+    div.className = "toast"+(cls?(" "+cls):"");
+    div.innerHTML = `<div class="ttitle">${title}</div><div>${msg}</div>`;
+    wrap.appendChild(div);
+    setTimeout(()=>{ div.style.transition="opacity .4s"; div.style.opacity="0"; setTimeout(()=>div.remove(),400); }, 5200);
+    log(`<strong>${title}:</strong> ${msg}`, cls);
+  }
+
+  function milestone(key, title, msg){
+    if(state.milestones[key]) return;
+    state.milestones[key]=true;
+    toast(title, msg, "good");
+  }
+
+  function checkAchievements(){
+    ACHIEVEMENTS.forEach(a=>{
+      if(!state.milestones[a.id] && a.check(state)){
+        milestone(a.id, "Achievement: "+a.title, a.desc);
+      }
+    });
+  }
+
+  // ---------------- ACTIONS ----------------
+  function gather(type){
+    const gains = {food:1, wood:1, stone:1, gold:1};
+    let g = gains[type];
+    if(type==="food" && state.path==="farmer") g*=PATHS.farmer.foodMult;
+    state.resources[type]+=g;
+    flashRes(type, true);
+    renderResbar();
+  }
+
+  function buyBuilding(id){
+    const b = BUILDINGS.find(x=>x.id===id);
+    if(!b || state.era < b.era) return;
+    const cost = costFor(b);
+    if(!canAfford(cost)) return;
+    pay(cost);
+    state.buildingCounts[id]++;
+    state.stats.buildingsBuilt++;
+    toast("Constructed", `A new ${b.name} rises in your settlement.`, "good");
+    checkAchievements();
+    renderAll();
+  }
+
+  function buyWonder(id){
+    const w = WONDERS.find(x=>x.id===id);
+    if(!w || state.era < w.era || state.wonders[id]) return;
+    const cost = wonderCostFor(w);
+    if(!canAfford(cost)) return;
+    pay(cost);
+    state.wonders[id] = true;
+    state.stats.wondersBuilt++;
+    toast("Wonder Complete", `${w.name} now stands over your civilization: ${w.tag}.`, "good");
+    checkAchievements();
+    renderAll();
+  }
+
+  function adoptGovernment(id){
+    const g = GOVERNMENTS.find(x=>x.id===id);
+    if(!g || state.era<g.era || state.government===id || state.govReformCooldown>0) return;
+    state.government = id;
+    state.govReformCooldown = 40;
+    toast("Reform Enacted", `Your people now live under a ${g.name}.`, "");
+    renderAll();
+  }
+
+  function openLeaderSuccession(){
+    const overlay = $("#modalOverlay");
+    const card = $("#modalCard");
+    const prevName = state.leader ? state.leader.name : null;
+    const candidates = [];
+    const pool = LEADER_TRAITS.slice();
+    for(let i=0;i<3 && pool.length;i++){
+      const idx = Math.floor(Math.random()*pool.length);
+      candidates.push(randomLeader.call(null));
+      pool.splice(idx,1);
+    }
+    // ensure 3 distinct traits
+    const seen = new Set(); const uniqueCandidates = [];
+    for(const c of candidates){ if(!seen.has(c.key)){ seen.add(c.key); uniqueCandidates.push(c); } }
+    while(uniqueCandidates.length<3){
+      const c = randomLeader();
+      if(!seen.has(c.key)){ seen.add(c.key); uniqueCandidates.push(c); }
+    }
+    card.innerHTML = `
+      <h3>📯 A New Era of Leadership</h3>
+      <p>${prevName? `${prevName}'s term has ended.` : "Your people gather to choose their first leader."} Who will guide your civilization next?</p>
+      <div class="modal-actions">
+        ${uniqueCandidates.map((c,i)=>`<button data-cand="${i}"><span class="mlabel">${c.icon} ${c.name}, ${c.title}</span>${c.desc}</button>`).join("")}
+      </div>
+    `;
+    overlay.classList.add("show");
+    uniqueCandidates.forEach((c,i)=>{
+      card.querySelector(`[data-cand="${i}"]`).onclick = ()=>{
+        overlay.classList.remove("show");
+        state.leader = c;
+        state.leaderTermRemaining = 100 + Math.floor(Math.random()*60);
+        toast("New Leader", `${c.name} rises as ${c.title}: ${c.desc}`, "");
+        renderAll();
+      };
+    });
+  }
+
+  function sendExpedition(){
+    if(state.buildingCounts.barracks<1 || state.expeditionCooldown>0) return;
+    state.expeditionCooldown = 45;
+    state.stats.expeditions++;
+    const strength = defenseTotal() + Math.floor(state.population/5);
+    const roll = Math.random()*10 + strength*0.6;
+    if(roll>=8){
+      const gold = 30+Math.round(Math.random()*30), know = 10+Math.round(Math.random()*10);
+      state.resources.gold += gold; state.resources.knowledge += know;
+      toast("Great Expedition!", `Your scouts return with ${gold} gold and ${know} knowledge.`, "good");
+    } else if(roll>=4){
+      const gold = 10+Math.round(Math.random()*15);
+      state.resources.gold += gold;
+      toast("Successful Expedition", `Your scouts return with ${gold} gold.`, "good");
+    } else {
+      const gold = 2+Math.round(Math.random()*4);
+      state.resources.gold += gold;
+      toast("Quiet Return", `The land offered little, but your scouts bring back ${gold} gold.`, "");
+    }
+    checkAchievements();
+    renderAll();
+  }
+
+  function advanceEra(){
+    const next = ERAS[state.era+1];
+    if(!next || !canAfford(next.cost)) return;
+    pay(next.cost);
+    state.era++;
+    toast("A New Age Dawns", `Your people have entered the ${next.name}.`, "");
+    log(`<strong>The ${next.name} begins.</strong>`, "era");
+    renderAll();
+  }
+
+  // ---------------- GAME LOOP ----------------
+  function tick(){
+    if(state.expeditionCooldown>0){ state.expeditionCooldown = Math.max(0, state.expeditionCooldown-1); renderExpedition(); }
+    if(state.govReformCooldown>0){ state.govReformCooldown = Math.max(0, state.govReformCooldown-1); }
+    if(state.festivalTicks>0){ state.festivalTicks = Math.max(0, state.festivalTicks-1); }
+    if(state.speed===0){ return; }
+
+    const speed = state.speed;
+
+    // leadership succession
+    if(!$("#modalOverlay").classList.contains("show")){
+      state.leaderTermRemaining -= speed;
+      if(state.leaderTermRemaining<=0){
+        openLeaderSuccession();
+        state.leaderTermRemaining = 999999; // frozen until a candidate is chosen
+      }
+    }
+
+    const rates = productionRates();
+    for(const k in rates){
+      const delta = rates[k]*speed;
+      state.resources[k] = Math.max(0, state.resources[k]+delta);
+      if(delta>0) state.stats.totalGained[k] += delta;
+    }
+    // starvation
+    if(state.resources.food<=0 && rates.food<0 && state.population>1){
+      if(Math.random()<0.35*speed){
+        state.population = Math.max(1, state.population-1);
+        log("Famine strikes — your people go hungry and your population shrinks.", "bad");
+      }
+    }
+    // growth
+    const cap = popCap();
+    if(state.population < cap && state.resources.food>5){
+      let growthRate = (0.015 + (hasMorale()?0.01:0) + wonderGrowthBonus())*speed;
+      state.growthProgress += growthRate;
+      if(state.growthProgress>=1){
+        state.growthProgress=0;
+        state.population = Math.min(cap, state.population+1);
+      }
+    } else {
+      state.growthProgress = Math.max(0, state.growthProgress-0.01*speed);
+    }
+    state.stats.peakPopulation = Math.max(state.stats.peakPopulation, state.population);
+
+    checkAchievements();
+
+    // events
+    state.nextEventIn -= speed;
+    if(state.nextEventIn<=0){
+      triggerRandomEvent();
+      state.nextEventIn = 24 + Math.floor(Math.random()*18);
+    }
+
+    renderResbar(); renderPop(); renderBuildings(); renderEras(); renderEmpire(); renderPolitics();
+  }
+
+  // ---------------- EVENTS ----------------
+  function triggerRandomEvent(){
+    const soften = 1 - eventSoftening();
+    const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+    const pool = [
+      {w:3, run: ()=>{
+        const gain = 8 + Math.random()*12;
+        state.resources.food += gain;
+        const line = pick([
+          `The fields yield extra grain: +${Math.round(gain)} food.`,
+          `A mild season fills every granary a little fuller: +${Math.round(gain)} food.`,
+          `Rains arrive right on time: +${Math.round(gain)} food.`
+        ]);
+        toast("Bountiful Harvest", line, "good");
+      }},
+      {w:3, run: ()=>{
+        const gain = 6 + Math.random()*10;
+        state.resources.gold += gain;
+        const line = pick([
+          `A caravan trades favorably: +${Math.round(gain)} gold.`,
+          `Merchants pass through and pay well for lodging: +${Math.round(gain)} gold.`,
+          `A lucky deal fills your treasury: +${Math.round(gain)} gold.`
+        ]);
+        toast("Traveling Merchant", line, "good");
+      }},
+      {w:2, run: ()=>{
+        const gain = 4 + Math.random()*8;
+        state.resources.knowledge += gain;
+        const line = pick([
+          `Scholars decipher old texts: +${Math.round(gain)} knowledge.`,
+          `A curious mind stumbles onto a real insight: +${Math.round(gain)} knowledge.`,
+          `Old records finally make sense: +${Math.round(gain)} knowledge.`
+        ]);
+        toast("Ancient Ruins", line, "good");
+      }},
+      {w:2, run: ()=>{
+        if(state.population < popCap()){
+          state.population = Math.min(popCap(), state.population+2);
+          toast("Migrants Arrive", "Wanderers join your settlement: +2 population.", "good");
+        } else {
+          state.resources.gold += 10;
+          toast("Passing Travelers", "No room to house them, but they leave gifts: +10 gold.", "good");
+        }
+      }},
+      {w:2, run: ()=>{
+        const gain = 6 + Math.random()*10;
+        state.resources.knowledge += gain;
+        toast("Inventor's Breakthrough", `A tinkerer's idea pays off at once: +${Math.round(gain)} knowledge.`, "good");
+      }},
+      {w:2, run: ()=>{
+        state.festivalTicks = 30;
+        toast("Festival", "Your people celebrate — all production is boosted for a short while.", "good");
+      }},
+      {w:2, run: ()=>{
+        const loss = Math.round(state.resources.food*0.2*soften);
+        state.resources.food = Math.max(0, state.resources.food-loss);
+        toast("Drought", `Dry season withers the crops: -${loss} food.`, "bad");
+      }},
+      {w:2, run: ()=>{
+        const loss = Math.round(state.resources.wood*0.2*soften);
+        state.resources.wood = Math.max(0, state.resources.wood-loss);
+        toast("Forest Fire", `Flames sweep the timberland: -${loss} wood.`, "bad");
+      }},
+      {w:2, run: ()=>{
+        const severity = (hasMorale()? 0.5:1) * soften;
+        if(Math.random()<0.5*severity && state.population>2){
+          state.population = Math.max(1, state.population-Math.ceil(1*severity));
+          toast("Plague", "Sickness passes through your settlement.", "bad");
+        } else {
+          toast("Fever Passes", "Your healers keep sickness at bay.", "");
+        }
+      }},
+      {w:2, run: openRaidEvent},
+      {w:1, run: openEnvoyEvent},
+    ];
+    const totalW = pool.reduce((s,e)=>s+e.w,0);
+    let r = Math.random()*totalW;
+    for(const e of pool){ if(r<e.w){ e.run(); return; } r-=e.w; }
+  }
+
+  function openRaidEvent(){
+    const overlay = $("#modalOverlay");
+    const card = $("#modalCard");
+    const def = defenseTotal();
+    card.innerHTML = `
+      <h3>⚔️ Raiders at the Gates</h3>
+      <p>A band of raiders approaches your settlement, eyeing your stores. Your defenses stand at <strong>${def}</strong>. How do you respond?</p>
+      <div class="modal-actions">
+        <button id="fightBtn"><span class="mlabel">Stand and Fight</span>Risk losses, but a strong defense may repel them and yield spoils.</button>
+        <button id="tributeBtn"><span class="mlabel">Pay Tribute</span>Hand over gold to guarantee your people's safety.</button>
+      </div>
+    `;
+    overlay.classList.add("show");
+    $("#fightBtn").onclick = ()=>{
+      overlay.classList.remove("show");
+      const roll = def + Math.random()*8;
+      if(roll>7){
+        const spoil = 15+Math.round(Math.random()*20);
+        state.resources.gold += spoil;
+        state.stats.raidsWon++;
+        toast("Raid Repelled", `Your defenders win the day and claim ${spoil} gold in spoils.`, "good");
+      } else {
+        const soften = 1 - eventSoftening();
+        const lossGold = Math.round(state.resources.gold*0.25*soften);
+        state.resources.gold = Math.max(0, state.resources.gold-lossGold);
+        state.stats.raidsLost++;
+        if(state.population>2 && Math.random()<0.4*soften) state.population -=1;
+        toast("Raid Losses", `The raiders break through, taking ${lossGold} gold and causing harm.`, "bad");
+      }
+      checkAchievements();
+      renderAll();
+    };
+    $("#tributeBtn").onclick = ()=>{
+      overlay.classList.remove("show");
+      const cost = Math.round(Math.max(10, state.resources.gold*0.35));
+      state.resources.gold = Math.max(0, state.resources.gold-cost);
+      toast("Tribute Paid", `You pay ${cost} gold. The raiders depart peacefully.`, "");
+      renderAll();
+    };
+  }
+
+  function openEnvoyEvent(){
+    const overlay = $("#modalOverlay");
+    const card = $("#modalCard");
+    card.innerHTML = `
+      <h3>🕊️ A Diplomatic Envoy</h3>
+      <p>Emissaries from a neighboring people arrive, proposing closer ties. Do you welcome them or keep to your own?</p>
+      <div class="modal-actions">
+        <button id="allyBtn"><span class="mlabel">Form an Alliance</span>Open trade routes for a gold gain, but their customs mix in — a small knowledge cost.</button>
+        <button id="isolateBtn"><span class="mlabel">Stay Independent</span>Keep your ways intact; a modest gift of knowledge as thanks for hearing them out.</button>
+      </div>
+    `;
+    overlay.classList.add("show");
+    $("#allyBtn").onclick = ()=>{
+      overlay.classList.remove("show");
+      const gold = 20+Math.round(Math.random()*25);
+      state.resources.gold += gold;
+      toast("Alliance Formed", `New trade routes open: +${gold} gold.`, "good");
+      renderAll();
+    };
+    $("#isolateBtn").onclick = ()=>{
+      overlay.classList.remove("show");
+      const know = 8+Math.round(Math.random()*10);
+      state.resources.knowledge += know;
+      toast("Independence Kept", `Your scholars study their customs from afar: +${know} knowledge.`, "good");
+      renderAll();
+    };
+  }
+
+  // ---------------- EVENT WIRING ----------------
+  document.addEventListener("click", (e)=>{
+    const gatherBtn = e.target.closest("[data-gather]");
+    if(gatherBtn){ gather(gatherBtn.dataset.gather); return; }
+    const buildBtn = e.target.closest("[data-build]");
+    if(buildBtn && !buildBtn.disabled){ buyBuilding(buildBtn.dataset.build); return; }
+    const advBtn = e.target.closest("#advanceBtn");
+    if(advBtn && !advBtn.disabled){ advanceEra(); return; }
+    const wonderBtn = e.target.closest("[data-wonder]");
+    if(wonderBtn && !wonderBtn.disabled){ buyWonder(wonderBtn.dataset.wonder); return; }
+    const govBtn = e.target.closest("[data-gov]");
+    if(govBtn && !govBtn.disabled){ adoptGovernment(govBtn.dataset.gov); return; }
+    const expBtn = e.target.closest("#expeditionBtn");
+    if(expBtn && !expBtn.disabled){ sendExpedition(); return; }
+    const speedBtn = e.target.closest("#speedControl button");
+    if(speedBtn){ state.speed = Number(speedBtn.dataset.speed); renderSpeed(); return; }
+    const tradeBtn = e.target.closest("[data-trade]");
+    if(tradeBtn && !tradeBtn.disabled){
+      const [action, key] = tradeBtn.dataset.trade.split(":");
+      tradeResource(action, key);
+      return;
+    }
+    const goldenBtn = e.target.closest("#declareGoldenBtn");
+    if(goldenBtn){ declareGoldenAge(); return; }
+    const tab = e.target.closest(".tab");
+    if(tab){
+      $$(".tab").forEach(t=>t.classList.remove("active"));
+      $$(".tabpage").forEach(p=>p.classList.remove("active"));
+      tab.classList.add("active");
+      $("#tab-"+tab.dataset.tab).classList.add("active");
+      return;
+    }
+    const pathCard = e.target.closest(".path-card");
+    if(pathCard){
+      $$(".path-card").forEach(p=>p.classList.remove("selected"));
+      pathCard.classList.add("selected");
+      state.path = pathCard.dataset.path;
+      return;
+    }
+  });
+
+  $("#beginBtn").addEventListener("click", ()=>{
+    const name = $("#civName").value.trim();
+    state.civName = name || "The Unnamed Kinship";
+    state.started = true;
+    state.leader = randomLeader();
+    state.leaderTermRemaining = 100 + Math.floor(Math.random()*60);
+    $("#startScreen").style.display="none";
+    $("#game").classList.add("active");
+    renderAll();
+    log(`<strong>${state.civName}</strong> is founded upon the stone age plains.`, "era");
+    log(`${state.leader.name} takes up leadership as ${state.leader.title}.`, "");
+    setInterval(tick, 1000);
+  });
+
+  $("#civName").addEventListener("keydown", (e)=>{ if(e.key==="Enter") $("#beginBtn").click(); });
+
+})();
+</script>
+</body>
+</html>
