@@ -121,6 +121,174 @@
   .icon-btn:hover{background:var(--panel-2);}
   .icon-btn:active{transform:scale(0.92);}
 
+  /* ---- Home screen ---- */
+  .home-screen{
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+    padding:14px 20px 30px;
+  }
+  .home-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .home-hero{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    padding-top:6px;
+  }
+  .home-kicker{
+    font-size:11px;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:700;
+    margin-bottom:8px;
+  }
+  .home-logo{
+    font-family:'Source Serif 4',Georgia,serif;
+    font-weight:900;
+    font-size:52px;
+    line-height:1;
+    margin:0;
+    color:var(--ink);
+    letter-spacing:.3px;
+  }
+  .home-date{
+    font-size:12.5px;
+    color:var(--muted);
+    font-weight:600;
+    margin-top:9px;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+  }
+  .home-tagline{
+    font-size:14.5px;
+    color:var(--muted);
+    max-width:300px;
+    margin:14px auto 0;
+    line-height:1.55;
+  }
+  .home-example{
+    margin:20px 0 4px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+  }
+  .home-example .word-tile-row .letter{
+    width:36px;height:36px;font-size:15px;
+  }
+  .home-example-arrow{
+    color:var(--muted-2);
+    font-size:13px;
+    font-weight:700;
+  }
+  .home-streaks{
+    display:flex;
+    gap:10px;
+    margin:22px 0 24px;
+  }
+  .home-play-btn{
+    width:100%;
+    max-width:280px;
+    background:var(--ink);
+    border:2px solid var(--ink);
+    color:var(--bg);
+    font-family:'Libre Franklin',sans-serif;
+    font-weight:800;
+    font-size:16.5px;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    padding:16px 22px;
+    border-radius:6px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    box-shadow:0 3px 0 rgba(0,0,0,.15);
+    transition:transform .1s ease, box-shadow .1s ease, opacity .15s ease;
+  }
+  .home-play-btn svg{width:17px;height:17px;}
+  .home-play-btn:active{transform:translateY(2px);box-shadow:none;}
+  .home-play-btn:disabled{opacity:.5;cursor:default;box-shadow:none;}
+  .home-solved-note{
+    margin-top:11px;
+    font-size:12.5px;
+    color:var(--moss-dark);
+    font-weight:700;
+    display:none;
+    align-items:center;
+    gap:6px;
+  }
+  .home-solved-note svg{width:14px;height:14px;}
+  .home-secondary-btn{
+    width:100%;
+    max-width:280px;
+    margin-top:12px;
+    background:var(--panel);
+    border:2px solid var(--tile-edge);
+    color:var(--ink);
+    font-weight:700;
+    font-size:13.5px;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    padding:13px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-family:'Libre Franklin',sans-serif;
+  }
+  .home-secondary-btn svg{width:15px;height:15px;}
+  .home-secondary-btn:hover{background:var(--panel-2);}
+  .home-links{
+    margin-top:24px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .home-link{
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    font-size:11px;
+    cursor:pointer;
+    font-family:'Libre Franklin',sans-serif;
+    padding:4px 2px;
+  }
+  .home-link:hover{color:var(--ink);}
+  .home-links-dot{color:var(--muted-2);font-size:11px;}
+  .home-footer{
+    text-align:center;
+    color:var(--muted-2);
+    font-size:12px;
+    margin-top:30px;
+    padding-top:16px;
+    border-top:1px solid var(--line);
+  }
+  .home-footer .credit{color:var(--muted);font-style:italic;}
+  .home-footer .credit a{
+    color:var(--ink);
+    font-weight:700;
+    font-style:normal;
+    text-decoration:none;
+    border-bottom:1px solid var(--ink);
+  }
+  @media (max-width:380px){
+    .home-logo{font-size:42px;}
+  }
+
   .streaks-row{
     display:flex;
     justify-content:center;
@@ -693,8 +861,60 @@
 <body>
 <div id="app">
 
+  <div class="home-screen" id="homeScreen">
+    <div class="home-top">
+      <button class="icon-btn" id="homeHelpBtn" title="How to play">?</button>
+      <button class="icon-btn" id="homeSettingsBtn" title="Settings"></button>
+    </div>
+
+    <div class="home-hero">
+      <div class="home-kicker">PixelMan Games</div>
+      <h1 class="home-logo">Ladder</h1>
+      <div class="home-date" id="homeDate">—</div>
+      <p class="home-tagline">Turn one word into another, changing a single letter at a time.</p>
+
+      <div class="home-example">
+        <div class="word-tile-row"><div class="letter">C</div><div class="letter">O</div><div class="letter">L</div><div class="letter">D</div></div>
+        <div class="home-example-arrow">&#8595;</div>
+        <div class="word-tile-row"><div class="letter changed">W</div><div class="letter">A</div><div class="letter">R</div><div class="letter">M</div></div>
+      </div>
+
+      <div class="home-streaks">
+        <div class="streak-pill normal-streak" id="homeNormalStreakPill" title="Normal mode streak"></div>
+        <div class="streak-pill hard-streak" id="homeHardStreakPill" title="Hard mode streak"></div>
+      </div>
+
+      <button class="home-play-btn" id="playBtn" disabled>
+        <span id="playBtnLabel">Loading&hellip;</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <div class="home-solved-note" id="homeSolvedNote">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Today's ladder is solved
+      </div>
+
+      <button class="home-secondary-btn" id="homeLeaderboardBtn">
+        <span id="homeLeaderboardIcon"></span>
+        Leaderboard
+      </button>
+
+      <div class="home-links">
+        <button class="home-link" id="homeStatsBtn">Stats</button>
+        <span class="home-links-dot">&middot;</span>
+        <button class="home-link" id="homeHowBtn">How to play</button>
+      </div>
+    </div>
+
+    <footer class="home-footer">
+      A new ladder appears every day at midnight, local time.<br>
+      <span class="credit">Made by <a href="https://pixelman.net" target="_blank" rel="noopener">PixelMan Games</a></span>
+    </footer>
+  </div>
+
+  <div id="gameScreen" style="display:none;">
   <header>
     <div class="header-actions left">
+      <button class="icon-btn" id="backHomeBtn" title="Home"></button>
       <button class="icon-btn" id="helpBtn" title="How to play">?</button>
     </div>
     <div class="brand">
@@ -775,6 +995,7 @@
     A new ladder appears every day at midnight, local time.<br>
     <span class="credit">Made by <a href="https://pixelman.net" target="_blank" rel="noopener">PixelMan Games</a></span>
   </footer>
+  </div><!-- /gameScreen -->
 </div>
 
 <div class="toast" id="toast"></div>
@@ -966,7 +1187,8 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     undo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>',
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
     flame: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1.2 3.1-2.8 4.4-2.8 7.4a2.8 2.8 0 0 0 5.6 0c0-1-.4-1.9-.9-2.7 1 .6 2.9 2.6 2.9 5.6A5.8 5.8 0 0 1 5.9 12.3C5.9 7.3 9.1 5 12 2z"></path></svg>',
-    gem: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12l4 6-10 12L2 9z"></path></svg>'
+    gem: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12l4 6-10 12L2 9z"></path></svg>',
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg>'
   };
   function setIcon(el, name){ el.innerHTML = ICONS[name]; }
 
@@ -974,11 +1196,16 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   setIcon(document.getElementById("leaderboardBtn"), "award");
   setIcon(document.getElementById("statsBtn"), "chart");
   setIcon(document.getElementById("settingsBtn"), "settings");
+  setIcon(document.getElementById("backHomeBtn"), "home");
+  setIcon(document.getElementById("homeSettingsBtn"), "settings");
+  document.getElementById("homeLeaderboardIcon").innerHTML = ICONS.award;
   document.getElementById("undoBtn").innerHTML = ICONS.undo + " Undo";
   document.getElementById("hintBtn").innerHTML = ICONS.sun + " Hint";
   document.getElementById("viewResultBtn").innerHTML = ICONS.award + " View today's result";
   document.getElementById("normalStreakPill").innerHTML = ICONS.flame + '<span id="normalStreakVal">0</span>';
   document.getElementById("hardStreakPill").innerHTML = ICONS.gem + '<span id="hardStreakVal">0</span>';
+  document.getElementById("homeNormalStreakPill").innerHTML = ICONS.flame + '<span id="homeNormalStreakVal">0</span>';
+  document.getElementById("homeHardStreakPill").innerHTML = ICONS.gem + '<span id="homeHardStreakVal">0</span>';
 
   /* ---------------- Word list ---------------- */
   const WORDS = ["ABLE", "ACHE", "ACID", "ACME", "ACNE", "ACRE", "ACTS", "ADDS", "AGED", "AGES", "AGUE", "AHOY", "AIDE", "AIDS", "AILS", "AIMS", "AIRS", "AIRY", "AJAR", "AKIN", "ALAS", "ALBS", "ALES", "ALGA", "ALIT", "ALLY", "ALMS", "ALOE", "ALSO", "ALTO", "AMBO", "AMEN", "AMID", "AMPS", "ANEW", "ANNO", "ANTE", "ANTS", "ANUS", "APED", "APES", "APEX", "APPS", "ARCH", "ARCS", "AREA", "ARES", "ARGO", "ARIA", "ARID", "ARIL", "ARKS", "ARMS", "ARMY", "ARSE", "ARTS", "ARTY", "ASHY", "ASIA", "ASKS", "ATOM", "ATOP", "AUNT", "AURA", "AUTO", "AVER", "AVID", "AWAY", "AWED", "AWES", "AWLS", "AWRY", "AXED", "AXES", "AXIS", "AXLE", "AYES", "BABE", "BABY", "BACK", "BADE", "BADS", "BAGS", "BAIL", "BAIT", "BAKE", "BALD", "BALE", "BALK", "BALL", "BALM", "BAND", "BANE", "BANG", "BANK", "BAPS", "BARB", "BARD", "BARE", "BARK", "BARN", "BARS", "BASE", "BASH", "BASK", "BASS", "BAST", "BATH", "BATS", "BAWD", "BAWL", "BAYS", "BEAD", "BEAK", "BEAM", "BEAN", "BEAR", "BEAT", "BEDS", "BEEF", "BEEN", "BEEP", "BEER", "BEES", "BEET", "BEGS", "BELL", "BELT", "BEND", "BENT", "BERM", "BEST", "BETA", "BETS", "BIAS", "BIBS", "BIDE", "BIDS", "BIER", "BIKE", "BILE", "BILK", "BILL", "BIND", "BINS", "BIRD", "BITE", "BITS", "BLAB", "BLAH", "BLED", "BLEW", "BLIP", "BLOB", "BLOC", "BLOG", "BLOT", "BLOW", "BLUE", "BLUR", "BOAR", "BOAT", "BODE", "BODY", "BOGS", "BOIL", "BOLD", "BOLE", "BOLT", "BOMB", "BOND", "BONE", "BONY", "BOOK", "BOOM", "BOON", "BOOR", "BOOT", "BORE", "BORN", "BOSS", "BOTH", "BOTS", "BOUT", "BOWL", "BOWS", "BOXY", "BRAG", "BRAN", "BRAS", "BRAT", "BRAY", "BRED", "BREW", "BRIG", "BRIM", "BRIT", "BROW", "BUCK", "BUDS", "BUFF", "BUGS", "BULB", "BULK", "BULL", "BUMP", "BUNK", "BUNS", "BUOY", "BURG", "BURN", "BURR", "BURY", "BUSH", "BUSK", "BUST", "BUSY", "BUTT", "BUYS", "BYTE", "CABS", "CADE", "CAFE", "CAGE", "CAGY", "CAKE", "CALF", "CALL", "CALM", "CAME", "CAMP", "CANE", "CANS", "CAPE", "CAPS", "CARD", "CARE", "CARP", "CARS", "CART", "CASE", "CASH", "CASK", "CAST", "CATS", "CAVE", "CAWS", "CEDE", "CELL", "CENT", "CHAP", "CHAR", "CHAT", "CHEF", "CHEW", "CHIC", "CHIN", "CHIP", "CHOP", "CHUG", "CHUM", "CITE", "CITY", "CLAD", "CLAM", "CLAN", "CLAP", "CLAW", "CLAY", "CLIP", "CLOD", "CLOG", "CLOP", "CLOT", "CLOY", "CLUB", "CLUE", "COAL", "COAT", "COAX", "CODE", "CODS", "COGS", "COIL", "COIN", "COKE", "COLA", "COLD", "COLT", "COMA", "COMB", "COME", "CONE", "CONS", "COOK", "COOL", "COOP", "COOT", "COPE", "COPS", "COPY", "CORD", "CORE", "CORK", "CORN", "COST", "COSY", "COTS", "COUP", "COVE", "COWL", "COWS", "COZY", "CRAB", "CRAG", "CRAM", "CRAP", "CRAW", "CRED", "CREW", "CRIB", "CROP", "CROW", "CRUD", "CRUX", "CUBE", "CUBS", "CUED", "CUES", "CUFF", "CULT", "CUPS", "CURB", "CURD", "CURE", "CURL", "CURS", "CURT", "CURY", "CUSP", "CUTE", "CUTS", "DABS", "DADO", "DADS", "DAFT", "DALE", "DAME", "DAMN", "DAMP", "DAMS", "DANK", "DARE", "DARK", "DARN", "DART", "DASH", "DATA", "DATE", "DAUB", "DAWN", "DAYS", "DAZE", "DEAD", "DEAF", "DEAL", "DEAN", "DEAR", "DEBT", "DECK", "DEED", "DEEM", "DEEP", "DEER", "DEFT", "DEFY", "DELI", "DELL", "DEMO", "DENS", "DENT", "DENY", "DEPT", "DESK", "DEWS", "DEWY", "DIAL", "DICE", "DIED", "DIES", "DIET", "DIGS", "DIKE", "DILL", "DIME", "DIMS", "DINE", "DING", "DINK", "DINO", "DINS", "DIRT", "DISC", "DISH", "DISK", "DIVA", "DIVE", "DOCK", "DOER", "DOES", "DOFF", "DOGS", "DOLE", "DOLL", "DOME", "DONE", "DONS", "DOOM", "DOOR", "DOPE", "DORK", "DOSE", "DOTS", "DOUR", "DOVE", "DOWN", "DOZE", "DRAB", "DRAG", "DRAM", "DRAT", "DRAW", "DREW", "DRIB", "DRIP", "DROP", "DRUB", "DRUG", "DRUM", "DUAL", "DUCK", "DUCT", "DUDE", "DUDS", "DUEL", "DUES", "DUET", "DUKE", "DULL", "DULY", "DUMB", "DUMP", "DUNE", "DUNG", "DUNK", "DUOS", "DUPE", "DUSK", "DUST", "DUTY", "EACH", "EARL", "EARN", "EARS", "EASE", "EAST", "EASY", "EATS", "EAVE", "EBBS", "ECHO", "EDDY", "EDGE", "EDGY", "EDIT", "EELS", "EGGS", "EGGY", "EGOS", "EKED", "EKES", "ELAN", "ELKS", "ELLE", "ELMS", "ELSE", "EMIT", "EMUS", "ENDS", "ENVY", "EONS", "EPIC", "ERAS", "ERGO", "ERGS", "ERRS", "ETCH", "EURO", "EVEN", "EVER", "EVIL", "EWES", "EXAM", "EXIT", "FACE", "FACT", "FADE", "FADS", "FAIL", "FAIR", "FAKE", "FALL", "FAME", "FANG", "FANS", "FARE", "FARM", "FAST", "FATE", "FATS", "FAUN", "FAWN", "FAZE", "FEAR", "FEAT", "FEED", "FEEL", "FEES", "FEET", "FELL", "FELT", "FEND", "FERN", "FEUD", "FIAT", "FIBS", "FIEF", "FIGS", "FILE", "FILL", "FILM", "FIND", "FINE", "FINS", "FIRE", "FIRM", "FIRS", "FISH", "FIST", "FITS", "FIVE", "FIZZ", "FLAB", "FLAG", "FLAK", "FLAN", "FLAP", "FLAT", "FLAW", "FLAX", "FLEA", "FLED", "FLEE", "FLEW", "FLEX", "FLIP", "FLIT", "FLOE", "FLOG", "FLOP", "FLOW", "FLUB", "FLUE", "FLUX", "FOAL", "FOAM", "FOES", "FOGS", "FOIL", "FOLD", "FOLK", "FOND", "FONT", "FOOD", "FOOL", "FOOT", "FORD", "FORE", "FORK", "FORM", "FORT", "FOUL", "FOUR", "FOWL", "FOXY", "FREE", "FRET", "FRIT", "FROG", "FROM", "FUEL", "FULL", "FUME", "FUND", "FUNK", "FUNS", "FUNY", "FURY", "FUSE", "FUSS", "FUZZ", "GABS", "GAGS", "GAIN", "GAIT", "GALA", "GALE", "GALL", "GAME", "GANG", "GAPE", "GAPS", "GARB", "GASH", "GASP", "GATE", "GAVE", "GAWK", "GAZE", "GEAR", "GEEK", "GEES", "GELS", "GENE", "GENT", "GERM", "GETS", "GHAT", "GHEE", "GIBE", "GIFT", "GILD", "GILL", "GILT", "GIMP", "GIRD", "GIRL", "GIRT", "GIST", "GIVE", "GLAD", "GLEN", "GLIB", "GLOB", "GLOW", "GLUE", "GLUM", "GLUT", "GNAT", "GNAW", "GOAD", "GOAL", "GOAT", "GOBS", "GODS", "GOES", "GOLD", "GOLF", "GONE", "GONG", "GOOD", "GOOF", "GOON", "GOOP", "GORE", "GORY", "GOSH", "GOWN", "GRAB", "GRAD", "GRAM", "GRAY", "GREW", "GREY", "GRID", "GRIM", "GRIN", "GRIP", "GRIT", "GROG", "GROW", "GRUB", "GULF", "GULL", "GULP", "GUMS", "GUNS", "GURU", "GUSH", "GUST", "GUTS", "GUYS", "GYMS", "GYRE", "HACK", "HAIL", "HAIR", "HALE", "HALF", "HALL", "HALO", "HALT", "HAND", "HANG", "HARD", "HARE", "HARK", "HARM", "HARP", "HART", "HASH", "HAST", "HATE", "HATH", "HATS", "HAUL", "HAVE", "HAWK", "HAYS", "HAZE", "HAZY", "HEAD", "HEAL", "HEAP", "HEAR", "HEAT", "HEED", "HEEL", "HEFT", "HEIR", "HELD", "HELL", "HELM", "HELP", "HEMP", "HENS", "HERB", "HERD", "HERE", "HERO", "HERS", "HEWN", "HEWS", "HIDE", "HIGH", "HIKE", "HILL", "HILT", "HIND", "HINT", "HIPS", "HIRE", "HISS", "HITS", "HIVE", "HOAX", "HOBO", "HOCK", "HOED", "HOES", "HOGS", "HOLD", "HOLE", "HOLY", "HOME", "HOMY", "HONE", "HONK", "HOOD", "HOOF", "HOOK", "HOOP", "HOOT", "HOPE", "HOPS", "HORN", "HOSE", "HOST", "HOTS", "HOUR", "HOWL", "HUBS", "HUED", "HUES", "HUFF", "HUGE", "HUGS", "HULK", "HULL", "HUMS", "HUNG", "HUNK", "HUNT", "HURL", "HURT", "HUSH", "HUSK", "HYMN", "HYPE", "ICED", "ICES", "ICON", "IDEA", "IDLE", "IDOL", "IKAT", "ILLS", "IMPS", "INCH", "INFO", "INKS", "INKY", "INTO", "IONS", "IOTA", "IRIS", "IRKS", "IRON", "ITCH", "ITEM", "IVES", "JABS", "JACK", "JADE", "JAIL", "JAMB", "JAMS", "JARS", "JAVA", "JAWS", "JAYS", "JAZZ", "JEAN", "JEER", "JEST", "JETS", "JIBE", "JIGS", "JILT", "JINX", "JOBS", "JOCK", "JOEY", "JOGS", "JOIN", "JOKE", "JOLT", "JOSH", "JOTS", "JOWL", "JOYS", "JUDO", "JUGS", "JULY", "JUMP", "JUNE", "JUNK", "JURY", "JUST", "JUTE", "KALE", "KAYO", "KEEL", "KEEN", "KEEP", "KEGS", "KELP", "KEPT", "KERB", "KEYS", "KICK", "KIDS", "KILL", "KILN", "KILO", "KIND", "KING", "KINK", "KISS", "KITE", "KITS", "KIWI", "KNEE", "KNEW", "KNIT", "KNOB", "KNOT", "KNOW", "LABS", "LACE", "LACK", "LACY", "LADS", "LADY", "LAID", "LAIN", "LAIR", "LAKE", "LAMB", "LAME", "LAMP", "LAND", "LANE", "LAPS", "LARD", "LARK", "LASH", "LAST", "LATE", "LAVA", "LAWN", "LAWS", "LAYS", "LAZY", "LEAD", "LEAF", "LEAK", "LEAN", "LEAP", "LEEK", "LEER", "LEFT", "LEGS", "LEND", "LENS", "LENT", "LESS", "LEST", "LETS", "LEVY", "LICE", "LICK", "LIED", "LIEN", "LIES", "LIFE", "LIFT", "LIKE", "LILY", "LIMB", "LIME", "LIMP", "LINE", "LINK", "LINT", "LION", "LIPS", "LISP", "LIST", "LITE", "LIVE", "LOAD", "LOAF", "LOAM", "LOAN", "LOBE", "LOCH", "LOCK", "LOFT", "LOGO", "LOGS", "LOIN", "LONE", "LONG", "LOOK", "LOOM", "LOON", "LOOP", "LOOT", "LOPE", "LORD", "LORE", "LOSE", "LOSS", "LOST", "LOTS", "LOUD", "LOUT", "LOVE", "LOWS", "LUCK", "LUGE", "LUGS", "LULL", "LUMP", "LUNG", "LURE", "LURK", "LUSH", "LUST", "LUTE", "LYNX", "LYRE", "MACE", "MADE", "MAID", "MAIL", "MAIM", "MAIN", "MAKE", "MALE", "MALL", "MALT", "MAMA", "MANE", "MANS", "MANY", "MAPS", "MARE", "MARK", "MARS", "MART", "MASH", "MASK", "MASS", "MAST", "MATE", "MATH", "MATS", "MAUL", "MAWS", "MAYO", "MAZE", "MEAD", "MEAL", "MEAN", "MEAT", "MEEK", "MEET", "MELD", "MELT", "MEMO", "MEND", "MENU", "MERE", "MESH", "MESS", "MICE", "MILD", "MILE", "MILK", "MILL", "MIME", "MIND", "MINE", "MINI", "MINK", "MINT", "MIRE", "MISS", "MIST", "MITE", "MOAN", "MOAT", "MOBS", "MOCK", "MODE", "MOLD", "MOLE", "MONK", "MOOD", "MOON", "MOOR", "MOOS", "MOOT", "MOPE", "MOPS", "MORE", "MOSS", "MOST", "MOTH", "MOVE", "MOWN", "MOWS", "MUCH", "MUCK", "MUDS", "MUFF", "MUGS", "MULE", "MULL", "MUMS", "MUNG", "MUSE", "MUSH", "MUSK", "MUST", "MUTE", "MUTT", "MYTH", "NABS", "NAGS", "NAIL", "NAME", "NAPE", "NAPS", "NARY", "NAVE", "NAVY", "NEAR", "NEAT", "NECK", "NEED", "NEON", "NERD", "NEST", "NETS", "NEWS", "NEWT", "NEXT", "NIBS", "NICE", "NICK", "NIGH", "NINE", "NIPS", "NODE", "NODS", "NONE", "NOOK", "NOON", "NOPE", "NORM", "NOSE", "NOSY", "NOTE", "NOUN", "NOVA", "NUDE", "NUKE", "NULL", "NUMB", "NUNS", "NUTS", "OAKS", "OARS", "OATH", "OATS", "OBEY", "OBOE", "ODDS", "ODOR", "OFFS", "OGLE", "OGRE", "OHMS", "OILS", "OILY", "OINK", "OKAY", "OKRA", "OMEN", "OMIT", "ONCE", "ONES", "ONLY", "ONTO", "ONUS", "ONYX", "OOZE", "OPAL", "OPEN", "OPTS", "ORAL", "ORBS", "ORCA", "ORES", "OUCH", "OUST", "OUTS", "OVAL", "OVEN", "OVER", "OWED", "OWES", "OWLS", "OWNS", "OXEN", "PACE", "PACK", "PACT", "PADS", "PAGE", "PAID", "PAIL", "PAIN", "PAIR", "PALE", "PALM", "PALS", "PANE", "PANG", "PANS", "PANT", "PARE", "PARK", "PART", "PASS", "PAST", "PATE", "PATH", "PATS", "PAVE", "PAWN", "PAWS", "PEAK", "PEAL", "PEAR", "PEAS", "PEAT", "PECK", "PEEK", "PEEL", "PEEP", "PEER", "PEGS", "PELT", "PENS", "PEPS", "PERK", "PERM", "PERT", "PESO", "PEST", "PETS", "PHEW", "PICK", "PIED", "PIER", "PIES", "PIGS", "PIKE", "PILE", "PILL", "PIMP", "PINE", "PING", "PINK", "PINS", "PINT", "PIPE", "PITH", "PITS", "PITY", "PIXY", "PLAN", "PLAT", "PLAY", "PLEA", "PLOD", "PLOP", "PLOT", "PLOW", "PLOY", "PLUG", "PLUM", "PLUS", "POCK", "PODS", "POEM", "POET", "POKE", "POLE", "POLL", "POLO", "POMP", "POND", "POOL", "POOP", "POOR", "PORE", "PORK", "PORT", "POSE", "POSH", "POSY", "POUR", "POUT", "PRAM", "PRAY", "PREP", "PREY", "PRIG", "PRIM", "PROD", "PROM", "PROP", "PROW", "PUBS", "PUCE", "PUCK", "PUFF", "PUGS", "PULL", "PULP", "PULS", "PUMA", "PUMP", "PUNK", "PUNS", "PUNT", "PUPA", "PUPS", "PURE", "PURR", "PUSH", "PUTT", "QUAD", "QUAY", "QUEY", "QUID", "QUIP", "QUIT", "QUIZ", "RACE", "RACK", "RAFT", "RAGE", "RAGS", "RAID", "RAIL", "RAIN", "RAKE", "RAMP", "RAMS", "RANG", "RANK", "RANT", "RAPS", "RARE", "RASH", "RASP", "RATE", "RATS", "RAVE", "RAWS", "RAYS", "RAZE", "READ", "REAL", "REAM", "REAP", "REAR", "REDO", "REDS", "REED", "REEF", "REEK", "REEL", "REIN", "RELY", "REND", "RENT", "REST", "RIBS", "RICE", "RICH", "RIDE", "RIFE", "RIFT", "RIGS", "RILE", "RIMS", "RIND", "RING", "RINK", "RINS", "RIOT", "RIPE", "RIPS", "RISE", "RISK", "RITE", "ROAD", "ROAM", "ROAN", "ROAR", "ROBE", "ROBS", "ROCK", "RODE", "RODS", "ROLE", "ROLL", "ROMP", "ROOF", "ROOK", "ROOM", "ROOT", "ROPE", "ROSE", "ROSY", "ROTS", "ROUT", "ROVE", "ROWS", "RUBS", "RUBY", "RUDE", "RUED", "RUES", "RUGS", "RUIN", "RULE", "RUMP", "RUNG", "RUNS", "RUNT", "RUSE", "RUSH", "RUST", "RUTS", "SACK", "SAFE", "SAGA", "SAGE", "SAGO", "SAID", "SAIL", "SAKE", "SALE", "SALT", "SAME", "SAND", "SANE", "SANG", "SANK", "SASH", "SAVE", "SAWN", "SAWS", "SAYS", "SCAB", "SCAN", "SCAR", "SCAT", "SCUM", "SEAL", "SEAM", "SEAR", "SEAS", "SEAT", "SECT", "SEED", "SEEK", "SEEM", "SEEN", "SEEP", "SEER", "SEES", "SELL", "SEND", "SENT", "SERF", "SETS", "SEWN", "SEWS", "SHAG", "SHAH", "SHAM", "SHED", "SHIM", "SHIN", "SHIP", "SHOD", "SHOE", "SHOO", "SHOP", "SHOT", "SHOW", "SHUN", "SHUT", "SICK", "SIDE", "SIFT", "SIGH", "SIGN", "SILK", "SILL", "SILO", "SILT", "SING", "SINK", "SIPS", "SIRE", "SITE", "SITS", "SIZE", "SKID", "SKIM", "SKIN", "SKIP", "SKIT", "SKUA", "SLAB", "SLAG", "SLAM", "SLAP", "SLAT", "SLAY", "SLED", "SLEW", "SLID", "SLIM", "SLIP", "SLIT", "SLOB", "SLOG", "SLOP", "SLOT", "SLOW", "SLUG", "SLUM", "SLUR", "SLUT", "SMOG", "SNAG", "SNAP", "SNIP", "SNIT", "SNOB", "SNOW", "SNUB", "SOAK", "SOAP", "SOAR", "SOBS", "SOCK", "SODA", "SOFA", "SOFT", "SOIL", "SOLD", "SOLE", "SOME", "SONG", "SONS", "SOOT", "SORE", "SORT", "SOUL", "SOUP", "SOUR", "SOWN", "SOWS", "SOYA", "SPAN", "SPAR", "SPAT", "SPAY", "SPED", "SPIN", "SPIT", "SPOT", "SPRY", "SPUD", "SPUR", "STAB", "STAG", "STAR", "STAY", "STEM", "STEP", "STEW", "STIR", "STOP", "STOW", "STUB", "STUD", "STUN", "STYE", "SUCH", "SUDS", "SUES", "SUIT", "SUMO", "SUMP", "SUMS", "SUNG", "SUNK", "SUNS", "SURE", "SURF", "SWAB", "SWAG", "SWAM", "SWAN", "SWAP", "SWAT", "SWAY", "SWIG", "SWIM", "SWUM", "SYNC", "TABS", "TACK", "TACO", "TACT", "TAGS", "TAIL", "TAKE", "TALC", "TALE", "TALK", "TALL", "TAME", "TAMP", "TANG", "TANK", "TAPE", "TAPS", "TARE", "TARN", "TARO", "TARP", "TART", "TASK", "TATS", "TAUT", "TAWS", "TAXI", "TEAK", "TEAL", "TEAM", "TEAR", "TEAS", "TEAT", "TECH", "TEEM", "TEEN", "TEES", "TELL", "TEMP", "TEND", "TENS", "TENT", "TERM", "TERN", "TEST", "TEXT", "THAN", "THAT", "THAW", "THAY", "THEE", "THEM", "THEN", "THEY", "THIN", "THIS", "THUD", "THUG", "TICK", "TIDE", "TIDY", "TIED", "TIER", "TIES", "TIKE", "TILE", "TILL", "TILT", "TIME", "TINE", "TING", "TINS", "TINT", "TINY", "TIRE", "TOAD", "TOFU", "TOGA", "TOIL", "TOLD", "TOLL", "TOMB", "TOME", "TONE", "TONG", "TONS", "TOOK", "TOOL", "TOON", "TOOT", "TOPS", "TORE", "TORN", "TORT", "TOSS", "TOTE", "TOUR", "TOUT", "TOWN", "TOYS", "TRAM", "TRAP", "TRAY", "TREE", "TREK", "TRIG", "TRIM", "TRIO", "TRIP", "TROD", "TROT", "TROY", "TRUE", "TSAR", "TUBA", "TUBE", "TUBS", "TUCK", "TUFT", "TUGS", "TUNA", "TUNE", "TURF", "TURN", "TUSK", "TWIG", "TWIN", "TWIT", "UGLY", "ULNA", "UMPS", "UNDO", "UNIT", "UNTO", "UPON", "URGE", "URIC", "URNS", "USED", "USER", "USES", "UTES", "VAIN", "VALE", "VANE", "VANS", "VARY", "VASE", "VAST", "VATS", "VEAL", "VEER", "VEIL", "VEIN", "VENT", "VERB", "VERY", "VEST", "VETO", "VETS", "VIAL", "VIBE", "VICE", "VIEW", "VILE", "VINE", "VISA", "VISE", "VOID", "VOLE", "VOTE", "WACK", "WADE", "WADS", "WAFT", "WAGE", "WAGS", "WAIF", "WAIL", "WAIT", "WAKE", "WALE", "WALK", "WALL", "WAND", "WANE", "WANT", "WARD", "WARE", "WARM", "WARN", "WARP", "WARS", "WART", "WARY", "WASH", "WASP", "WAST", "WATT", "WAVE", "WAVY", "WAXY", "WAYS", "WEAK", "WEAL", "WEAN", "WEAR", "WEDS", "WEED", "WEEK", "WEEP", "WEIR", "WELD", "WELL", "WELT", "WENT", "WEPT", "WERE", "WEST", "WETS", "WHAM", "WHAT", "WHEN", "WHET", "WHIG", "WHIM", "WHIP", "WHIT", "WHIZ", "WHOA", "WHOM", "WHOP", "WICK", "WIDE", "WIFE", "WIGS", "WILD", "WILE", "WILL", "WILT", "WIMP", "WIND", "WINE", "WING", "WINK", "WINO", "WINS", "WIPE", "WIRE", "WISE", "WISH", "WISP", "WITH", "WITS", "WOES", "WOKE", "WOLF", "WOMB", "WONT", "WOOD", "WOOF", "WOOL", "WORD", "WORE", "WORK", "WORM", "WORN", "WORT", "WOVE", "WRAP", "WREN", "WRIT", "YAKS", "YAMS", "YANK", "YARD", "YARN", "YAWL", "YAWN", "YEAR", "YELL", "YELP", "YENS", "YETI", "YIPE", "YOGA", "YOKE", "YOLK", "YORE", "YOUR", "YOWL", "YUCK", "YULE", "YURT", "ZAGS", "ZANY", "ZAPS", "ZEAL", "ZEBU", "ZERO", "ZEST", "ZINC", "ZING", "ZIPS", "ZITS", "ZONE", "ZOOM", "ZOOS"];
@@ -1340,6 +1567,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     toast: document.getElementById("toast"),
     inputArea: document.getElementById("inputArea"),
     normalStreakVal: null, hardStreakVal: null,
+    homeNormalStreakVal: null, homeHardStreakVal: null,
     normalStreakPill: document.getElementById("normalStreakPill"),
     hardStreakPill: document.getElementById("hardStreakPill"),
     modeBadge: document.getElementById("modeBadge"),
@@ -1348,6 +1576,8 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   };
   els.normalStreakVal = document.getElementById("normalStreakVal");
   els.hardStreakVal = document.getElementById("hardStreakVal");
+  els.homeNormalStreakVal = document.getElementById("homeNormalStreakVal");
+  els.homeHardStreakVal = document.getElementById("homeHardStreakVal");
 
   function fmtTime(totalSeconds){
     const s = Math.max(0, Math.floor(totalSeconds));
@@ -1385,6 +1615,43 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   function updateStreakPills(){
     els.normalStreakVal.textContent = String(userDoc.stats.normalStreak);
     els.hardStreakVal.textContent = String(userDoc.stats.hardStreak);
+    els.homeNormalStreakVal.textContent = String(userDoc.stats.normalStreak);
+    els.homeHardStreakVal.textContent = String(userDoc.stats.hardStreak);
+    updateHomeScreen();
+  }
+
+  /* ---------------- Home screen ---------------- */
+  function showHome(){
+    stopTimer();
+    document.getElementById("homeScreen").style.display = "flex";
+    document.getElementById("gameScreen").style.display = "none";
+    updateHomeScreen();
+  }
+  function showGame(){
+    document.getElementById("homeScreen").style.display = "none";
+    document.getElementById("gameScreen").style.display = "";
+  }
+  function updateHomeScreen(){
+    if(!userDoc) return;
+    const dateEl = document.getElementById("homeDate");
+    if(dateEl){
+      dateEl.textContent = new Date(todayDateString()+"T00:00:00").toLocaleDateString(undefined,{weekday:"long", month:"long", day:"numeric"});
+    }
+    const key = todayDateString() + "_" + currentMode();
+    const state = userDoc.progress ? userDoc.progress[key] : null;
+    const solved = !!(state && state.solved);
+    const playBtn = document.getElementById("playBtn");
+    const label = document.getElementById("playBtnLabel");
+    const note = document.getElementById("homeSolvedNote");
+    if(!docLoaded){ return; }
+    playBtn.disabled = false;
+    if(solved){
+      label.textContent = "View Result";
+      note.style.display = "flex";
+    } else {
+      label.textContent = state ? "Continue" : "Play";
+      note.style.display = "none";
+    }
   }
 
   function popStreak(mode){
@@ -1850,6 +2117,29 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     showWinModal(state, false, pct);
   });
   document.getElementById("helpBtn").addEventListener("click", ()=> openOverlay("helpOverlay"));
+
+  document.getElementById("playBtn").addEventListener("click", ()=>{
+    if(!userDoc) return;
+    showGame();
+    switchDay("today");
+    const state = getState();
+    if(!state.solved && els.boxInputs[0]) els.boxInputs[0].focus();
+  });
+  document.getElementById("backHomeBtn").addEventListener("click", showHome);
+  document.getElementById("homeHelpBtn").addEventListener("click", ()=> openOverlay("helpOverlay"));
+  document.getElementById("homeSettingsBtn").addEventListener("click", ()=>{
+    applySettingsToDOM();
+    document.getElementById("displayNameInput").value = userDoc.displayName || "";
+    refreshAccountPanel();
+    openOverlay("settingsOverlay");
+  });
+  document.getElementById("homeStatsBtn").addEventListener("click", ()=>{ refreshStatsModal(); openOverlay("statsOverlay"); });
+  document.getElementById("homeHowBtn").addEventListener("click", ()=> openOverlay("helpOverlay"));
+  document.getElementById("homeLeaderboardBtn").addEventListener("click", ()=>{
+    openOverlay("leaderboardOverlay");
+    loadLeaderboard();
+  });
+
   document.querySelectorAll("[data-close]").forEach(btn=>{
     btn.addEventListener("click", ()=> closeOverlay(btn.getAttribute("data-close")));
   });
@@ -2071,13 +2361,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     applySettingsToDOM();
     refreshAccountPanel();
     render();
-    const state = getState();
-    if(!state.solved){
-      startTimer();
-      els.boxInputs[0].focus();
-    } else {
-      showToast("Today's ladder is complete — see you tomorrow", true);
-    }
+    updateHomeScreen();
   }
 
   async function startWithUser(user){
@@ -2088,13 +2372,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     applySettingsToDOM();
     refreshAccountPanel();
     render();
-    const state = getState();
-    if(!state.solved){
-      startTimer();
-      els.boxInputs[0].focus();
-    } else {
-      showToast("Today's ladder is complete — see you tomorrow", true);
-    }
+    updateHomeScreen();
   }
 
   // Failsafe: if Firebase hasn't told us anything within 2.5s (slow network,
