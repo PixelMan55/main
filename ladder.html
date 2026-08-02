@@ -249,6 +249,32 @@
   }
   .home-secondary-btn svg{width:15px;height:15px;}
   .home-secondary-btn:hover{background:var(--panel-2);}
+  .home-secondary-btn:disabled{opacity:.5;cursor:default;}
+  .home-secondary-btn:disabled:hover{background:var(--panel);}
+  .home-btn-row{
+    width:100%;
+    max-width:280px;
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+  }
+  .home-btn-row .home-secondary-btn{
+    margin-top:0;
+    flex:1;
+    min-width:0;
+    flex-direction:column;
+    gap:4px;
+    padding:11px 8px;
+    font-size:11.5px;
+  }
+  .home-btn-row .home-secondary-btn svg{width:16px;height:16px;}
+  .home-btn-row .btn-sub{
+    font-size:9.5px;
+    font-weight:600;
+    text-transform:none;
+    letter-spacing:0;
+    opacity:.65;
+  }
   .home-links{
     margin-top:24px;
     display:flex;
@@ -898,6 +924,18 @@
         Leaderboard
       </button>
 
+      <div class="home-btn-row">
+        <button class="home-secondary-btn" id="weeklyBtn">
+          <span id="homeWeeklyIcon"></span>
+          <span id="weeklyBtnLabel">Weekly Puzzle</span>
+        </button>
+        <button class="home-secondary-btn" id="practiceBtn">
+          <span id="homePracticeIcon"></span>
+          <span id="practiceBtnLabel">Practice Puzzle</span>
+          <span class="btn-sub" id="practiceRemaining"></span>
+        </button>
+      </div>
+
       <div class="home-links">
         <button class="home-link" id="homeStatsBtn">Stats</button>
         <span class="home-links-dot">&middot;</span>
@@ -1188,7 +1226,9 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
     flame: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1.2 3.1-2.8 4.4-2.8 7.4a2.8 2.8 0 0 0 5.6 0c0-1-.4-1.9-.9-2.7 1 .6 2.9 2.6 2.9 5.6A5.8 5.8 0 0 1 5.9 12.3C5.9 7.3 9.1 5 12 2z"></path></svg>',
     gem: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12l4 6-10 12L2 9z"></path></svg>',
-    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg>'
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h14V10"></path></svg>',
+    calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
+    target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><circle cx="12" cy="12" r="1"></circle></svg>'
   };
   function setIcon(el, name){ el.innerHTML = ICONS[name]; }
 
@@ -1199,6 +1239,8 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   setIcon(document.getElementById("backHomeBtn"), "home");
   setIcon(document.getElementById("homeSettingsBtn"), "settings");
   document.getElementById("homeLeaderboardIcon").innerHTML = ICONS.award;
+  document.getElementById("homeWeeklyIcon").innerHTML = ICONS.calendar;
+  document.getElementById("homePracticeIcon").innerHTML = ICONS.target;
   document.getElementById("undoBtn").innerHTML = ICONS.undo + " Undo";
   document.getElementById("hintBtn").innerHTML = ICONS.sun + " Hint";
   document.getElementById("viewResultBtn").innerHTML = ICONS.award + " View today's result";
@@ -1321,6 +1363,15 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     dt.setDate(dt.getDate()+delta);
     return dateStringFromDate(dt);
   }
+  function mondayOfWeek(dateStr){
+    const [y,m,d] = dateStr.split("-").map(Number);
+    const dt = new Date(y,m-1,d);
+    const dow = dt.getDay(); // 0=Sun..6=Sat
+    const shift = (dow === 0) ? -6 : (1 - dow);
+    dt.setDate(dt.getDate()+shift);
+    return dateStringFromDate(dt);
+  }
+  function currentWeekStart(){ return mondayOfWeek(todayDateString()); }
 
   const LAUNCH_DATE = new Date(2026,0,1); // Jan 1 2026, local
   function puzzleNumber(dateStr){
@@ -1344,19 +1395,15 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     "SILK","WOOL","YARN","ROPE","NAIL","BOLT","LOCK","KEYS","DOOR","GATE","WALL","ROOF","BARN",
     "FARM","CROP","SEED","VINE","ROOT","STEM","MOSS","FERN","WEED","HERB","SAGE","MINT"];
 
-  function generatePuzzle(dateStr){
-    const seedFn = hashString("ladder-"+dateStr);
-    const seed = seedFn();
-    const rng = mulberry32(seed);
-
+  function buildPuzzle(seedStr, desired, rngOverride){
+    const rng = rngOverride || mulberry32(hashString(seedStr)());
     const startIdx = Math.floor(rng() * STARTER_WORDS.length);
     const start = STARTER_WORDS[startIdx];
     const dist = bfsDistances(start);
-    const desired = targetDistanceForDate(dateStr);
 
     let candidates = [];
     let radius = 0;
-    while(candidates.length === 0 && radius < 6){
+    while(candidates.length === 0 && radius < 8){
       const lo = Math.max(2, desired - radius);
       const hi = desired + radius;
       candidates = [];
@@ -1368,9 +1415,30 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     candidates.sort((a,b)=> Math.abs(a[1]-desired) - Math.abs(b[1]-desired));
     const topBand = candidates.filter(c => c[1] === candidates[0][1]);
     const pick = topBand[Math.floor(rng() * topBand.length)];
-    const target = pick[0];
-    const optimal = pick[1];
-    return { start, target, optimal, dateStr, number: puzzleNumber(dateStr) };
+    return { start, target: pick[0], optimal: pick[1] };
+  }
+
+  function generatePuzzle(dateStr){
+    const desired = targetDistanceForDate(dateStr);
+    const core = buildPuzzle("ladder-"+dateStr, desired);
+    return Object.assign({}, core, { dateStr, number: puzzleNumber(dateStr) });
+  }
+
+  function weeklyPuzzleNumber(weekStartStr){
+    const diff = Math.round((new Date(weekStartStr+"T00:00:00") - LAUNCH_DATE) / 86400000);
+    return Math.max(1, Math.floor(diff/7) + 1);
+  }
+  function generateWeeklyPuzzle(weekStartStr){
+    // A tougher, once-a-week challenge — always the hardest tier.
+    const core = buildPuzzle("ladder-weekly-"+weekStartStr, 7);
+    return Object.assign({}, core, { dateStr: weekStartStr, number: weeklyPuzzleNumber(weekStartStr) });
+  }
+  function generatePracticePuzzle(){
+    const practiceId = Date.now() + "-" + Math.floor(Math.random()*1e9);
+    const rng = mulberry32((Math.random()*4294967296)>>>0);
+    const desired = 3 + Math.floor(Math.random()*3); // casual difficulty, 3-5
+    const core = buildPuzzle(null, desired, rng);
+    return Object.assign({}, core, { dateStr: todayDateString(), number: null, practiceId });
   }
 
   /* =========================================================================
@@ -1385,6 +1453,8 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     lastNormalDate:null, lastHardDate:null, lastAnyDate:null,
     totalSolved:0, fastestSolveSeconds:null, fewestMoves:null
   };
+  const DEFAULT_PRACTICE = { weekStart:null, count:0 };
+  const PRACTICE_LIMIT = 5;
 
   let currentUser = null;
   let userDoc = null; // { displayName, settings, stats, progress }
@@ -1396,6 +1466,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
       displayName: "Player" + Math.floor(1000 + Math.random()*9000),
       settings: Object.assign({}, DEFAULT_SETTINGS),
       stats: Object.assign({}, DEFAULT_STATS),
+      practice: Object.assign({}, DEFAULT_PRACTICE),
       progress: {}
     };
   }
@@ -1413,6 +1484,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
         displayName: data.displayName || freshUserDoc().displayName,
         settings: Object.assign({}, DEFAULT_SETTINGS, data.settings || {}),
         stats: Object.assign({}, DEFAULT_STATS, data.stats || {}),
+        practice: Object.assign({}, DEFAULT_PRACTICE, data.practice || {}),
         progress: data.progress || {}
       };
     }catch(e){ return null; }
@@ -1430,6 +1502,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
         displayName: data.displayName || freshUserDoc().displayName,
         settings: Object.assign({}, DEFAULT_SETTINGS, data.settings || {}),
         stats: Object.assign({}, DEFAULT_STATS, data.stats || {}),
+        practice: Object.assign({}, DEFAULT_PRACTICE, data.practice || {}),
         progress: data.progress || {}
       };
     } else {
@@ -1512,24 +1585,54 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   function pruneOldProgress(){
     const today = todayDateString();
     const yest = yesterdayDateString();
+    const weekStart = currentWeekStart();
     const keep = new Set([
-      today+"_normal", today+"_hard", yest+"_normal", yest+"_hard"
+      today+"_normal", today+"_hard", yest+"_normal", yest+"_hard",
+      "weekly_"+weekStart+"_normal", "weekly_"+weekStart+"_hard"
     ]);
+    if(puzzlePractice){
+      keep.add("practice_"+puzzlePractice.practiceId+"_normal");
+      keep.add("practice_"+puzzlePractice.practiceId+"_hard");
+    }
     for(const key of Object.keys(userDoc.progress)){
       if(!keep.has(key)) delete userDoc.progress[key];
     }
   }
 
+  /* ---------------- Practice quota (resets weekly) ---------------- */
+  function ensurePracticeWeek(){
+    if(!userDoc.practice) userDoc.practice = Object.assign({}, DEFAULT_PRACTICE);
+    const ws = currentWeekStart();
+    if(userDoc.practice.weekStart !== ws){
+      userDoc.practice.weekStart = ws;
+      userDoc.practice.count = 0;
+    }
+  }
+  function practiceRemaining(){
+    ensurePracticeWeek();
+    return Math.max(0, PRACTICE_LIMIT - (userDoc.practice.count || 0));
+  }
+
   /* ---------------- Game state ---------------- */
-  let viewDay = "today"; // "today" | "yesterday"
-  let puzzleToday = null, puzzleYesterday = null;
+  let viewDay = "today"; // "today" | "yesterday" | "weekly" | "practice"
+  let puzzleToday = null, puzzleYesterday = null, puzzleWeekly = null, puzzlePractice = null;
   let timerHandle = null;
   const HINT_LIMIT = 2;
 
   function currentMode(){ return userDoc.settings.hardMode ? "hard" : "normal"; }
-  function currentDateStr(){ return viewDay === "today" ? todayDateString() : yesterdayDateString(); }
-  function currentPuzzle(){ return viewDay === "today" ? puzzleToday : puzzleYesterday; }
-  function stateKey(){ return currentDateStr() + "_" + currentMode(); }
+  function currentPuzzle(){
+    if(viewDay === "today") return puzzleToday;
+    if(viewDay === "yesterday") return puzzleYesterday;
+    if(viewDay === "weekly") return puzzleWeekly;
+    return puzzlePractice;
+  }
+  function stateKey(){
+    const mode = currentMode();
+    if(viewDay === "today") return todayDateString()+"_"+mode;
+    if(viewDay === "yesterday") return yesterdayDateString()+"_"+mode;
+    if(viewDay === "weekly") return "weekly_"+puzzleWeekly.dateStr+"_"+mode;
+    return "practice_"+puzzlePractice.practiceId+"_"+mode;
+  }
 
   function getState(){
     const key = stateKey();
@@ -1652,6 +1755,21 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
       label.textContent = state ? "Continue" : "Play";
       note.style.display = "none";
     }
+
+    if(puzzleWeekly){
+      const wKey = "weekly_" + puzzleWeekly.dateStr + "_" + currentMode();
+      const wState = userDoc.progress ? userDoc.progress[wKey] : null;
+      const wLabel = document.getElementById("weeklyBtnLabel");
+      if(wLabel) wLabel.textContent = (wState && wState.solved) ? "View Weekly Result" : (wState ? "Continue Weekly" : "Weekly Puzzle");
+    }
+
+    const remaining = practiceRemaining();
+    const practiceBtn = document.getElementById("practiceBtn");
+    const practiceNote = document.getElementById("practiceRemaining");
+    if(practiceBtn){
+      practiceBtn.disabled = remaining <= 0;
+      if(practiceNote) practiceNote.textContent = remaining + "/" + PRACTICE_LIMIT + " left this week";
+    }
   }
 
   function popStreak(mode){
@@ -1674,8 +1792,16 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     const state = getState();
     const mode = currentMode();
 
-    els.puzzleNum.textContent = "#" + puzzle.number;
-    els.puzzleDate.textContent = new Date(puzzle.dateStr+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
+    if(viewDay === "weekly"){
+      els.puzzleNum.textContent = "Weekly #" + puzzle.number;
+      els.puzzleDate.textContent = "Week of " + new Date(puzzle.dateStr+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"});
+    } else if(viewDay === "practice"){
+      els.puzzleNum.textContent = "Practice";
+      els.puzzleDate.textContent = practiceRemaining() + " of " + PRACTICE_LIMIT + " left this week";
+    } else {
+      els.puzzleNum.textContent = "#" + puzzle.number;
+      els.puzzleDate.textContent = new Date(puzzle.dateStr+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
+    }
     els.startWordLabel.textContent = puzzle.start;
     els.targetWordLabel.textContent = puzzle.target;
     els.modeBadge.style.display = mode === "hard" ? "inline-block" : "none";
@@ -1858,7 +1984,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   }
 
   async function handleSubmit(){
-    if(viewDay !== "today") return;
+    if(viewDay === "yesterday") return;
     const state = getState();
     if(state.solved) return;
     const puzzle = currentPuzzle();
@@ -1901,7 +2027,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   }
 
   function handleUndo(){
-    if(viewDay !== "today") return;
+    if(viewDay === "yesterday") return;
     const state = getState();
     if(currentMode() === "hard") return;
     if(state.chain.length <= 1) return;
@@ -1912,7 +2038,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   }
 
   function handleHint(){
-    if(viewDay !== "today") return;
+    if(viewDay === "yesterday") return;
     const state = getState();
     if(currentMode() === "hard") return;
     if(state.hintsUsed >= HINT_LIMIT || state.solved) return;
@@ -1948,47 +2074,58 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   async function finishGame(state){
     const mode = currentMode();
     const puzzle = currentPuzzle();
-    const stats = userDoc.stats;
     playTone(880, 0.18);
     let pct = null;
-
-    const today = puzzle.dateStr;
-    const yest = yesterdayDateString();
-    if(mode === "normal"){
-      if(stats.lastNormalDate !== today){
-        stats.normalStreak = (stats.lastNormalDate === yest) ? stats.normalStreak + 1 : 1;
-        stats.normalLongest = Math.max(stats.normalLongest, stats.normalStreak);
-        stats.lastNormalDate = today;
-      }
-    } else {
-      if(stats.lastHardDate !== today){
-        stats.hardStreak = (stats.lastHardDate === yest) ? stats.hardStreak + 1 : 1;
-        stats.hardLongest = Math.max(stats.hardLongest, stats.hardStreak);
-        stats.lastHardDate = today;
-      }
-    }
-    stats.lastAnyDate = today;
-
     const movesUsed = state.chain.length - 1;
-    if(stats.fastestSolveSeconds == null || state.solveSeconds < stats.fastestSolveSeconds){
-      stats.fastestSolveSeconds = state.solveSeconds;
-    }
-    if(stats.fewestMoves == null || movesUsed < stats.fewestMoves){
-      stats.fewestMoves = movesUsed;
-    }
-    stats.totalSolved += 1;
-    persistUserDoc();
-    persistLeaderboard();
-    updateStreakPills();
-    popStreak(mode);
 
-    pct = await recordPuzzleResult(today, mode, movesUsed);
-    showWinModal(state, false, pct);
+    if(viewDay === "today"){
+      const stats = userDoc.stats;
+      const today = puzzle.dateStr;
+      const yest = yesterdayDateString();
+      if(mode === "normal"){
+        if(stats.lastNormalDate !== today){
+          stats.normalStreak = (stats.lastNormalDate === yest) ? stats.normalStreak + 1 : 1;
+          stats.normalLongest = Math.max(stats.normalLongest, stats.normalStreak);
+          stats.lastNormalDate = today;
+        }
+      } else {
+        if(stats.lastHardDate !== today){
+          stats.hardStreak = (stats.lastHardDate === yest) ? stats.hardStreak + 1 : 1;
+          stats.hardLongest = Math.max(stats.hardLongest, stats.hardStreak);
+          stats.lastHardDate = today;
+        }
+      }
+      stats.lastAnyDate = today;
+
+      if(stats.fastestSolveSeconds == null || state.solveSeconds < stats.fastestSolveSeconds){
+        stats.fastestSolveSeconds = state.solveSeconds;
+      }
+      if(stats.fewestMoves == null || movesUsed < stats.fewestMoves){
+        stats.fewestMoves = movesUsed;
+      }
+      stats.totalSolved += 1;
+      persistUserDoc();
+      persistLeaderboard();
+      updateStreakPills();
+      popStreak(mode);
+      pct = await recordPuzzleResult(today, mode, movesUsed);
+    } else if(viewDay === "weekly"){
+      persistUserDoc();
+      pct = await recordPuzzleResult(puzzle.dateStr, "weekly-"+mode, movesUsed);
+      updateHomeScreen();
+    } else if(viewDay === "practice"){
+      persistUserDoc();
+      updateHomeScreen();
+    }
+
+    const kind = viewDay === "today" ? "daily" : viewDay === "weekly" ? "weekly" : "practice";
+    showWinModal(state, kind, pct);
   }
 
-  function showWinModal(state, isPractice, pct){
+  function showWinModal(state, kind, pct){
     const puzzle = currentPuzzle();
     const mode = currentMode();
+    const isDaily = kind === "daily";
     const movesUsed = state.chain.length - 1;
     document.getElementById("winStart").textContent = puzzle.start;
     document.getElementById("winTarget").textContent = puzzle.target;
@@ -1997,13 +2134,16 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     document.getElementById("w-time").textContent = fmtTime(state.solveSeconds || 0);
 
     const streakVal = mode === "hard" ? userDoc.stats.hardStreak : userDoc.stats.normalStreak;
-    document.getElementById("w-streak").textContent = isPractice ? "—" : String(streakVal);
-    document.getElementById("w-streak-lbl").textContent = isPractice ? "Practice (no streak)" : (mode === "hard" ? "Hard streak" : "Normal streak");
+    document.getElementById("w-streak").textContent = isDaily ? String(streakVal) : "—";
+    document.getElementById("w-streak-lbl").textContent = isDaily
+      ? (mode === "hard" ? "Hard streak" : "Normal streak")
+      : (kind === "weekly" ? "Weekly challenge (no streak)" : "Practice (no streak)");
 
     const title = movesUsed <= puzzle.optimal ? "Perfect climb!" : "Solved it!";
     document.getElementById("winTitle").textContent = title;
+    const kindPrefix = kind === "practice" ? "Practice complete. " : kind === "weekly" ? "Weekly challenge complete. " : "";
     document.getElementById("winSub").textContent =
-      (isPractice ? "Practice complete. " : "") +
+      kindPrefix +
       (movesUsed <= puzzle.optimal ? "You found the shortest path." : "You made it to the top.");
 
     const pctBlock = document.getElementById("pctBlock");
@@ -2016,9 +2156,12 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
 
     let squares = "";
     for(let i=0;i<movesUsed;i++) squares += (i < puzzle.optimal ? "#" : "-");
-    const streakLine = isPractice ? "Practice puzzle (no streak)" : (mode === "hard" ? ("Hard streak: "+streakVal) : ("Normal streak: "+streakVal));
+    const streakLine = isDaily
+      ? (mode === "hard" ? ("Hard streak: "+streakVal) : ("Normal streak: "+streakVal))
+      : (kind === "weekly" ? "Weekly challenge (no streak)" : "Practice puzzle (no streak)");
     const pctLine = pct != null ? ("Beat "+pct+"% of players today\n") : "";
-    const shareText = "Ladder #"+puzzle.number+"\n"+puzzle.start+" -> "+puzzle.target+"\n"+
+    const labelForShare = kind === "weekly" ? ("Ladder Weekly #"+(puzzle.number||"")) : kind === "practice" ? "Ladder Practice" : ("Ladder #"+puzzle.number);
+    const shareText = labelForShare+"\n"+puzzle.start+" -> "+puzzle.target+"\n"+
       movesUsed+" moves (best "+puzzle.optimal+") - "+fmtTime(state.solveSeconds||0)+"\n"+
       squares+"\n"+pctLine+streakLine;
     document.getElementById("shareText").textContent = shareText;
@@ -2110,11 +2253,17 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   document.getElementById("clearBtn").addEventListener("click", clearBoxes);
   document.getElementById("statsBtn").addEventListener("click", ()=>{ refreshStatsModal(); openOverlay("statsOverlay"); });
   document.getElementById("viewResultBtn").addEventListener("click", async ()=>{
-    if(viewDay !== "today") return;
+    if(viewDay === "yesterday") return;
     const state = getState();
     const puzzle = currentPuzzle();
-    const pct = await getPercentileReadOnly(puzzle.dateStr, currentMode(), state.chain.length - 1);
-    showWinModal(state, false, pct);
+    const kind = viewDay === "today" ? "daily" : viewDay === "weekly" ? "weekly" : "practice";
+    let pct = null;
+    if(viewDay === "today"){
+      pct = await getPercentileReadOnly(puzzle.dateStr, currentMode(), state.chain.length - 1);
+    } else if(viewDay === "weekly"){
+      pct = await getPercentileReadOnly(puzzle.dateStr, "weekly-"+currentMode(), state.chain.length - 1);
+    }
+    showWinModal(state, kind, pct);
   });
   document.getElementById("helpBtn").addEventListener("click", ()=> openOverlay("helpOverlay"));
 
@@ -2122,6 +2271,29 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     if(!userDoc) return;
     showGame();
     switchDay("today");
+    const state = getState();
+    if(!state.solved && els.boxInputs[0]) els.boxInputs[0].focus();
+  });
+  document.getElementById("weeklyBtn").addEventListener("click", ()=>{
+    if(!userDoc) return;
+    showGame();
+    switchDay("weekly");
+    const state = getState();
+    if(!state.solved && els.boxInputs[0]) els.boxInputs[0].focus();
+  });
+  document.getElementById("practiceBtn").addEventListener("click", ()=>{
+    if(!userDoc) return;
+    ensurePracticeWeek();
+    if(practiceRemaining() <= 0){
+      showToast("You've used all " + PRACTICE_LIMIT + " practice puzzles this week");
+      return;
+    }
+    puzzlePractice = generatePracticePuzzle();
+    userDoc.practice.count += 1;
+    persistUserDoc();
+    updateHomeScreen();
+    showGame();
+    switchDay("practice");
     const state = getState();
     if(!state.solved && els.boxInputs[0]) els.boxInputs[0].focus();
   });
@@ -2153,8 +2325,11 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     viewDay = day;
     document.getElementById("tabToday").classList.toggle("active", day==="today");
     document.getElementById("tabYesterday").classList.toggle("active", day==="yesterday");
+    const isSpecial = (day === "weekly" || day === "practice");
+    document.querySelector(".day-tabs").style.display = isSpecial ? "none" : "";
+    document.querySelector(".streaks-row").style.display = isSpecial ? "none" : "";
     stopTimer();
-    if(day === "today"){
+    if(day === "today" || day === "weekly" || day === "practice"){
       const state = getState();
       if(!state.solved){ startTimer(); }
     }
@@ -2344,6 +2519,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   wireBoxes();
   puzzleToday = generatePuzzle(todayDateString());
   puzzleYesterday = generatePuzzle(yesterdayDateString());
+  puzzleWeekly = generateWeeklyPuzzle(currentWeekStart());
 
   let offlineMode = false;
   let bootedLocally = false;
@@ -2358,6 +2534,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     userDoc = loadLocalDoc() || freshUserDoc();
     docLoaded = true;
     maybeResetStreaksForNewDay();
+    ensurePracticeWeek();
     applySettingsToDOM();
     refreshAccountPanel();
     render();
@@ -2369,6 +2546,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     currentUser = user;
     await loadUserDoc(user.uid);
     maybeResetStreaksForNewDay();
+    ensurePracticeWeek();
     applySettingsToDOM();
     refreshAccountPanel();
     render();
