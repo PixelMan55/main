@@ -257,7 +257,8 @@
     margin-top:14px;
   }
   .home-mode-btn{
-    flex:1;
+    flex:1 1 0;
+    min-width:0;
     display:flex;
     align-items:center;
     gap:8px;
@@ -276,7 +277,7 @@
   .home-mode-btn:disabled{opacity:.5;cursor:default;}
   .home-mode-btn:disabled:hover{border-color:var(--line);}
   .home-mode-icon{
-    flex:none;
+    flex:0 0 auto;
     width:26px;height:26px;
     border-radius:50%;
     background:var(--panel);
