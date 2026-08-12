@@ -1120,6 +1120,11 @@
         </button>
       </div>
 
+      <button class="home-secondary-btn" id="homeCustomBtn">
+        <span id="homeCustomIcon"></span>
+        Custom Ladder
+      </button>
+
       <button class="home-secondary-btn" id="homeLeaderboardBtn">
         <span id="homeLeaderboardIcon"></span>
         Leaderboard
@@ -1429,6 +1434,54 @@
 
 <div id="confettiLayer"></div>
 
+<!-- Custom Ladder -->
+<div class="overlay" id="customOverlay">
+  <div class="modal">
+    <button class="close" data-close="customOverlay">&times;</button>
+    <h2>Custom Ladder</h2>
+    <div class="sub" style="margin-bottom:16px;">Build your own word ladder and share it with a 6-digit code.</div>
+
+    <div id="customChoice">
+      <button class="fun-btn" id="customChoosePlay">
+        <span class="fun-emoji">🔑</span>
+        <span class="fun-text"><span class="fun-title">Play a custom ladder</span><span class="fun-desc">Enter a friend's 6-digit code</span></span>
+      </button>
+      <button class="fun-btn" id="customChooseCreate" style="margin-top:10px;">
+        <span class="fun-emoji">🛠️</span>
+        <span class="fun-text"><span class="fun-title">Create a custom ladder</span><span class="fun-desc">Pick a start and target word</span></span>
+      </button>
+    </div>
+
+    <div id="customPlayPanel" style="display:none;">
+      <button class="home-link" id="customBackFromPlay" style="margin-bottom:12px;padding-left:0;">&larr; Back</button>
+      <input class="admin-name-input" id="customCodeInput" maxlength="6" inputmode="numeric" placeholder="123456" style="width:100%;text-align:center;letter-spacing:6px;font-size:20px;">
+      <button class="secondary" id="customPlayGoBtn" style="width:100%;margin-top:12px;">Play</button>
+      <div class="solver-result" id="customPlayError" style="color:#b3402a;margin-top:8px;"></div>
+    </div>
+
+    <div id="customCreatePanel" style="display:none;">
+      <button class="home-link" id="customBackFromCreate" style="margin-bottom:12px;padding-left:0;">&larr; Back</button>
+      <div class="solver-row">
+        <input class="admin-name-input" id="customStartInput" maxlength="4" placeholder="START">
+        <input class="admin-name-input" id="customTargetInput" maxlength="4" placeholder="TARGET">
+      </div>
+      <button class="secondary" id="customCreateGoBtn" style="width:100%;margin-bottom:8px;">Create</button>
+      <div class="solver-result" id="customCreateError" style="color:#b3402a;"></div>
+
+      <div id="customCreateResult" style="display:none;margin-top:12px;">
+        <div class="peek-block" style="text-align:center;">
+          <div class="peek-label">Share this code</div>
+          <div id="customResultCode" style="font-size:32px;font-weight:900;letter-spacing:6px;font-family:'Libre Franklin',sans-serif;color:var(--ink);">------</div>
+          <div class="peek-optimal" id="customResultWords"></div>
+          <button class="secondary" id="customCopyCodeBtn" style="margin-top:10px;width:100%;">Copy code</button>
+          <button class="secondary" id="customCopyLinkBtn" style="margin-top:8px;width:100%;">Copy link</button>
+          <button class="home-play-btn" id="customPlayNowBtn" style="margin-top:12px;width:100%;max-width:none;">Play it now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Win modal -->
 <div class="overlay" id="winOverlay">
   <div class="modal">
@@ -1505,7 +1558,8 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     star: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.6 7.1.7-5.4 4.8 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.3l7.1-.7z"/></svg>',
     eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>',
     eyeOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A11 11 0 0 1 12 19c-7 0-11-7-11-7a19.5 19.5 0 0 1 4.2-5.1M9.9 5.2A9.4 9.4 0 0 1 12 5c7 0 11 7 11 7a19.6 19.6 0 0 1-2.2 3.1"></path><path d="M9.5 9.5a3 3 0 0 0 4.2 4.2"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>',
-    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>'
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l2-2a5 5 0 0 0-7.07-7.07l-1 1"></path><path d="M14 11a5 5 0 0 0-7.07 0l-2 2a5 5 0 0 0 7.07 7.07l1-1"></path></svg>'
   };
   function setIcon(el, name){ el.innerHTML = ICONS[name]; }
 
@@ -1516,6 +1570,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   setIcon(document.getElementById("backHomeBtn"), "home");
   setIcon(document.getElementById("homeSettingsBtn"), "settings");
   document.getElementById("homeLeaderboardIcon").innerHTML = ICONS.award;
+  document.getElementById("homeCustomIcon").innerHTML = ICONS.link;
   document.getElementById("homeWeeklyIcon").innerHTML = ICONS.calendar;
   document.getElementById("homePracticeIcon").innerHTML = ICONS.target;
   setIcon(document.getElementById("homeAdminBtn"), "shield");
@@ -1843,16 +1898,21 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
       keep.add("practice_"+practiceSeed+"_normal");
       keep.add("practice_"+practiceSeed+"_hard");
     }
+    if(customCode){
+      keep.add("custom_"+customCode+"_normal");
+      keep.add("custom_"+customCode+"_hard");
+    }
     for(const key of Object.keys(userDoc.progress)){
       if(!keep.has(key)) delete userDoc.progress[key];
     }
   }
 
   /* ---------------- Game state ---------------- */
-  let viewDay = "today"; // "today" | "yesterday" | "practice" | "weekly"
+  let viewDay = "today"; // "today" | "yesterday" | "practice" | "weekly" | "custom"
   let puzzleToday = null, puzzleYesterday = null;
   let weeklyPuzzle = null, weeklyKeyStr = null;
   let practicePuzzle = null, practiceSeed = null;
+  let customPuzzle = null, customCode = null;
   let timerHandle = null;
   const HINT_LIMIT = 2;
   const PRACTICE_WEEKLY_LIMIT = 5;
@@ -1861,11 +1921,13 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   function currentDateStr(){
     if(viewDay === "practice") return "practice_" + practiceSeed;
     if(viewDay === "weekly") return "weekly_" + weeklyKeyStr;
+    if(viewDay === "custom") return "custom_" + customCode;
     return viewDay === "today" ? todayDateString() : yesterdayDateString();
   }
   function currentPuzzle(){
     if(viewDay === "practice") return practicePuzzle;
     if(viewDay === "weekly") return weeklyPuzzle;
+    if(viewDay === "custom") return customPuzzle;
     return viewDay === "today" ? puzzleToday : puzzleYesterday;
   }
   function stateKey(){ return currentDateStr() + "_" + currentMode(); }
@@ -2117,6 +2179,11 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
       els.puzzleDate.textContent = "Resets Monday";
       els.recapNote.style.display = "";
       els.recapNote.textContent = "Weekly puzzle — extra tough, no streak, refreshes every Monday.";
+    } else if(viewDay === "custom"){
+      els.puzzleNum.textContent = "Custom · " + customCode;
+      els.puzzleDate.textContent = "Untimed";
+      els.recapNote.style.display = "";
+      els.recapNote.textContent = "Custom ladder — doesn't affect your streak. Share code " + customCode + " with a friend.";
     } else {
       els.puzzleNum.textContent = "#" + puzzle.number;
       els.puzzleDate.textContent = new Date(puzzle.dateStr+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
@@ -2433,10 +2500,21 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
 
       pct = await recordPuzzleResult(today, mode, movesUsed);
     } else {
-      // Practice and weekly puzzles are bonus content: no streak, no
-      // leaderboard impact, no cross-player percentile.
+      // Practice, weekly, and custom puzzles are bonus content: no
+      // streak, no leaderboard impact, no cross-player percentile.
       persistUserDoc();
       updateHomeScreen();
+      if(viewDay === "custom" && customCode && !offlineMode){
+        try{
+          await runTransaction(db, async (tx)=>{
+            const ref = doc(db, "customLadders", customCode);
+            const snap = await tx.get(ref);
+            if(!snap.exists()) return;
+            const solves = (snap.data().solves || 0) + 1;
+            tx.set(ref, { solves }, { merge:true });
+          });
+        }catch(e){ /* non-critical */ }
+      }
     }
 
     showWinModal(state, viewDay, pct);
@@ -2445,7 +2523,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   function showWinModal(state, kind, pct){
     const puzzle = currentPuzzle();
     const mode = currentMode();
-    const isBonus = (kind === "practice" || kind === "weekly");
+    const isBonus = (kind === "practice" || kind === "weekly" || kind === "custom");
     const movesUsed = state.chain.length - 1;
     document.getElementById("winStart").textContent = puzzle.start;
     document.getElementById("winTarget").textContent = puzzle.target;
@@ -2456,13 +2534,13 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     const streakVal = mode === "hard" ? userDoc.stats.hardStreak : userDoc.stats.normalStreak;
     document.getElementById("w-streak").textContent = isBonus ? "—" : String(streakVal);
     document.getElementById("w-streak-lbl").textContent = isBonus
-      ? (kind === "weekly" ? "Weekly (no streak)" : "Practice (no streak)")
+      ? (kind === "weekly" ? "Weekly (no streak)" : kind === "custom" ? "Custom (no streak)" : "Practice (no streak)")
       : (mode === "hard" ? "Hard streak" : "Normal streak");
 
     const title = movesUsed <= puzzle.optimal ? "Perfect climb!" : "Solved it!";
     document.getElementById("winTitle").textContent = title;
     document.getElementById("winSub").textContent =
-      (kind === "practice" ? "Practice complete. " : kind === "weekly" ? "Weekly puzzle complete. " : "") +
+      (kind === "practice" ? "Practice complete. " : kind === "weekly" ? "Weekly puzzle complete. " : kind === "custom" ? "Custom ladder complete. " : "") +
       (movesUsed <= puzzle.optimal ? "You found the shortest path." : "You made it to the top.");
 
     const pctBlock = document.getElementById("pctBlock");
@@ -2476,11 +2554,12 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     let squares = "";
     for(let i=0;i<movesUsed;i++) squares += (i < puzzle.optimal ? "#" : "-");
     const streakLine = isBonus
-      ? (kind === "weekly" ? "Weekly puzzle (no streak)" : "Practice puzzle (no streak)")
+      ? (kind === "weekly" ? "Weekly puzzle (no streak)" : kind === "custom" ? ("Custom ladder "+customCode+" (no streak)") : "Practice puzzle (no streak)")
       : (mode === "hard" ? ("Hard streak: "+streakVal) : ("Normal streak: "+streakVal));
     const pctLine = pct != null ? ("Beat "+pct+"% of players today\n") : "";
     const headerLabel = kind === "weekly" ? ("Weekly Ladder #"+puzzle.number)
       : kind === "practice" ? "Ladder Practice"
+      : kind === "custom" ? ("Custom Ladder "+customCode)
       : ("Ladder #"+puzzle.number);
     const shareText = headerLabel+"\n"+puzzle.start+" -> "+puzzle.target+"\n"+
       movesUsed+" moves (best "+puzzle.optimal+") - "+fmtTime(state.solveSeconds||0)+"\n"+
@@ -3087,6 +3166,177 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     }
   });
 
+  /* ---------------- Custom ladders ---------------- */
+  function buildCustomLink(code){
+    return "https://pixelman.net/ladder?code=" + code;
+  }
+  function getRequestedCustomCode(){
+    const params = new URLSearchParams(window.location.search);
+    let code = params.get("code");
+    if(!code){
+      const m = window.location.pathname.match(/(\d{6})\/?$/);
+      if(m) code = m[1];
+    }
+    return (code && /^\d{6}$/.test(code)) ? code : null;
+  }
+  function loadCustomPuzzle(code, start, target, optimal){
+    customCode = code;
+    customPuzzle = { start, target, optimal, dateStr: "custom_"+code, number: null };
+    viewDay = "custom";
+    showGame();
+    render();
+    const state = getState();
+    stopTimer();
+    if(!state.solved){
+      startTimer();
+      if(els.boxInputs[0]) els.boxInputs[0].focus();
+    }
+  }
+  async function playCustomLadderByCode(code){
+    const errEl = document.getElementById("customPlayError");
+    if(errEl) errEl.textContent = "";
+    if(!/^\d{6}$/.test(code)){
+      if(errEl) errEl.textContent = "Enter a 6-digit code.";
+      return false;
+    }
+    if(offlineMode){
+      if(errEl) errEl.textContent = "You need to be online to play a custom ladder.";
+      return false;
+    }
+    try{
+      const snap = await getDoc(doc(db,"customLadders", code));
+      if(!snap.exists()){
+        if(errEl) errEl.textContent = "No custom ladder with that code.";
+        return false;
+      }
+      const d = snap.data();
+      loadCustomPuzzle(code, d.start, d.target, d.optimal);
+      return true;
+    }catch(e){
+      if(errEl) errEl.textContent = "Couldn't load that ladder — try again.";
+      return false;
+    }
+  }
+  async function createCustomLadder(startRaw, targetRaw){
+    const start = (startRaw||"").trim().toUpperCase();
+    const target = (targetRaw||"").trim().toUpperCase();
+    const errEl = document.getElementById("customCreateError");
+    errEl.textContent = "";
+    if(offlineMode){ errEl.textContent = "You need to be online to create a custom ladder."; return; }
+    if(!/^[A-Z]{4}$/.test(start) || !/^[A-Z]{4}$/.test(target)){
+      errEl.textContent = "Enter two real 4-letter words."; return;
+    }
+    if(!WORD_SET.has(start) || !WORD_SET.has(target)){
+      errEl.textContent = "Both words need to be in the word list."; return;
+    }
+    if(start === target){ errEl.textContent = "Start and target need to be different words."; return; }
+    const path = shortestPath(start, target);
+    if(!path){ errEl.textContent = "No ladder connects those two words."; return; }
+    const optimal = path.length - 1;
+    const pairKey = start + "_" + target;
+    const btn = document.getElementById("customCreateGoBtn");
+    btn.disabled = true; const oldLabel = btn.textContent; btn.textContent = "Creating…";
+    try{
+      let code = null;
+      const pairSnap = await getDoc(doc(db,"customLadderPairs", pairKey));
+      if(pairSnap.exists()){
+        const existingCode = pairSnap.data().code;
+        const check = await getDoc(doc(db,"customLadders", existingCode));
+        if(check.exists()) code = existingCode;
+      }
+      if(!code){
+        for(let tries=0; tries<8 && !code; tries++){
+          const candidate = String(Math.floor(100000 + Math.random()*900000));
+          const exists = await getDoc(doc(db,"customLadders", candidate));
+          if(!exists.exists()) code = candidate;
+        }
+        if(!code) throw new Error("no free code found");
+        await setDoc(doc(db,"customLadders", code), {
+          start, target, optimal, pairKey,
+          createdAt: serverTimestamp(),
+          createdBy: currentUser ? currentUser.uid : null,
+          solves: 0
+        });
+        await setDoc(doc(db,"customLadderPairs", pairKey), { code, updatedAt: serverTimestamp() });
+      }
+      document.getElementById("customResultCode").textContent = code;
+      document.getElementById("customResultWords").textContent = start + " \u2192 " + target + " \u00b7 best " + optimal + " moves";
+      const resultBox = document.getElementById("customCreateResult");
+      resultBox.style.display = "";
+      resultBox.dataset.code = code;
+      resultBox.dataset.start = start;
+      resultBox.dataset.target = target;
+      resultBox.dataset.optimal = String(optimal);
+    }catch(e){
+      errEl.textContent = "Couldn't create the ladder — try again.";
+    }finally{
+      btn.disabled = false; btn.textContent = oldLabel;
+    }
+  }
+
+  function resetCustomOverlay(){
+    document.getElementById("customChoice").style.display = "";
+    document.getElementById("customPlayPanel").style.display = "none";
+    document.getElementById("customCreatePanel").style.display = "none";
+    document.getElementById("customCreateResult").style.display = "none";
+    document.getElementById("customPlayError").textContent = "";
+    document.getElementById("customCreateError").textContent = "";
+    document.getElementById("customCodeInput").value = "";
+    document.getElementById("customStartInput").value = "";
+    document.getElementById("customTargetInput").value = "";
+  }
+  document.getElementById("homeCustomBtn").addEventListener("click", ()=>{
+    resetCustomOverlay();
+    openOverlay("customOverlay");
+  });
+  document.getElementById("customChoosePlay").addEventListener("click", ()=>{
+    document.getElementById("customChoice").style.display = "none";
+    document.getElementById("customPlayPanel").style.display = "";
+    document.getElementById("customCodeInput").focus();
+  });
+  document.getElementById("customChooseCreate").addEventListener("click", ()=>{
+    document.getElementById("customChoice").style.display = "none";
+    document.getElementById("customCreatePanel").style.display = "";
+  });
+  document.getElementById("customBackFromPlay").addEventListener("click", ()=>{
+    document.getElementById("customPlayPanel").style.display = "none";
+    document.getElementById("customChoice").style.display = "";
+  });
+  document.getElementById("customBackFromCreate").addEventListener("click", ()=>{
+    document.getElementById("customCreatePanel").style.display = "none";
+    document.getElementById("customCreateResult").style.display = "none";
+    document.getElementById("customChoice").style.display = "";
+  });
+  document.getElementById("customCodeInput").addEventListener("input", (e)=>{
+    e.target.value = e.target.value.replace(/[^0-9]/g,"").slice(0,6);
+  });
+  document.getElementById("customPlayGoBtn").addEventListener("click", async ()=>{
+    const code = document.getElementById("customCodeInput").value.trim();
+    const ok = await playCustomLadderByCode(code);
+    if(ok) closeOverlay("customOverlay");
+  });
+  document.getElementById("customCreateGoBtn").addEventListener("click", ()=>{
+    createCustomLadder(
+      document.getElementById("customStartInput").value,
+      document.getElementById("customTargetInput").value
+    );
+  });
+  document.getElementById("customCopyCodeBtn").addEventListener("click", async ()=>{
+    const code = document.getElementById("customCreateResult").dataset.code;
+    try{ await navigator.clipboard.writeText(code); showToast("Code copied", true); }
+    catch(e){ showToast("Couldn't copy — select the text manually"); }
+  });
+  document.getElementById("customCopyLinkBtn").addEventListener("click", async ()=>{
+    const code = document.getElementById("customCreateResult").dataset.code;
+    try{ await navigator.clipboard.writeText(buildCustomLink(code)); showToast("Link copied", true); }
+    catch(e){ showToast("Couldn't copy — select the text manually"); }
+  });
+  document.getElementById("customPlayNowBtn").addEventListener("click", ()=>{
+    const ds = document.getElementById("customCreateResult").dataset;
+    loadCustomPuzzle(ds.code, ds.start, ds.target, Number(ds.optimal));
+    closeOverlay("customOverlay");
+  });
+
   /* ---------------- Boot ---------------- */
   wireBoxes();
   puzzleToday = generatePuzzle(todayDateString());
@@ -3114,6 +3364,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     updateHomeScreen();
   }
 
+  let autoCustomHandled = false;
   async function startWithUser(user){
     offlineMode = false;
     currentUser = user;
@@ -3124,6 +3375,14 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     refreshAdminVisibility();
     render();
     updateHomeScreen();
+    if(!autoCustomHandled){
+      autoCustomHandled = true;
+      const reqCode = getRequestedCustomCode();
+      if(reqCode){
+        const ok = await playCustomLadderByCode(reqCode);
+        if(ok) history.replaceState({}, "", window.location.pathname);
+      }
+    }
   }
 
   // Failsafe: if Firebase hasn't told us anything within 2.5s (slow network,
