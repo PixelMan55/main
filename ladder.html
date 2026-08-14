@@ -249,6 +249,69 @@
   }
   .home-secondary-btn svg{width:15px;height:15px;}
   .home-secondary-btn:hover{background:var(--panel-2);}
+  .home-banner{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#fdf3d8;
+    border:1px solid #e6cf8c;
+    color:#6b551a;
+    font-size:12.5px;
+    font-weight:700;
+    padding:9px 12px;
+    border-radius:6px;
+    margin-bottom:10px;
+  }
+  body.dark .home-banner{background:#3a3120;border-color:#5a4a24;color:#e7d493;}
+  .home-banner span:first-child{flex:1;}
+  .home-banner-close{
+    flex:none;
+    background:none;border:none;
+    color:inherit;
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+    opacity:.7;
+  }
+  .home-banner-close:hover{opacity:1;}
+
+  .home-featured{
+    width:100%;
+    max-width:280px;
+    margin-top:16px;
+  }
+  .home-featured-label{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    justify-content:center;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    font-weight:800;
+    color:#c9971e;
+    margin-bottom:6px;
+  }
+  .home-featured-label svg{width:12px;height:12px;}
+  .home-featured-btn{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    background:linear-gradient(135deg,#fdf3d8,#f7e6ae);
+    border:1.5px solid #c9971e;
+    border-radius:6px;
+    padding:12px 16px;
+    font-family:'Source Serif 4',Georgia,serif;
+    font-weight:800;
+    font-size:15px;
+    color:#5c4713;
+    cursor:pointer;
+  }
+  body.dark .home-featured-btn{background:linear-gradient(135deg,#3a3120,#4a3c1f);color:#f0dfa0;}
+  .home-featured-btn svg{width:15px;height:15px;flex:none;}
+
   .home-mode-row{
     display:flex;
     gap:10px;
@@ -1066,6 +1129,10 @@
 <div id="app">
 
   <div class="home-screen" id="homeScreen">
+    <div class="home-banner" id="homeBanner" style="display:none;">
+      <span id="homeBannerText"></span>
+      <button class="home-banner-close" id="homeBannerClose" aria-label="Dismiss">&times;</button>
+    </div>
     <div class="home-top">
       <button class="icon-btn" id="homeHelpBtn" title="How to play">?</button>
       <div style="display:flex;gap:6px;">
@@ -1098,6 +1165,14 @@
       <div class="home-solved-note" id="homeSolvedNote">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         Today's ladder is solved
+      </div>
+
+      <div class="home-featured" id="homeFeatured" style="display:none;">
+        <div class="home-featured-label"><span id="homeFeaturedIcon"></span> Ladder of the Day</div>
+        <button class="home-featured-btn" id="homeFeaturedBtn">
+          <span id="homeFeaturedWords">— → —</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
       </div>
 
       <div class="home-mode-row">
@@ -1139,8 +1214,7 @@
 
     <footer class="home-footer">
       A new ladder appears every day at midnight, local time.<br>
-      <span class="credit">Made by <a href="https://pixelman.net" target="_blank" rel="noopener">PixelMan Games</a></span><br>
-      <span class="credit"><a href="terms-of-service.html" target="_blank" rel="noopener">Terms of Service</a> &middot; <a href="privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a></span>
+      <span class="credit">Made by <a href="https://pixelman.net" target="_blank" rel="noopener">PixelMan Games</a></span>
     </footer>
   </div>
 
@@ -1226,8 +1300,7 @@
 
   <footer>
     A new ladder appears every day at midnight, local time.<br>
-    <span class="credit">Made by <a href="https://pixelman.net" target="_blank" rel="noopener">PixelMan Games</a></span><br>
-    <span class="credit"><a href="terms-of-service.html" target="_blank" rel="noopener">Terms of Service</a> &middot; <a href="privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a></span>
+    <span class="credit">Made by <a href="https://pixelman.net" target="_blank" rel="noopener">PixelMan Games</a></span>
   </footer>
   </div><!-- /gameScreen -->
 </div>
@@ -1327,15 +1400,6 @@
       <input class="text-input" id="newsletterEmail" type="email" placeholder="you@example.com">
       <button class="secondary" id="newsletterBtn">Subscribe</button>
     </div>
-
-    <div class="settings-section">
-      <h3>Legal</h3>
-      <div class="lbl-sub" style="margin-bottom:8px;">
-        <a href="terms-of-service.html" target="_blank" rel="noopener">Terms of Service</a>
-        &middot;
-        <a href="privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -1371,6 +1435,7 @@
     <div class="admin-sub">Only visible to your account</div>
     <div class="tab-row">
       <button class="tab-btn active" id="adminTabLb" data-admintab="lb">Leaderboard</button>
+      <button class="tab-btn" id="adminTabBroadcast" data-admintab="broadcast">Broadcast</button>
       <button class="tab-btn" id="adminTabFun" data-admintab="fun">Fun Zone</button>
       <button class="tab-btn" id="adminTabPeek" data-admintab="peek">Puzzle Peek</button>
     </div>
@@ -1382,6 +1447,35 @@
       </div>
       <div class="sub" style="margin-bottom:10px;">Edits here change the public leaderboard entry directly. They'll be overwritten the next time that player finishes a puzzle.</div>
       <div class="admin-list" id="adminLbList"><div class="lb-loading">Loading…</div></div>
+    </div>
+
+    <div id="adminPanelBroadcast" style="display:none;">
+      <div class="peek-block">
+        <div class="peek-label">Site stats</div>
+        <div class="solver-result" id="adminStats">Loading…</div>
+      </div>
+
+      <div class="peek-block">
+        <div class="peek-label">Announcement banner</div>
+        <div class="sub" style="margin-bottom:8px;">Shows at the top of every player's home screen, including guests.</div>
+        <textarea class="admin-name-input" id="announceText" maxlength="280" rows="3" style="width:100%;font-weight:600;resize:vertical;" placeholder="e.g. New weekly puzzle just dropped 🎉"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="secondary" id="announcePublishBtn" style="flex:1;">Publish</button>
+          <button class="secondary" id="announceClearBtn" style="flex:1;">Clear</button>
+        </div>
+        <div class="solver-result" id="announceStatus" style="margin-top:6px;"></div>
+      </div>
+
+      <div class="peek-block">
+        <div class="peek-label">Ladder of the day</div>
+        <div class="sub" style="margin-bottom:8px;">Feature a custom ladder code — it'll show as a highlighted pick on everyone's home screen.</div>
+        <input class="admin-name-input" id="featuredCodeInput" maxlength="6" inputmode="numeric" placeholder="123456" style="width:100%;text-align:center;letter-spacing:4px;">
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="secondary" id="featuredSetBtn" style="flex:1;">Set</button>
+          <button class="secondary" id="featuredClearBtn" style="flex:1;">Clear</button>
+        </div>
+        <div class="solver-result" id="featuredStatus" style="margin-top:6px;"></div>
+      </div>
     </div>
 
     <div id="adminPanelFun" style="display:none;">
@@ -1532,7 +1626,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, orderBy, limit,
-  getDocs, serverTimestamp, enableIndexedDbPersistence, runTransaction
+  getDocs, getCountFromServer, serverTimestamp, enableIndexedDbPersistence, runTransaction
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1582,6 +1676,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   setIcon(document.getElementById("homeSettingsBtn"), "settings");
   document.getElementById("homeLeaderboardIcon").innerHTML = ICONS.award;
   document.getElementById("homeCustomIcon").innerHTML = ICONS.link;
+  document.getElementById("homeFeaturedIcon").innerHTML = ICONS.star;
   document.getElementById("homeWeeklyIcon").innerHTML = ICONS.calendar;
   document.getElementById("homePracticeIcon").innerHTML = ICONS.target;
   setIcon(document.getElementById("homeAdminBtn"), "shield");
@@ -2479,6 +2574,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     let pct = null;
 
     if(viewDay === "today"){
+      await ensureAuth();
       const today = puzzle.dateStr;
       const yest = yesterdayDateString();
       if(mode === "normal"){
@@ -2693,6 +2789,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   document.getElementById("homeLeaderboardBtn").addEventListener("click", ()=>{
     openOverlay("leaderboardOverlay");
     loadLeaderboard();
+    ensureAuth();
   });
   document.getElementById("homeWeeklyBtn").addEventListener("click", ()=>{
     if(!userDoc) return;
@@ -2808,6 +2905,26 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     if(btn) btn.style.display = isAdminUser() ? "inline-flex" : "none";
   }
 
+  // Retry getting *some* Firebase identity (anonymous is fine) right
+  // before something needs it — e.g. syncing a solve to the public
+  // leaderboard. This self-heals if the very first sign-in attempt at
+  // page load failed (slow network, brief hiccup) without requiring a
+  // reload. If Anonymous auth is disabled in the Firebase project this
+  // will keep failing — that's a one-toggle fix in Firebase Console ->
+  // Authentication -> Sign-in method -> Anonymous.
+  async function ensureAuth(){
+    if(currentUser) return currentUser;
+    try{
+      const cred = await signInAnonymously(auth);
+      currentUser = cred.user;
+      offlineMode = false;
+      refreshAdminVisibility();
+      return currentUser;
+    }catch(e){
+      return null;
+    }
+  }
+
   document.getElementById("googleSignInBtn").addEventListener("click", async ()=>{
     const provider = new GoogleAuthProvider();
     try{
@@ -2895,6 +3012,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
   document.getElementById("leaderboardBtn").addEventListener("click", ()=>{
     openOverlay("leaderboardOverlay");
     loadLeaderboard();
+    ensureAuth();
   });
   document.getElementById("lbTabNormal").addEventListener("click", ()=>{ lbMode="normal"; setLbTabs(); loadLeaderboard(); });
   document.getElementById("lbTabHard").addEventListener("click", ()=>{ lbMode="hard"; setLbTabs(); loadLeaderboard(); });
@@ -2947,9 +3065,11 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
       const tab = btn.getAttribute("data-admintab");
       document.querySelectorAll("[data-admintab]").forEach(b=> b.classList.toggle("active", b===btn));
       document.getElementById("adminPanelLb").style.display = tab==="lb" ? "" : "none";
+      document.getElementById("adminPanelBroadcast").style.display = tab==="broadcast" ? "" : "none";
       document.getElementById("adminPanelFun").style.display = tab==="fun" ? "" : "none";
       document.getElementById("adminPanelPeek").style.display = tab==="peek" ? "" : "none";
       if(tab === "peek") renderPuzzlePeek();
+      if(tab === "broadcast") loadBroadcastPanel();
     });
   });
   document.querySelectorAll("[data-adminlb]").forEach(btn=>{
@@ -3092,6 +3212,99 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     return row;
   }
 
+  /* ---- Broadcast ---- */
+  async function loadBroadcastPanel(){
+    if(!isAdminUser()) return;
+    const statsEl = document.getElementById("adminStats");
+    statsEl.textContent = "Loading…";
+    try{
+      const [playersSnap, customsSnap, nSnap, hSnap] = await Promise.all([
+        getCountFromServer(collection(db,"leaderboard")),
+        getCountFromServer(collection(db,"customLadders")),
+        getDoc(doc(db,"puzzleStats", todayDateString()+"_normal")),
+        getDoc(doc(db,"puzzleStats", todayDateString()+"_hard"))
+      ]);
+      const n = nSnap.exists() ? (nSnap.data().total||0) : 0;
+      const h = hSnap.exists() ? (hSnap.data().total||0) : 0;
+      statsEl.textContent = playersSnap.data().count + " players on the board \u00b7 " +
+        customsSnap.data().count + " custom ladders created \u00b7 " +
+        (n+h) + " solves today";
+    }catch(e){
+      statsEl.textContent = "Could not load site stats.";
+    }
+
+    try{
+      const annSnap = await getDoc(doc(db,"config","announcement"));
+      document.getElementById("announceText").value = annSnap.exists() ? (annSnap.data().text || "") : "";
+      document.getElementById("announceStatus").textContent = (annSnap.exists() && annSnap.data().active)
+        ? "Live on every home screen right now." : "Not currently showing.";
+    }catch(e){
+      document.getElementById("announceStatus").textContent = "Could not load current announcement.";
+    }
+
+    try{
+      const featSnap = await getDoc(doc(db,"config","featuredCustom"));
+      if(featSnap.exists() && featSnap.data().active && featSnap.data().code){
+        document.getElementById("featuredCodeInput").value = featSnap.data().code;
+        document.getElementById("featuredStatus").textContent = "Live: " + featSnap.data().code +
+          (featSnap.data().start ? (" (" + featSnap.data().start + " \u2192 " + featSnap.data().target + ")") : "");
+      } else {
+        document.getElementById("featuredStatus").textContent = "No ladder of the day set.";
+      }
+    }catch(e){
+      document.getElementById("featuredStatus").textContent = "Could not load featured ladder.";
+    }
+  }
+
+  document.getElementById("announcePublishBtn").addEventListener("click", async ()=>{
+    const text = document.getElementById("announceText").value.trim().slice(0,280);
+    const statusEl = document.getElementById("announceStatus");
+    if(!text){ statusEl.textContent = "Write something first."; return; }
+    try{
+      await setDoc(doc(db,"config","announcement"), { text, active: true, updatedAt: serverTimestamp() });
+      statusEl.textContent = "Published — live on every home screen now.";
+      showToast("Announcement published", true);
+      loadHomeConfig();
+    }catch(e){ statusEl.textContent = "Couldn't publish — try again."; }
+  });
+  document.getElementById("announceClearBtn").addEventListener("click", async ()=>{
+    const statusEl = document.getElementById("announceStatus");
+    try{
+      await setDoc(doc(db,"config","announcement"), { active: false, updatedAt: serverTimestamp() }, {merge:true});
+      statusEl.textContent = "Cleared.";
+      showToast("Announcement cleared", true);
+      loadHomeConfig();
+    }catch(e){ statusEl.textContent = "Couldn't clear — try again."; }
+  });
+
+  document.getElementById("featuredSetBtn").addEventListener("click", async ()=>{
+    const code = document.getElementById("featuredCodeInput").value.trim();
+    const statusEl = document.getElementById("featuredStatus");
+    if(!/^\d{6}$/.test(code)){ statusEl.textContent = "Enter a 6-digit code."; return; }
+    try{
+      const snap = await getDoc(doc(db,"customLadders", code));
+      if(!snap.exists()){ statusEl.textContent = "No custom ladder with that code."; return; }
+      const d = snap.data();
+      await setDoc(doc(db,"config","featuredCustom"), {
+        code, start: d.start, target: d.target, optimal: d.optimal,
+        active: true, updatedAt: serverTimestamp()
+      });
+      statusEl.textContent = "Live: " + code + " (" + d.start + " \u2192 " + d.target + ")";
+      showToast("Ladder of the day set", true);
+      loadHomeConfig();
+    }catch(e){ statusEl.textContent = "Couldn't set featured ladder — try again."; }
+  });
+  document.getElementById("featuredClearBtn").addEventListener("click", async ()=>{
+    const statusEl = document.getElementById("featuredStatus");
+    try{
+      await setDoc(doc(db,"config","featuredCustom"), { active: false, updatedAt: serverTimestamp() }, {merge:true});
+      document.getElementById("featuredCodeInput").value = "";
+      statusEl.textContent = "Cleared.";
+      showToast("Ladder of the day cleared", true);
+      loadHomeConfig();
+    }catch(e){ statusEl.textContent = "Couldn't clear — try again."; }
+  });
+
   /* ---- Fun zone ---- */
   document.getElementById("funConfettiBtn").addEventListener("click", spawnConfetti);
   function spawnConfetti(){
@@ -3210,8 +3423,8 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
       if(errEl) errEl.textContent = "Enter a 6-digit code.";
       return false;
     }
-    if(offlineMode){
-      if(errEl) errEl.textContent = "You need to be online to play a custom ladder.";
+    if(navigator.onLine === false){
+      if(errEl) errEl.textContent = "You're offline — connect to the internet to play a custom ladder.";
       return false;
     }
     try{
@@ -3233,7 +3446,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     const target = (targetRaw||"").trim().toUpperCase();
     const errEl = document.getElementById("customCreateError");
     errEl.textContent = "";
-    if(offlineMode){ errEl.textContent = "You need to be online to create a custom ladder."; return; }
+    if(navigator.onLine === false){ errEl.textContent = "You're offline — connect to the internet to create a custom ladder."; return; }
     if(!/^[A-Z]{4}$/.test(start) || !/^[A-Z]{4}$/.test(target)){
       errEl.textContent = "Enter two real 4-letter words."; return;
     }
@@ -3245,6 +3458,7 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     if(!path){ errEl.textContent = "No ladder connects those two words."; return; }
     const optimal = path.length - 1;
     const pairKey = start + "_" + target;
+    await ensureAuth();
     const btn = document.getElementById("customCreateGoBtn");
     btn.disabled = true; const oldLabel = btn.textContent; btn.textContent = "Creating…";
     try{
@@ -3347,6 +3561,50 @@ try{ await enableIndexedDbPersistence(db); }catch(e){ /* multi-tab or unsupporte
     loadCustomPuzzle(ds.code, ds.start, ds.target, Number(ds.optimal));
     closeOverlay("customOverlay");
   });
+
+  /* ---------------- Home config (announcement + ladder of the day) ---------------- */
+  // Public reads — no account needed, works even for guests and even if
+  // Firebase Auth never resolves, since this only depends on network.
+  let bannerDismissed = false;
+  async function loadHomeConfig(){
+    try{
+      const annSnap = await getDoc(doc(db,"config","announcement"));
+      const bannerEl = document.getElementById("homeBanner");
+      if(annSnap.exists() && annSnap.data().active && annSnap.data().text && !bannerDismissed){
+        document.getElementById("homeBannerText").textContent = annSnap.data().text;
+        bannerEl.style.display = "flex";
+      } else {
+        bannerEl.style.display = "none";
+      }
+    }catch(e){ /* offline or unreachable — just skip the banner */ }
+
+    try{
+      const featSnap = await getDoc(doc(db,"config","featuredCustom"));
+      const featEl = document.getElementById("homeFeatured");
+      if(featSnap.exists() && featSnap.data().active && featSnap.data().code){
+        const d = featSnap.data();
+        document.getElementById("homeFeaturedWords").textContent = d.start + " \u2192 " + d.target;
+        featEl.style.display = "";
+        featEl.dataset.code = d.code;
+        featEl.dataset.start = d.start;
+        featEl.dataset.target = d.target;
+        featEl.dataset.optimal = d.optimal;
+      } else {
+        featEl.style.display = "none";
+      }
+    }catch(e){ /* offline or unreachable — just skip the featured card */ }
+  }
+  document.getElementById("homeBannerClose").addEventListener("click", ()=>{
+    bannerDismissed = true;
+    document.getElementById("homeBanner").style.display = "none";
+  });
+  document.getElementById("homeFeaturedBtn").addEventListener("click", ()=>{
+    const el = document.getElementById("homeFeatured");
+    const ds = el.dataset;
+    if(!ds.code) return;
+    loadCustomPuzzle(ds.code, ds.start, ds.target, Number(ds.optimal));
+  });
+  loadHomeConfig();
 
   /* ---------------- Boot ---------------- */
   wireBoxes();
