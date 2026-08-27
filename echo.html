@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ECHO</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root{
+  --deep:      #081019;
+  --panel:     #0d1a28;
+  --panel-2:   #0f2033;
+  --line:      #1c3247;
+  --line-soft: #142633;
+  --signal:    #4ade9c;
+  --signal-dim:#2c7a5c;
+  --amber:     #ffb454;
+  --ink:       #d8e6ea;
+  --ink-dim:   #7d97a3;
+  --ink-faint: #47606c;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+
+html,body{
+  height:100%;
+  background:var(--deep);
+  color:var(--ink);
+  font-family:'Inter', sans-serif;
+  overflow-x:hidden;
+}
+
+.scope-bg{
+  position:fixed; inset:0; z-index:0;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(74,222,156,0.06), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(74,222,156,0.025) 0px, rgba(74,222,156,0.025) 1px, transparent 1px, transparent 3px);
+  pointer-events:none;
+}
+.scope-bg::after{
+  content:'';
+  position:absolute; inset:0;
+  background:radial-gradient(ellipse at 50% 50%, transparent 40%, var(--deep) 95%);
+}
+
+.wrap{
+  position:relative; z-index:1;
+  min-height:100vh;
+  display:flex; flex-direction:column; align-items:center;
+  padding:8vh 20px 10vh;
+}
+
+.wordmark{
+  font-family:'JetBrains Mono', monospace;
+  font-weight:700;
+  letter-spacing:0.5em;
+  font-size:15px;
+  color:var(--signal);
+  text-shadow:0 0 18px rgba(74,222,156,0.45);
+  margin-bottom:6px;
+}
+.tagline{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.15em;
+  color:var(--ink-faint);
+  text-transform:uppercase;
+  margin-bottom:56px;
+}
+
+.search-shell{
+  width:100%; max-width:620px;
+}
+#searchForm{
+  display:flex; align-items:center; gap:10px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:2px;
+  padding:4px 4px 4px 18px;
+  transition:border-color .2s, box-shadow .2s;
+}
+#searchForm:focus-within{
+  border-color:var(--signal-dim);
+  box-shadow:0 0 0 3px rgba(74,222,156,0.08);
+}
+.prompt-char{
+  font-family:'JetBrains Mono', monospace;
+  color:var(--signal);
+  font-size:15px;
+}
+#queryInput{
+  flex:1;
+  background:transparent;
+  border:none;
+  outline:none;
+  color:var(--ink);
+  font-family:'JetBrains Mono', monospace;
+  font-size:15px;
+  padding:14px 0;
+}
+#queryInput::placeholder{ color:var(--ink-faint); }
+
+#pingBtn{
+  font-family:'JetBrains Mono', monospace;
+  font-weight:600;
+  letter-spacing:0.1em;
+  font-size:12px;
+  color:var(--deep);
+  background:var(--signal);
+  border:none;
+  border-radius:1px;
+  padding:14px 20px;
+  cursor:pointer;
+  transition:background .15s, transform .1s;
+}
+#pingBtn:hover{ background:#63f0b3; }
+#pingBtn:active{ transform:scale(0.97); }
+#pingBtn:disabled{ background:var(--signal-dim); cursor:default; }
+
+.hint{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  color:var(--ink-faint);
+  margin-top:12px;
+  padding-left:4px;
+}
+
+/* ---------- radar scope ---------- */
+.radar-scope{
+  margin-top:64px;
+  width:220px; height:220px;
+  position:relative;
+  display:flex; align-items:center; justify-content:center;
+}
+.radar-scope.hidden{ display:none; }
+
+.ring{
+  position:absolute;
+  border:1px solid var(--line-soft);
+  border-radius:50%;
+}
+.ring.r1{ width:60px; height:60px; }
+.ring.r2{ width:120px; height:120px; }
+.ring.r3{ width:180px; height:180px; }
+.ring.r4{ width:220px; height:220px; border-color:var(--line); }
+
+.sweep{
+  position:absolute; inset:0;
+  border-radius:50%;
+  overflow:hidden;
+  animation:spin 2.6s linear infinite;
+}
+.sweep::before{
+  content:'';
+  position:absolute; inset:0;
+  background:conic-gradient(from 0deg, rgba(74,222,156,0.55), transparent 22%, transparent 100%);
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+.blip{
+  position:absolute;
+  width:5px; height:5px;
+  border-radius:50%;
+  background:var(--signal);
+  box-shadow:0 0 8px 2px rgba(74,222,156,0.7);
+  opacity:0;
+  animation:blip-in 2.6s ease-in-out infinite;
+}
+@keyframes blip-in{
+  0%,100%{ opacity:0; transform:scale(0.6); }
+  50%{ opacity:1; transform:scale(1); }
+}
+
+.radar-status{
+  position:absolute; bottom:-38px;
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.2em;
+  color:var(--ink-dim);
+}
+.radar-status .dots::after{
+  content:'';
+  animation:dots 1.4s steps(4,end) infinite;
+}
+@keyframes dots{
+  0%{content:'';} 25%{content:'.';} 50%{content:'..';} 75%{content:'...';} 100%{content:'';}
+}
+
+/* ---------- results ---------- */
+.results-panel{
+  width:100%; max-width:680px;
+  margin-top:48px;
+}
+.results-panel.hidden{ display:none; }
+
+.results-meta{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.08em;
+  color:var(--ink-faint);
+  border-bottom:1px solid var(--line-soft);
+  padding-bottom:14px;
+  margin-bottom:22px;
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+}
+.results-meta span.acc{ color:var(--signal); }
+
+#resultsList{ display:flex; flex-direction:column; gap:2px; }
+
+.contact-card{
+  padding:18px 20px;
+  border:1px solid transparent;
+  border-radius:2px;
+  opacity:0;
+  transform:translateY(6px);
+  animation:resolve .45s ease forwards;
+  transition:background .15s, border-color .15s;
+}
+.contact-card:hover{
+  background:var(--panel-2);
+  border-color:var(--line);
+}
+@keyframes resolve{
+  to{ opacity:1; transform:translateY(0); }
+}
+
+.contact-top{
+  display:flex; align-items:baseline; gap:10px;
+  font-family:'JetBrains Mono', monospace;
+  font-size:10.5px;
+  letter-spacing:0.1em;
+  color:var(--ink-faint);
+  margin-bottom:8px;
+}
+.contact-top .cid{ color:var(--signal-dim); }
+.contact-top .domain{ color:var(--ink-dim); }
+
+.signal-meter{ display:inline-flex; gap:2px; margin-left:auto; }
+.signal-meter i{
+  width:3px; height:9px;
+  background:var(--line);
+  display:inline-block;
+  border-radius:1px;
+}
+.signal-meter i.on{ background:var(--signal); }
+
+.contact-title{
+  display:block;
+  font-size:16.5px;
+  font-weight:600;
+  color:var(--ink);
+  text-decoration:none;
+  margin-bottom:6px;
+}
+.contact-title:hover{ color:var(--signal); }
+
+.contact-url{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11.5px;
+  color:var(--signal-dim);
+  margin-bottom:8px;
+  word-break:break-all;
+}
+
+.contact-snippet{
+  font-size:13.5px;
+  line-height:1.55;
+  color:var(--ink-dim);
+}
+
+/* ---------- error ---------- */
+.error-panel{
+  margin-top:56px;
+  max-width:520px;
+  text-align:center;
+  font-family:'JetBrains Mono', monospace;
+}
+.error-panel.hidden{ display:none; }
+.error-title{
+  color:var(--amber);
+  font-size:13px;
+  letter-spacing:0.15em;
+  margin-bottom:10px;
+}
+.error-body{
+  color:var(--ink-dim);
+  font-size:12px;
+  line-height:1.6;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .sweep{ animation:none; }
+  .sweep::before{ background:conic-gradient(from 0deg, rgba(74,222,156,0.3), rgba(74,222,156,0.3)); }
+  .blip{ animation:none; opacity:0.8; }
+  .contact-card{ animation:none; opacity:1; transform:none; }
+}
+
+@media (max-width:480px){
+  .wordmark{ letter-spacing:0.35em; }
+  .results-meta{ flex-direction:column; }
+}
+</style>
+</head>
+<body>
+
+<div class="scope-bg"></div>
+
+<div class="wrap">
+  <div class="wordmark">ECHO</div>
+  <div class="tagline">search that pings back</div>
+
+  <div class="search-shell">
+    <form id="searchForm">
+      <span class="prompt-char">&gt;</span>
+      <input id="queryInput" type="text" placeholder="query the depths" autocomplete="off" autofocus />
+      <button id="pingBtn" type="submit">PING</button>
+    </form>
+    <div class="hint">real web results, fetched live — press enter or hit ping</div>
+  </div>
+
+  <div class="radar-scope hidden" id="radarScope">
+    <div class="ring r4"></div>
+    <div class="ring r3"></div>
+    <div class="ring r2"></div>
+    <div class="ring r1"></div>
+    <div class="sweep"></div>
+    <div class="blip" style="top:30%; left:62%; animation-delay:0.2s;"></div>
+    <div class="blip" style="top:60%; left:35%; animation-delay:0.9s;"></div>
+    <div class="blip" style="top:45%; left:70%; animation-delay:1.6s;"></div>
+    <div class="radar-status">SCANNING<span class="dots"></span></div>
+  </div>
+
+  <div class="results-panel hidden" id="resultsPanel">
+    <div class="results-meta" id="resultsMeta"></div>
+    <div id="resultsList"></div>
+  </div>
+
+  <div class="error-panel hidden" id="errorPanel">
+    <div class="error-title">SIGNAL LOST</div>
+    <div class="error-body" id="errorBody"></div>
+  </div>
+</div>
+
+<script>
+// Replace with your deployed Cloudflare Worker URL (see worker.js).
+// e.g. "https://echo-search-proxy.yourname.workers.dev"
+const API_ENDPOINT = "echo-browser.alexsmall313.workers.dev";
+
+const form = document.getElementById('searchForm');
+const input = document.getElementById('queryInput');
+const btn = document.getElementById('pingBtn');
+const radar = document.getElementById('radarScope');
+const resultsPanel = document.getElementById('resultsPanel');
+const resultsMeta = document.getElementById('resultsMeta');
+const resultsList = document.getElementById('resultsList');
+const errorPanel = document.getElementById('errorPanel');
+const errorBody = document.getElementById('errorBody');
+
+function hideAll(){
+  radar.classList.add('hidden');
+  resultsPanel.classList.add('hidden');
+  errorPanel.classList.add('hidden');
+}
+
+function signalBars(rank, total){
+  // stronger signal for earlier / higher-ranked contacts
+  const strength = Math.max(1, 5 - Math.floor((rank / Math.max(total,1)) * 5));
+  let html = '<span class="signal-meter">';
+  for(let i=0;i<5;i++){
+    html += `<i class="${i < strength ? 'on' : ''}"></i>`;
+  }
+  html += '</span>';
+  return html;
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str == null ? '' : String(str);
+  return d.innerHTML;
+}
+
+function domainFromUrl(url, fallback){
+  try{
+    return new URL(url).hostname.replace(/^www\./,'');
+  }catch(e){
+    return fallback || '';
+  }
+}
+
+function renderResults(query, items){
+  resultsMeta.innerHTML =
+    `<span>CONTACTS FOUND: <span class="acc">${items.length}</span></span>` +
+    `<span>QUERY: "${escapeHtml(query)}"</span>`;
+
+  resultsList.innerHTML = items.map((item, i) => {
+    const domain = escapeHtml(item.domain || domainFromUrl(item.url, ''));
+    const cid = String(i+1).padStart(3,'0');
+    const url = item.url || '#';
+    return `
+      <div class="contact-card" style="animation-delay:${i * 70}ms">
+        <div class="contact-top">
+          <span class="cid">CONTACT ${cid}</span>
+          <span class="domain">${domain}</span>
+          ${signalBars(i, items.length)}
+        </div>
+        <a class="contact-title" href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title || 'Untitled')}</a>
+        <div class="contact-url">${escapeHtml(url)}</div>
+        <p class="contact-snippet">${escapeHtml(item.snippet || '')}</p>
+      </div>
+    `;
+  }).join('');
+
+  hideAll();
+  resultsPanel.classList.remove('hidden');
+}
+
+function renderError(message){
+  hideAll();
+  errorBody.textContent = message;
+  errorPanel.classList.remove('hidden');
+}
+
+async function fetchResults(query){
+  const response = await fetch(API_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1000,
+      system: "You are the backend of a real-time search engine. Use the web_search tool to find current, genuinely relevant results for the user's query. Then respond with ONLY a raw JSON array — no markdown code fences, no preamble, no commentary, nothing before or after it. Return up to 8 objects, each with exactly these string fields: \"title\" (page title), \"url\" (the real source URL), \"domain\" (bare hostname, no www), \"snippet\" (one or two plain sentences summarizing the page's relevance to the query, written in your own words). Only include results you actually found via web_search.",
+      messages: [{ role: "user", content: query }],
+      tools: [{ type: "web_search_20250305", name: "web_search" }]
+    })
+  });
+
+  if(!response.ok){
+    throw new Error(`API request failed (${response.status})`);
+  }
+
+  const data = await response.json();
+  const text = (data.content || [])
+    .filter(b => b.type === 'text')
+    .map(b => b.text)
+    .join('\n');
+
+  const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+  const match = cleaned.match(/\[[\s\S]*\]/);
+  const raw = match ? match[0] : cleaned;
+
+  let parsed;
+  try{
+    parsed = JSON.parse(raw);
+  }catch(e){
+    throw new Error('Could not parse search results.');
+  }
+
+  if(!Array.isArray(parsed)) throw new Error('Unexpected response shape.');
+  return parsed;
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const query = input.value.trim();
+  if(!query) return;
+
+  hideAll();
+  radar.classList.remove('hidden');
+  btn.disabled = true;
+
+  try{
+    const items = await fetchResults(query);
+    if(items.length === 0){
+      renderError(`No contacts detected for "${query}". Try a different query.`);
+    }else{
+      renderResults(query, items);
+    }
+  }catch(err){
+    renderError(err.message || 'The connection to the deep dropped. Try again.');
+  }finally{
+    btn.disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>
