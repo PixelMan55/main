@@ -297,9 +297,11 @@
    SKIN DEFINITIONS
    ========================================================= */
 const TIER_COLORS = {
-  common:'#9aa1c9', uncommon:'#4dffe0', rare:'#4d8bff', epic:'#c14dff', legendary:'#ffce3a'
+  common:'#9aa1c9', uncommon:'#4dffe0', rare:'#4d8bff', epic:'#c14dff', legendary:'#ffce3a', mythic:'#ff2d5e'
 };
-const TIER_WEIGHT = { common:50, uncommon:30, rare:13, epic:5, legendary:2 };
+// Rebalanced: epic/legendary pulled way down and a new mythic tier sits
+// above legendary as the true chase item. Total still sums to 100.
+const TIER_WEIGHT = { common:52, uncommon:32, rare:12, epic:2.8, legendary:1, mythic:0.2 };
 
 function drawBallBase(ctx,x,y,r,fill){
   ctx.beginPath();
@@ -451,14 +453,49 @@ const SKINS = [
       c.restore();
       glow(c,x,y,r,'#4dffe0',1.5);
   }, trail:true},
+  // mythic - the true chase tier, shifting prismatic effects
+  {id:'phoenix_ascendant', tier:'mythic', name:'Phoenix Ascendant', render:(c,x,y,r,t)=>{
+      const hue=(t/10)%60+10; // flickers through red/orange/gold
+      const g=c.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,'#fff6d8');g.addColorStop(.45,`hsl(${hue},95%,55%)`);g.addColorStop(1,'#3a0505');
+      drawBallBase(c,x,y,r,g);
+      c.save();c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.clip();
+      for(let i=0;i<3;i++){
+        const ang = t/260 + i*(Math.PI*2/3);
+        const fx = x+Math.cos(ang)*r*0.5, fy = y+Math.sin(ang)*r*0.5;
+        c.fillStyle = `hsla(${hue+i*20},100%,65%,.8)`;
+        c.beginPath();c.ellipse(fx,fy,r*0.28,r*0.14,ang,0,Math.PI*2);c.fill();
+      }
+      c.restore();
+      glow(c,x,y,r,'#ff5b1a',1.9);
+  }, trail:true},
+  {id:'void_sovereign', tier:'mythic', name:'Void Sovereign', render:(c,x,y,r,t)=>{
+      const g=c.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,'#1a0010');g.addColorStop(.55,'#5e0030');g.addColorStop(1,'#000000');
+      drawBallBase(c,x,y,r,g);
+      c.save();c.translate(x,y);
+      for(let i=0;i<3;i++){
+        c.rotate(t/220*(i%2?-1:1)+i*1.05);
+        const hue=(t/8+i*90)%360;
+        c.strokeStyle=`hsla(${hue},100%,65%,.85)`;
+        c.lineWidth=1.4;
+        c.beginPath();c.ellipse(0,0,r*(1.1+i*0.25),r*0.32,0,0,Math.PI*2);c.stroke();
+      }
+      c.restore();
+      glow(c,x,y,r,'#ff2d5e',2);
+  }, trail:true},
 ];
 
 function glow(c,x,y,r,color,mult){
   mult = mult||1;
   c.save();
   c.globalCompositeOperation='lighter';
+  // Use globalAlpha instead of concatenating a hex alpha suffix onto
+  // `color`, since callers pass hex (#rrggbb), hsl(...), and rgb(...)
+  // strings interchangeably and only hex supports the suffix trick.
+  c.globalAlpha = 0.33;
   const g=c.createRadialGradient(x,y,r*0.6,x,y,r*2.2*mult);
-  g.addColorStop(0, color+'55');
+  g.addColorStop(0, color);
   g.addColorStop(1, 'transparent');
   c.fillStyle=g;
   c.beginPath();c.arc(x,y,r*2.2*mult,0,Math.PI*2);c.fill();
@@ -477,7 +514,7 @@ function weightedRollTier(){
   return 'common';
 }
 function rollSkin(minTier){
-  const order=['common','uncommon','rare','epic','legendary'];
+  const order=['common','uncommon','rare','epic','legendary','mythic'];
   let tier = weightedRollTier();
   if(minTier && order.indexOf(tier) < order.indexOf(minTier)) tier = minTier;
   const pool = SKINS.filter(s=>s.tier===tier);
@@ -660,15 +697,15 @@ function buildSlots(){
   const n = 9;
   slots = [];
   const values = [
-    {label:'100', coins:100, color:'#9aa1c9'},
-    {label:'x2', coins:130, color:'#4dffe0'},
-    {label:'x3', coins:190, color:'#4d8bff'},
-    {label:'x5', coins:300, color:'#c14dff'},
-    {label:'CHEST', coins:1000, color:'#ffce3a', chest:true},
-    {label:'x5', coins:300, color:'#c14dff'},
-    {label:'x3', coins:190, color:'#4d8bff'},
-    {label:'x2', coins:130, color:'#4dffe0'},
-    {label:'100', coins:100, color:'#9aa1c9'},
+    {label:'20', coins:20, color:'#9aa1c9'},
+    {label:'x2', coins:26, color:'#4dffe0'},
+    {label:'x3', coins:38, color:'#4d8bff'},
+    {label:'x5', coins:60, color:'#c14dff'},
+    {label:'CHEST', coins:200, color:'#ffce3a', chest:true},
+    {label:'x5', coins:60, color:'#c14dff'},
+    {label:'x3', coins:38, color:'#4d8bff'},
+    {label:'x2', coins:26, color:'#4dffe0'},
+    {label:'20', coins:20, color:'#9aa1c9'},
   ];
   const slotW = W/n;
   for(let i=0;i<n;i++){
@@ -695,10 +732,11 @@ let lastDropTime = 0;
 const DROP_COOLDOWN_MS = 500;
 const MAX_BALLS = 12;
 // Sliding-window coin earn cap. Even at max drop rate, the player can't earn
-// more than ~720 coins/sec. This is roughly what sustained skilled play
-// produces naturally; anything above this is spam-exploit territory.
+// more than ~144 coins/sec. This is the whole economy scaled down to ~1/5th
+// of its old throughput, so grinding out epics/legendaries/mythics takes
+// meaningfully longer instead of being spammable to a full unlock in minutes.
 const EARN_WINDOW_MS = 1000;
-const EARN_WINDOW_CAP = 720;
+const EARN_WINDOW_CAP = 144;
 
 function showBanner(text, ms){
   const el = document.getElementById('banner');
@@ -916,7 +954,7 @@ function stepPhysics(){
 
     // top boundary catch during gravity flip (acts as elevated "slots")
     if(gravityDir===-1 && b.y - b.r < RAIL_H){
-      const val = Math.round(150 * b.valueMult);
+      const val = Math.round(30 * b.valueMult);
       awardCoins(val);
       addPopup(b.x, RAIL_H, '+'+val, '#4dffe0');
       addParticles(b.x, RAIL_H, '#4dffe0', 14);
@@ -942,7 +980,7 @@ function stepPhysics(){
 
         if(p.type==='seismic'){
           shakeTime = 14; shakeMag = 5;
-          const val = Math.round(25*b.valueMult);
+          const val = Math.round(5*b.valueMult);
           awardCoins(val);
           addPopup(p.x,p.y-14,'+'+val,'#ffce3a');
           addParticles(p.x,p.y,'#ffce3a',12);
@@ -970,7 +1008,7 @@ function stepPhysics(){
           showBanner('CHAOS CORE!', 1400);
           b._consumedBySplit = true;
         } else if(p.type==='normal' || p.type==='flipper'){
-          if(Math.random()<0.5){
+          if(Math.random()<0.1){
             awardCoins(1);
           }
         }
@@ -983,7 +1021,7 @@ function stepPhysics(){
     if(b.y + b.r > H - SLOT_H){
       // moving slot jackpot check first
       if(b.x > movingSlot.x && b.x < movingSlot.x+movingSlot.w){
-        const val = Math.round(5000*b.valueMult);
+        const val = Math.round(1000*b.valueMult);
         awardLargeCoins(val);
         awardGems(3);
         addPopup(b.x, H-SLOT_H, 'JACKPOT +'+val, '#ffce3a');
@@ -1237,11 +1275,18 @@ function drawRollPreview(skin, spinning){
   skin.render(rollCtx, 70, 70, 34, performance.now());
 }
 
+// Sub-1% tiers (mythic) round to "0%" with toFixed(0), which reads as
+// impossible even though the odds are real — use extra decimal precision
+// for anything under 1%.
+function formatOddsPct(raw){
+  return raw < 1 ? raw.toFixed(1) : raw.toFixed(0);
+}
+
 function renderOddsLegend(){
   const el = document.getElementById('oddsLegend');
   const total = Object.values(TIER_WEIGHT).reduce((a,b)=>a+b,0);
   el.innerHTML = Object.keys(TIER_WEIGHT).map(tier=>{
-    const pct = (TIER_WEIGHT[tier]/total*100).toFixed(0);
+    const pct = formatOddsPct(TIER_WEIGHT[tier]/total*100);
     const name = tier.charAt(0).toUpperCase()+tier.slice(1);
     return `<span style="color:${TIER_COLORS[tier]}">${name} ${pct}%</span>`;
   }).join(' &nbsp;&middot;&nbsp; ');
@@ -1291,7 +1336,7 @@ function startGachaAnimation(targetSkin){
   rollBtn.disabled = true;
   gemRollBtn.disabled = true;
   revealLabel.style.visibility = 'hidden';
-  const tierExtra = {common:0, uncommon:150, rare:400, epic:700, legendary:1100}[targetSkin.tier] || 0;
+  const tierExtra = {common:0, uncommon:150, rare:400, epic:700, legendary:1100, mythic:1600}[targetSkin.tier] || 0;
   const duration = 1200 + tierExtra;
   const myId = ++rollAnimSeq;
   rollAnim = {
@@ -1355,7 +1400,7 @@ function applyRollResult(skin){
   let isDupe = false, pct = '0';
   try{
     const total = Object.values(TIER_WEIGHT).reduce((a,b)=>a+b,0);
-    pct = (TIER_WEIGHT[skin.tier]/total*100).toFixed(0);
+    pct = formatOddsPct(TIER_WEIGHT[skin.tier]/total*100);
     isDupe = state.owned.includes(skin.id);
   }catch(err){
     console.error('roll display-info compute failed', err);
@@ -1363,7 +1408,7 @@ function applyRollResult(skin){
 
   try{
     if(isDupe){
-      state.coins += 100;
+      state.coins += 20;
     } else if(!state.owned.includes(skin.id)){
       state.owned.push(skin.id);
     }
@@ -1394,8 +1439,8 @@ function applyRollResult(skin){
     revealLabel.style.visibility = 'visible';
     drawRollPreview(skin);
     pulseStage(TIER_COLORS[skin.tier]);
-    if(skin.tier==='epic' || skin.tier==='legendary'){
-      burstRollCanvas(TIER_COLORS[skin.tier], skin.tier==='legendary'?10:6);
+    if(skin.tier==='epic' || skin.tier==='legendary' || skin.tier==='mythic'){
+      burstRollCanvas(TIER_COLORS[skin.tier], skin.tier==='mythic'?16:(skin.tier==='legendary'?10:6));
     }
   }catch(err){
     console.error('roll reveal effect error (skin was still awarded):', err);
