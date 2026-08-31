@@ -91,7 +91,7 @@
     color:#cfd3f5;
   }
   .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
-
+ 
   .stage-wrap{
     display:flex;justify-content:center;padding:6px 8px 4px;
   }
@@ -132,7 +132,7 @@
     white-space:nowrap;
   }
   .banner.show{transform:translate(-50%,0);opacity:1;}
-
+ 
   .hint{
     text-align:center;
     font-size:11px;
@@ -140,11 +140,11 @@
     padding:6px 10px 2px;
     letter-spacing:.03em;
   }
-
+ 
   .controls-row{
     display:flex;justify-content:center;gap:10px;padding:10px 10px 26px;flex-wrap:wrap;
   }
-
+ 
   /* Skin machine modal */
   .modal-backdrop{
     position:fixed;inset:0;
@@ -229,7 +229,7 @@
     font-size:7px;font-weight:800;letter-spacing:.05em;
     padding:1px 4px;border-radius:5px;text-transform:uppercase;
   }
-
+ 
   .footer-note{
     text-align:center;color:var(--text-dim);font-size:10.5px;
     padding:0 20px 22px;line-height:1.6;
@@ -237,18 +237,18 @@
 </style>
 </head>
 <body>
-
+ 
 <div class="marquee">
   <h1>Bounce Chaos</h1>
   <div class="sub">Drop &middot; Chaos &middot; Collect</div>
 </div>
-
+ 
 <div class="hud">
   <div class="chip coins"><span class="ico">&#9679;</span><span id="coinDisplay">0</span></div>
   <div class="chip gems"><span class="ico">&#9670;</span><span id="gemDisplay">0</span></div>
   <button class="btn btn-primary" id="openMachineBtn" disabled>Skin Machine</button>
 </div>
-
+ 
 <div class="stage-wrap">
   <div class="stage">
     <div class="stage-inner">
@@ -257,22 +257,22 @@
     </div>
   </div>
 </div>
-
+ 
 <div class="hint" id="hintText">Loading save&hellip;</div>
-
+ 
 <div class="controls-row">
   <button class="btn btn-ghost" id="resetBtn" disabled>Reset Progress</button>
 </div>
-
+ 
 <div class="footer-note">Chaos Core splits your ball into five. Black holes teleport it. Seismic pegs shake loose bonus coins. Watch the rail — gravity won't always point down.</div>
-
+ 
 <!-- Skin Machine Modal -->
 <div class="modal-backdrop" id="modalBackdrop">
   <div class="modal">
     <button class="close-x" id="closeModalBtn">&times;</button>
     <h2>Skin Machine</h2>
     <div class="desc">Spend Coins to roll a new ball skin. Duplicate rolls refund partial Coins.</div>
-
+ 
     <div class="roll-zone">
       <div class="roll-stage"><canvas id="rollCanvas" width="140" height="140"></canvas></div>
       <div class="reveal-label" id="revealLabel" style="visibility:hidden;">—</div>
@@ -284,15 +284,15 @@
         Skip roll animation
       </label>
     </div>
-
+ 
     <div class="desc" style="margin-bottom:8px;">Your Skins</div>
     <div class="skin-grid" id="skinGrid"></div>
   </div>
 </div>
-
+ 
 <script>
 (function(){
-
+ 
 /* =========================================================
    SKIN DEFINITIONS
    ========================================================= */
@@ -302,7 +302,7 @@ const TIER_COLORS = {
 // Rebalanced: epic/legendary pulled way down and a new mythic tier sits
 // above legendary as the true chase item. Total still sums to 100.
 const TIER_WEIGHT = { common:52, uncommon:32, rare:12, epic:2.8, legendary:1, mythic:0.2 };
-
+ 
 function drawBallBase(ctx,x,y,r,fill){
   ctx.beginPath();
   ctx.arc(x,y,r,0,Math.PI*2);
@@ -314,7 +314,7 @@ function drawBallBase(ctx,x,y,r,fill){
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
   ctx.fill();
 }
-
+ 
 const SKINS = [
   // common - solid colors
   {id:'matte_red', tier:'common', name:'Matte Red', render:(c,x,y,r)=>drawBallBase(c,x,y,r,'#d6394f')},
@@ -485,7 +485,7 @@ const SKINS = [
       glow(c,x,y,r,'#ff2d5e',2);
   }, trail:true},
 ];
-
+ 
 function glow(c,x,y,r,color,mult){
   mult = mult||1;
   c.save();
@@ -501,9 +501,9 @@ function glow(c,x,y,r,color,mult){
   c.beginPath();c.arc(x,y,r*2.2*mult,0,Math.PI*2);c.fill();
   c.restore();
 }
-
+ 
 function skinById(id){ return SKINS.find(s=>s.id===id) || SKINS[0]; }
-
+ 
 function weightedRollTier(){
   const total = Object.values(TIER_WEIGHT).reduce((a,b)=>a+b,0);
   let roll = Math.random()*total;
@@ -520,7 +520,7 @@ function rollSkin(minTier){
   const pool = SKINS.filter(s=>s.tier===tier);
   return pool[Math.floor(Math.random()*pool.length)];
 }
-
+ 
 /* =========================================================
    STATE / PERSISTENCE
    ========================================================= */
@@ -532,17 +532,56 @@ let state = {
   equipped: 'matte_red',
   skipAnimation: false
 };
+ 
+// ---- Save integrity -----------------------------------------------------
+// NOTE ON WHAT THIS DOES AND DOESN'T DO: this is a client-only game with no
+// server, so there is no way to make the save file truly un-forgeable —
+// anyone willing to read this source and reimplement the signing below
+// could still do it. What this DOES stop is generic "paste this script"
+// cheats (like ones that blindly write coins/owned onto the save object):
+// those scripts don't know about the nested/signed shape below, so their
+// writes land on fields the game never reads, and get discarded on reload.
+const _INTEGRITY_SALT = [98,111,117,110,99,101,45,99,104,97,111,115,45,55,120,113,45,105,110,116,101,103,114,105,116,121]
+  .map(c=>String.fromCharCode(c)).join('');
+async function _signPayload(dataStr){
+  try{
+    const enc = new TextEncoder().encode(_INTEGRITY_SALT + dataStr + _INTEGRITY_SALT);
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){
+    console.warn('signing unavailable, saves will be unsigned this session', e);
+    return null;
+  }
+}
+// Clamp/validate a loaded state object into something structurally sane.
+// This can't tell "legitimately earned" from "hacked in" — it just refuses
+// to load garbage (wrong types, impossible numbers, unknown skin ids).
+function _sanitizeState(s){
+  const validIds = new Set(SKINS.map(sk=>sk.id));
+  const num = (v, def, max)=> (typeof v==='number' && isFinite(v) && v>=0) ? Math.min(v, max) : def;
+  let owned = Array.isArray(s.owned) ? s.owned.filter(id=>typeof id==='string' && validIds.has(id)) : [];
+  if(!owned.length) owned = ['matte_red'];
+  let equipped = (typeof s.equipped==='string' && owned.includes(s.equipped)) ? s.equipped : owned[0];
+  return {
+    coins: num(s.coins, 800, 2_000_000),
+    gems: num(s.gems, 5, 20_000),
+    owned,
+    equipped,
+    skipAnimation: !!s.skipAnimation
+  };
+}
 // `loaded` is intentionally OUTSIDE state. If it lived inside, the late
 // Object.assign(state, parsed) below would overwrite it back to false on
 // every save load, which is the exact clobber we're trying to avoid.
 let loaded = false;
-
+ 
 // Timeout so if localStorage is wedged (e.g. on GameJolt iframes where
 // getItem can hang behind a quota/permission check), we don't stay stuck
 // on "Loading save…" forever. Fall back to defaults after 1500ms.
 const LOAD_TIMEOUT_MS = 1500;
-function loadState(){
+async function loadState(){
   let resolved = false;
+  let tamperDetected = false;
   const finish = ()=>{
     if(resolved) return;
     resolved = true;
@@ -556,8 +595,14 @@ function loadState(){
     openMachineBtn.disabled = false;
     resetBtn.disabled = false;
     document.getElementById('hintText').innerHTML =
-      'Drag along the top rail to aim &middot; tap or press space to drop';
+      tamperDetected
+        ? 'Save data looked tampered with, so it was reset &middot; drag the top rail to aim'
+        : 'Drag along the top rail to aim &middot; tap or press space to drop';
     requestAnimationFrame(loop);
+    // Re-persist immediately: turns a legacy/unsigned save into a signed
+    // one, and locks in a tamper-reset so re-running an old cheat script
+    // twice in a row doesn't quietly get "accepted" a second time.
+    saveState();
   };
   const timeoutId = setTimeout(()=>{
     if(resolved) return;
@@ -568,7 +613,28 @@ function loadState(){
     const raw = localStorage.getItem(STORAGE_KEY);
     if(raw){
       const parsed = JSON.parse(raw);
-      state = Object.assign(state, parsed);
+      if(parsed && parsed.v===2 && typeof parsed.sig==='string' && parsed.data){
+        // Signed save: only trust it if the signature actually matches.
+        const dataStr = JSON.stringify(parsed.data);
+        const expected = await _signPayload(dataStr);
+        if(expected!==null && expected===parsed.sig){
+          state = _sanitizeState(Object.assign({}, state, parsed.data));
+        } else if(expected===null){
+          // crypto.subtle unavailable (very old/insecure context) — fall
+          // back to trusting the shape rather than bricking the game.
+          state = _sanitizeState(Object.assign({}, state, parsed.data));
+        } else {
+          console.warn('save signature mismatch — save was edited outside the game, resetting');
+          tamperDetected = true;
+          state = _sanitizeState({});
+        }
+      } else if(parsed && typeof parsed==='object'){
+        // Legacy (pre-signing) save, or a hand-edited object shaped like
+        // one. Accept it once so existing players keep their progress,
+        // sanitize it, then it gets signed going forward by finish()'s
+        // saveState() call above.
+        state = _sanitizeState(Object.assign({}, state, parsed));
+      }
     }
   }catch(e){ console.warn('save load failed', e); }
   clearTimeout(timeoutId);
@@ -584,7 +650,12 @@ function saveState(){
 async function flushSave(){
   if(!dirty) return;
   try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const clean = _sanitizeState(state);
+    state = Object.assign(state, clean);
+    const dataStr = JSON.stringify(clean);
+    const sig = await _signPayload(dataStr);
+    const payload = sig!==null ? {v:2, data:clean, sig} : clean;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     dirty = false;
   }catch(e){
     // Some embedded contexts (e.g. GameJolt iframe sandbox) block
@@ -600,19 +671,19 @@ window.addEventListener('beforeunload', flushSave);
 window.addEventListener('pagehide', flushSave);
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden) flushSave(); });
 setInterval(flushSave, 5000);
-
+ 
 function refreshHud(){
   document.getElementById('coinDisplay').textContent = Math.floor(state.coins).toLocaleString();
   document.getElementById('gemDisplay').textContent = Math.floor(state.gems).toLocaleString();
 }
-
+ 
 /* =========================================================
    CANVAS / BOARD SETUP
    ========================================================= */
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
 const stageInner = document.querySelector('.stage-inner');
-
+ 
 let W=460, H=680, DPR=1;
 function resize(){
   const rect = stageInner.getBoundingClientRect();
@@ -626,7 +697,7 @@ function resize(){
   buildBoard();
 }
 window.addEventListener('resize', resize);
-
+ 
 /* Layout regions */
 const RAIL_H = 46;
 let SLOT_H = 54;
@@ -634,7 +705,7 @@ let pegs = [];
 let flippers = [];
 let portalPairs = [];
 let coreIndex = -1;
-
+ 
 function buildBoard(){
   pegs = [];
   const rows = 9;
@@ -643,7 +714,7 @@ function buildBoard(){
   const rowSpacing = (bottom-top)/(rows-1);
   const maxCols = 8;
   const colSpacing = W/(maxCols+1);
-
+ 
   for(let r=0;r<rows;r++){
     const y = top + r*rowSpacing;
     const cols = (r%2===0) ? maxCols : maxCols-1;
@@ -653,17 +724,17 @@ function buildBoard(){
       pegs.push({x,y,r:6,type:'normal',row:r,col:c});
     }
   }
-
+ 
   // pick chaos core: middle row, middle col
   const midRow = Math.floor(rows/2);
   let core = pegs.filter(p=>p.row===midRow).sort((a,b)=>Math.abs(a.x-W/2)-Math.abs(b.x-W/2))[0];
   if(core) core.type='core';
-
+ 
   // seismic pegs: scattered pattern
   pegs.forEach(p=>{
     if(p.type==='normal' && (p.row+p.col)%7===0) p.type='seismic';
   });
-
+ 
   // portal pairs: two pairs symmetric
   portalPairs = [];
   const candidateRowsForPortals = [1, rows-3];
@@ -677,7 +748,7 @@ function buildBoard(){
       portalPairs.push('p'+i);
     }
   });
-
+ 
   // flippers: second to last row, far left and far right
   flippers = [];
   const flipRow = rows-2;
@@ -687,10 +758,10 @@ function buildBoard(){
     flipRowPegs[flipRowPegs.length-1].type='flipper'; flipRowPegs[flipRowPegs.length-1].armed=false; flipRowPegs[flipRowPegs.length-1].cooldown=0;
     flippers = [flipRowPegs[0], flipRowPegs[flipRowPegs.length-1]];
   }
-
+ 
   buildSlots();
 }
-
+ 
 let slots = [];
 let movingSlot = { x:0, dir:1, w:44 };
 function buildSlots(){
@@ -713,7 +784,7 @@ function buildSlots(){
   }
   movingSlot = { x: W/2 - 22, dir:1, w:44, speed: 1.6 };
 }
-
+ 
 /* =========================================================
    RUNTIME GAME STATE
    ========================================================= */
@@ -737,7 +808,7 @@ const MAX_BALLS = 12;
 // meaningfully longer instead of being spammable to a full unlock in minutes.
 const EARN_WINDOW_MS = 1000;
 const EARN_WINDOW_CAP = 144;
-
+ 
 function showBanner(text, ms){
   const el = document.getElementById('banner');
   el.textContent = text;
@@ -745,7 +816,7 @@ function showBanner(text, ms){
   clearTimeout(bannerTimeout);
   bannerTimeout = setTimeout(()=>el.classList.remove('show'), ms||1800);
 }
-
+ 
 function spawnBall(x){
   if(!loaded) return;
   if(balls.length >= MAX_BALLS) return;
@@ -755,7 +826,7 @@ function spawnBall(x){
     skinId: state.equipped, trail:[], splitDone:false, tpCooldown:0
   });
 }
-
+ 
 function tryDrop(x){
   if(!loaded) return;
   const now = performance.now();
@@ -763,7 +834,7 @@ function tryDrop(x){
   lastDropTime = now;
   spawnBall(x);
 }
-
+ 
 function addPopup(x,y,text,color){
   popups.push({x,y,text,color,life:60,vy:-0.9});
 }
@@ -774,7 +845,7 @@ function addParticles(x,y,color,n){
     particles.push({x,y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,life:30+Math.random()*20,color});
   }
 }
-
+ 
 // Per-second earn cap. Tracks a rolling window of small coin awards so a
 // player spamming drops (or hitting seismic pegs with 12 balls in flight)
 // can't outpace the natural physics earn rate. Excess awards are dropped
@@ -791,7 +862,7 @@ function _earnWindowUsed(){
   for(const e of _earnWindow) used += e.amt;
   return used;
 }
-
+ 
 function awardCoins(n){ if(!loaded) return; awardCoinsCapped(n, false); }
 function awardLargeCoins(n){ if(!loaded) return; awardCoinsCapped(n, true); }
 function awardCoinsCapped(n, bypass){
@@ -810,7 +881,7 @@ function awardCoinsCapped(n, bypass){
   saveState();
 }
 function awardGems(n){ if(!loaded) return; state.gems += n; refreshHud(); saveState(); }
-
+ 
 /* =========================================================
    INPUT
    ========================================================= */
@@ -820,7 +891,7 @@ function localPos(evt){
   const cy = (evt.touches ? evt.touches[0].clientY : evt.clientY) - rect.top;
   return {x:cx, y:cy};
 }
-
+ 
 canvas.addEventListener('mousemove', (e)=>{
   if(!loaded) return;
   const p = localPos(e);
@@ -828,14 +899,14 @@ canvas.addEventListener('mousemove', (e)=>{
   if(p.y < RAIL_H) launcherX = Math.max(14,Math.min(W-14,p.x));
 });
 canvas.addEventListener('mouseleave', ()=>{ mouse.active=false; });
-
+ 
 canvas.addEventListener('touchmove', (e)=>{
   if(!loaded) return;
   const p = localPos(e);
   launcherX = Math.max(14,Math.min(W-14,p.x));
   e.preventDefault();
 }, {passive:false});
-
+ 
 function handleTap(evt){
   if(!loaded) return;
   const p = localPos(evt);
@@ -864,19 +935,19 @@ canvas.addEventListener('touchstart', (e)=>{
 canvas.addEventListener('touchend', (e)=>{
   handleTap({clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY, touches:null});
 });
-
+ 
 document.addEventListener('keydown', (e)=>{
   if(!loaded) return;
   if(e.code==='Space'){ e.preventDefault(); tryDrop(launcherX); }
 });
-
+ 
 /* =========================================================
    PHYSICS
    ========================================================= */
 const GRAVITY = 0.30;
 const REST = 0.72;
 const WALL_REST = 0.75;
-
+ 
 function fireFlipper(f){
   f.armed=false;
   f.cooldown=90;
@@ -890,11 +961,11 @@ function fireFlipper(f){
   });
   showBanner('FLIPPER LAUNCH!', 1000);
 }
-
+ 
 function stepPhysics(){
   if(!loaded) return;
   const now = performance.now();
-
+ 
   // gravity flip event scheduling
   if(now > nextFlipAt){
     gravityDir = -1;
@@ -903,7 +974,7 @@ function stepPhysics(){
     nextFlipAt = now + 18000 + Math.random()*8000;
   }
   if(gravityDir===-1 && now > flipUntil){ gravityDir = 1; }
-
+ 
   // flipper arming schedule
   if(now > nextFlipperArmAt && flippers.length){
     const f = flippers[Math.floor(Math.random()*flippers.length)];
@@ -914,14 +985,14 @@ function stepPhysics(){
     nextFlipperArmAt = now + 9000 + Math.random()*6000;
   }
   flippers.forEach(f=>{ if(f.cooldown>0) f.cooldown--; });
-
+ 
   // moving slot patrol
   movingSlot.x += movingSlot.dir * movingSlot.speed;
   if(movingSlot.x < 0 || movingSlot.x+movingSlot.w > W) movingSlot.dir *= -1;
-
+ 
   const g = GRAVITY * gravityDir;
   const survivors = [];
-
+ 
   for(const b of balls){
     // cursor magnet (desktop only)
     if(mouse.active){
@@ -933,25 +1004,25 @@ function stepPhysics(){
         b.vy += (mouse.y-b.y)/d*strength;
       }
     }
-
+ 
     b.vy += g;
     b.x += b.vx;
     b.y += b.vy;
     b.vx *= 0.999;
-
+ 
     if(b.tpCooldown>0) b.tpCooldown--;
-
+ 
     // trail
     const skin = skinById(b.skinId);
     if(skin.trail){
       b.trail.push({x:b.x,y:b.y});
       if(b.trail.length>10) b.trail.shift();
     }
-
+ 
     // walls
     if(b.x - b.r < 0){ b.x = b.r; b.vx *= -WALL_REST; }
     if(b.x + b.r > W){ b.x = W-b.r; b.vx *= -WALL_REST; }
-
+ 
     // top boundary catch during gravity flip (acts as elevated "slots")
     if(gravityDir===-1 && b.y - b.r < RAIL_H){
       const val = Math.round(30 * b.valueMult);
@@ -963,7 +1034,7 @@ function stepPhysics(){
     if(gravityDir===1 && b.y - b.r < RAIL_H){
       b.y = RAIL_H + b.r; b.vy *= -0.4;
     }
-
+ 
     // peg collisions
     for(const p of pegs){
       const dx=b.x-p.x, dy=b.y-p.y;
@@ -977,7 +1048,7 @@ function stepPhysics(){
         b.vx -= (1+REST)*dot*nx;
         b.vy -= (1+REST)*dot*ny;
         b.vx += (Math.random()-0.5)*0.6;
-
+ 
         if(p.type==='seismic'){
           shakeTime = 14; shakeMag = 5;
           const val = Math.round(5*b.valueMult);
@@ -1014,9 +1085,9 @@ function stepPhysics(){
         }
       }
     }
-
+ 
     if(b._consumedBySplit) continue;
-
+ 
     // bottom slots
     if(b.y + b.r > H - SLOT_H){
       // moving slot jackpot check first
@@ -1045,26 +1116,26 @@ function stepPhysics(){
       addParticles(b.x, H-SLOT_H, slot.color, 12);
       continue;
     }
-
+ 
     survivors.push(b);
   }
   balls = survivors;
-
+ 
   // popups
   popups = popups.filter(p=>{ p.y += p.vy; p.life--; return p.life>0; });
   particles = particles.filter(pt=>{
     pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=0.12; pt.life--; return pt.life>0;
   });
-
+ 
   if(shakeTime>0) shakeTime--;
 }
-
+ 
 let pendingFreeRoll = false;
 function maybeFreeRoll(guaranteedRare){
   pendingFreeRoll = guaranteedRare ? 'rare' : true;
   showBanner('FREE ROLL READY — Open Skin Machine', 2600);
 }
-
+ 
 /* =========================================================
    RENDER
    ========================================================= */
@@ -1075,7 +1146,7 @@ function drawPeg(p, t){
   if(p.type==='portal'){ color = p.pairId==='p0' ? '#9a6bff':'#ff3d7f'; strokeGlow=color; }
   if(p.type==='core'){ color='#ff3d7f'; strokeGlow='#ff3d7f'; }
   if(p.type==='flipper'){ color = p.armed ? '#4dffe0' : '#4d8bff'; strokeGlow = p.armed?'#4dffe0':null; }
-
+ 
   if(p.type==='core'){
     ctx.save();
     ctx.translate(p.x,p.y);
@@ -1088,7 +1159,7 @@ function drawPeg(p, t){
     ctx.beginPath(); ctx.arc(0,0,p.r+12,0,Math.PI*1.3); ctx.stroke();
     ctx.restore();
   }
-
+ 
   if(strokeGlow){
     ctx.save();
     ctx.globalCompositeOperation='lighter';
@@ -1098,32 +1169,32 @@ function drawPeg(p, t){
     ctx.beginPath(); ctx.arc(p.x,p.y,p.r*3.2,0,Math.PI*2); ctx.fill();
     ctx.restore();
   }
-
+ 
   ctx.beginPath();
   ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
   ctx.fillStyle=color;
   ctx.fill();
 }
-
+ 
 function render(){
   const t = performance.now();
   ctx.clearRect(0,0,W,H);
-
+ 
   ctx.save();
   if(shakeTime>0){
     ctx.translate((Math.random()-0.5)*shakeMag, (Math.random()-0.5)*shakeMag);
   }
-
+ 
   // background subtle grid
   ctx.fillStyle = gravityDir===-1 ? '#170a22' : '#080915';
   ctx.fillRect(-10,-10,W+20,H+20);
-
+ 
   // rail
   ctx.fillStyle = 'rgba(77,255,224,0.06)';
   ctx.fillRect(0,0,W,RAIL_H);
   ctx.strokeStyle='rgba(77,255,224,0.35)';
   ctx.beginPath(); ctx.moveTo(0,RAIL_H); ctx.lineTo(W,RAIL_H); ctx.stroke();
-
+ 
   // launcher indicator
   const inCooldown = (performance.now() - lastDropTime) < DROP_COOLDOWN_MS;
   ctx.save();
@@ -1141,10 +1212,10 @@ function render(){
   ctx.fillStyle='#4dffe0';
   ctx.fill();
   ctx.restore();
-
+ 
   // pegs
   pegs.forEach(p=>drawPeg(p,t));
-
+ 
   // flipper wedge indicators
   flippers.forEach(f=>{
     ctx.save();
@@ -1155,7 +1226,7 @@ function render(){
     ctx.stroke();
     ctx.restore();
   });
-
+ 
   // particles
   particles.forEach(pt=>{
     ctx.globalAlpha = Math.max(0,pt.life/40);
@@ -1165,7 +1236,7 @@ function render(){
     ctx.fill();
     ctx.globalAlpha=1;
   });
-
+ 
   // balls + trails
   balls.forEach(b=>{
     const skin = skinById(b.skinId);
@@ -1181,7 +1252,7 @@ function render(){
     }
     skin.render(ctx,b.x,b.y,b.r,t, mouse.active?mouse:null);
   });
-
+ 
   // slots
   const slotY = H-SLOT_H;
   slots.forEach(s=>{
@@ -1206,7 +1277,7 @@ function render(){
   ctx.fillStyle='#ffce3a';
   ctx.font='900 8px monospace';
   ctx.fillText('JACKPOT', movingSlot.x+movingSlot.w/2, slotY-8);
-
+ 
   // popups
   popups.forEach(p=>{
     ctx.globalAlpha = Math.max(0,p.life/60);
@@ -1216,10 +1287,10 @@ function render(){
     ctx.fillText(p.text, p.x, p.y);
     ctx.globalAlpha=1;
   });
-
+ 
   ctx.restore();
 }
-
+ 
 function loop(){
   try{
     stepPhysics();
@@ -1229,7 +1300,7 @@ function loop(){
   }
   requestAnimationFrame(loop);
 }
-
+ 
 /* =========================================================
    SKIN MACHINE UI
    ========================================================= */
@@ -1243,7 +1314,7 @@ const revealLabel = document.getElementById('revealLabel');
 const rollCanvas = document.getElementById('rollCanvas');
 const rollCtx = rollCanvas.getContext('2d');
 const skinGrid = document.getElementById('skinGrid');
-
+ 
 openMachineBtn.addEventListener('click', ()=>{
   modalBackdrop.classList.add('open');
   updateRollButtons();
@@ -1251,13 +1322,13 @@ openMachineBtn.addEventListener('click', ()=>{
 });
 closeModalBtn.addEventListener('click', ()=>{ modalBackdrop.classList.remove('open'); flushSave(); });
 modalBackdrop.addEventListener('click', (e)=>{ if(e.target===modalBackdrop){ modalBackdrop.classList.remove('open'); flushSave(); } });
-
+ 
 function updateRollButtons(){
   rollBtn.disabled = (!pendingFreeRoll && state.coins < 500) || !!rollAnim;
   gemRollBtn.disabled = state.gems < 20 || !!rollAnim;
   rollBtn.textContent = pendingFreeRoll ? 'Claim Free Roll!' : 'Roll — 500 Coins';
 }
-
+ 
 function drawRollPreview(skin, spinning){
   rollCtx.clearRect(0,0,140,140);
   rollCtx.fillStyle = TIER_COLORS[skin.tier]+'22';
@@ -1274,14 +1345,14 @@ function drawRollPreview(skin, spinning){
   }
   skin.render(rollCtx, 70, 70, 34, performance.now());
 }
-
+ 
 // Sub-1% tiers (mythic) round to "0%" with toFixed(0), which reads as
 // impossible even though the odds are real — use extra decimal precision
 // for anything under 1%.
 function formatOddsPct(raw){
   return raw < 1 ? raw.toFixed(1) : raw.toFixed(0);
 }
-
+ 
 function renderOddsLegend(){
   const el = document.getElementById('oddsLegend');
   const total = Object.values(TIER_WEIGHT).reduce((a,b)=>a+b,0);
@@ -1291,7 +1362,7 @@ function renderOddsLegend(){
     return `<span style="color:${TIER_COLORS[tier]}">${name} ${pct}%</span>`;
   }).join(' &nbsp;&middot;&nbsp; ');
 }
-
+ 
 function burstRollCanvas(color, ringCount){
   let frame = 0;
   const maxFrames = 24;
@@ -1318,7 +1389,7 @@ function burstRollCanvas(color, ringCount){
   }
   step();
 }
-
+ 
 function pulseStage(color){
   const el = document.querySelector('.roll-stage');
   el.style.transition = 'box-shadow .1s ease';
@@ -1328,10 +1399,10 @@ function pulseStage(color){
     el.style.boxShadow = 'none';
   }, 90);
 }
-
+ 
 let rollAnim = null;
 let rollAnimSeq = 0;
-
+ 
 function startGachaAnimation(targetSkin){
   rollBtn.disabled = true;
   gemRollBtn.disabled = true;
@@ -1361,7 +1432,7 @@ function startGachaAnimation(targetSkin){
     }
   }, duration + 700);
 }
-
+ 
 function animationFrameTick(){
   try{
     const t = performance.now();
@@ -1393,7 +1464,7 @@ function animationFrameTick(){
   requestAnimationFrame(animationFrameTick);
 }
 requestAnimationFrame(animationFrameTick);
-
+ 
 function applyRollResult(skin){
   // Compute display info BEFORE touching state, so the cosmetic reveal can
   // still run even if a state mutation throws.
@@ -1405,7 +1476,7 @@ function applyRollResult(skin){
   }catch(err){
     console.error('roll display-info compute failed', err);
   }
-
+ 
   try{
     if(isDupe){
       state.coins += 20;
@@ -1415,7 +1486,7 @@ function applyRollResult(skin){
   }catch(err){
     console.error('roll state update failed', err);
   }
-
+ 
   // Critical game-state updates happen first and unconditionally — the
   // player must always get their skin/refund and a working button, even
   // if something below in the purely cosmetic reveal goes wrong.
@@ -1430,7 +1501,7 @@ function applyRollResult(skin){
     rollBtn.disabled = (!pendingFreeRoll && state.coins < 500);
     gemRollBtn.disabled = state.gems < 20;
   }
-
+ 
   try{
     revealLabel.textContent = isDupe
       ? skin.name+' (DUPLICATE +100) · '+pct+'% odds'
@@ -1446,7 +1517,7 @@ function applyRollResult(skin){
     console.error('roll reveal effect error (skin was still awarded):', err);
   }
 }
-
+ 
 function doRoll(cost, currency, minTier){
   if(!loaded) return;
   if(rollAnim) return;
@@ -1455,7 +1526,7 @@ function doRoll(cost, currency, minTier){
   if(currency==='coins') state.coins -= cost; else state.gems -= cost;
   refreshHud();
   saveState();
-
+ 
   const skin = rollSkin(minTier);
   if(state.skipAnimation){
     applyRollResult(skin);
@@ -1463,7 +1534,7 @@ function doRoll(cost, currency, minTier){
     startGachaAnimation(skin);
   }
 }
-
+ 
 rollBtn.addEventListener('click', ()=>{
   if(rollAnim) return;
   if(pendingFreeRoll){
@@ -1475,13 +1546,13 @@ rollBtn.addEventListener('click', ()=>{
   doRoll(500,'coins',null);
 });
 gemRollBtn.addEventListener('click', ()=> doRoll(20,'gems','rare'));
-
+ 
 document.getElementById('skipAnimCheckbox').addEventListener('change', (e)=>{
   state.skipAnimation = e.target.checked;
   saveState();
 });
 renderOddsLegend();
-
+ 
 function renderSkinGrid(){
   // Build into a detached fragment first so a throw mid-loop leaves the
   // existing visible grid intact rather than wiping it to empty. That
@@ -1531,7 +1602,7 @@ function renderSkinGrid(){
     console.error('renderSkinGrid top-level failure', err);
   }
 }
-
+ 
 document.getElementById('resetBtn').addEventListener('click', async ()=>{
   if(!confirm('Reset all Coins, Gems, and unlocked skins?')) return;
   state = { coins:800, gems:5, owned:['matte_red'], equipped:'matte_red', skipAnimation: state.skipAnimation };
@@ -1540,7 +1611,7 @@ document.getElementById('resetBtn').addEventListener('click', async ()=>{
   refreshHud();
   renderSkinGrid();
 });
-
+ 
 /* =========================================================
    INIT
    ========================================================= */
@@ -1548,8 +1619,9 @@ resize();
 loadState();
 // The game loop is now started from inside loadState(), AFTER the save
 // has resolved and the loaded flag is set — see loadState().
-
+ 
 })();
 </script>
 </body>
 </html>
+ 
