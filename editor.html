@@ -1,0 +1,2730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel — code editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ---- color tokens ---- */
+    --bg-app: #100f0d;
+    --bg-panel: #1a1815;
+    --bg-panel-raised: #232019;
+    --bg-editor: #15140f;
+    --bg-editor-gutter: #1b1912;
+    --bg-hover: #2b2720;
+    --bg-active: #322c22;
+    --border: #322d24;
+    --border-soft: #262219;
+
+    --text-bright: #f2ecdc;
+    --text-primary: #cfc7b4;
+    --text-dim: #8c8371;
+    --text-faint: #5f584a;
+
+    --amber: #e8a33d;
+    --amber-dim: #a97a34;
+    --teal: #67b3a3;
+    --teal-dim: #4c8479;
+    --clay: #d98a5f;
+    --red: #d9634a;
+
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --font-display: 'Space Grotesk', var(--font-mono);
+    --editor-font-size: 13.5px;
+
+    --radius: 3px;
+    --titlebar-h: 38px;
+    --statusbar-h: 26px;
+    --tabs-h: 36px;
+    --crumbs-h: 28px;
+  }
+
+  [data-theme="paper"]{
+    --bg-app: #ece7da;
+    --bg-panel: #f4efe2;
+    --bg-panel-raised: #fbf7ec;
+    --bg-editor: #f8f4e8;
+    --bg-editor-gutter: #f0ebdc;
+    --bg-hover: #e5dfcd;
+    --bg-active: #ddd5bd;
+    --border: #d8d0ba;
+    --border-soft: #e2dac4;
+
+    --text-bright: #2a251c;
+    --text-primary: #3c362a;
+    --text-dim: #7d7361;
+    --text-faint: #a89f8b;
+
+    --amber: #b3701d;
+    --amber-dim: #8a5518;
+    --teal: #2f7d6c;
+    --teal-dim: #3f6a5f;
+    --clay: #a85a34;
+    --red: #b13f2a;
+  }
+
+  /* ---- extension: color themes (installed from the Extensions panel) ---- */
+  [data-color-theme="dracula"]{
+    --bg-app:#282a36; --bg-panel:#2b2d3a; --bg-panel-raised:#323445; --bg-editor:#282a36; --bg-editor-gutter:#2b2d3a;
+    --bg-hover:#383a4a; --bg-active:#44475a; --border:#44475a; --border-soft:#383a4a;
+    --text-bright:#f8f8f2; --text-primary:#e2e2f0; --text-dim:#9ea0c4; --text-faint:#6272a4;
+    --amber:#ffb86c; --amber-dim:#cf9152; --teal:#8be9fd; --teal-dim:#63a9b8; --clay:#ff79c6; --red:#ff5555;
+  }
+  [data-color-theme="one-dark"]{
+    --bg-app:#282c34; --bg-panel:#2c313a; --bg-panel-raised:#333842; --bg-editor:#282c34; --bg-editor-gutter:#2c313a;
+    --bg-hover:#333842; --bg-active:#3e4451; --border:#3e4451; --border-soft:#333842;
+    --text-bright:#d7dae0; --text-primary:#abb2bf; --text-dim:#7f8794; --text-faint:#5c6370;
+    --amber:#d19a66; --amber-dim:#a97e50; --teal:#56b6c2; --teal-dim:#3f8891; --clay:#c678dd; --red:#e06c75;
+  }
+  [data-color-theme="nord"]{
+    --bg-app:#2e3440; --bg-panel:#3b4252; --bg-panel-raised:#434c5e; --bg-editor:#2e3440; --bg-editor-gutter:#3b4252;
+    --bg-hover:#434c5e; --bg-active:#4c566a; --border:#4c566a; --border-soft:#434c5e;
+    --text-bright:#eceff4; --text-primary:#d8dee9; --text-dim:#8fa1b3; --text-faint:#616e88;
+    --amber:#d08770; --amber-dim:#b06f57; --teal:#88c0d0; --teal-dim:#6d9bab; --clay:#b48ead; --red:#bf616a;
+  }
+  [data-color-theme="solarized-light"]{
+    --bg-app:#fdf6e3; --bg-panel:#eee8d5; --bg-panel-raised:#f5efdc; --bg-editor:#fdf6e3; --bg-editor-gutter:#eee8d5;
+    --bg-hover:#e5decb; --bg-active:#ddd6bf; --border:#d3cbb2; --border-soft:#e5decb;
+    --text-bright:#073642; --text-primary:#586e75; --text-dim:#839496; --text-faint:#93a1a1;
+    --amber:#b58900; --amber-dim:#8a6a00; --teal:#2aa198; --teal-dim:#21807a; --clay:#cb4b16; --red:#dc322f;
+  }
+  [data-color-theme="monokai"]{
+    --bg-app:#272822; --bg-panel:#2d2e27; --bg-panel-raised:#33342b; --bg-editor:#272822; --bg-editor-gutter:#2d2e27;
+    --bg-hover:#3e3d32; --bg-active:#49483e; --border:#49483e; --border-soft:#3e3d32;
+    --text-bright:#f8f8f2; --text-primary:#cfcfc2; --text-dim:#9d9d90; --text-faint:#75715e;
+    --amber:#fd971f; --amber-dim:#c97a1a; --teal:#66d9ef; --teal-dim:#4ea6b8; --clay:#ae81ff; --red:#f92672;
+  }
+  [data-color-theme="synthwave"]{
+    --bg-app:#170a26; --bg-panel:#20103a; --bg-panel-raised:#2a1548; --bg-editor:#190c2c; --bg-editor-gutter:#200f38;
+    --bg-hover:#341a5c; --bg-active:#3d1f6b; --border:#3a1e63; --border-soft:#2a1548;
+    --text-bright:#fbe9ff; --text-primary:#d9b8ff; --text-dim:#9c7fc9; --text-faint:#6f5798;
+    --amber:#ff2fd0; --amber-dim:#c221a0; --teal:#33e6ff; --teal-dim:#26a8bd; --clay:#ff8b3d; --red:#ff4d6d;
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background: var(--bg-app);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    overflow:hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection{ background: rgba(232,163,61,.28); }
+  button{ font-family: inherit; }
+  ::-webkit-scrollbar{ width:11px; height:11px; }
+  ::-webkit-scrollbar-track{ background: transparent; }
+  ::-webkit-scrollbar-thumb{ background: var(--border); border:3px solid var(--bg-editor); border-radius:8px; }
+  ::-webkit-scrollbar-thumb:hover{ background: var(--text-faint); }
+
+  .app{
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------------- titlebar ---------------- */
+  .titlebar{
+    height: var(--titlebar-h);
+    flex: 0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 0 10px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    -webkit-app-region: drag;
+  }
+  .titlebar-left, .titlebar-right{ display:flex; align-items:center; gap:10px; }
+  .brand{ display:flex; align-items:center; gap:8px; padding-right:10px; border-right:1px solid var(--border-soft); }
+  .brand-led{
+    width:7px; height:7px; border-radius:50%;
+    background: var(--amber);
+    box-shadow: 0 0 6px 1px rgba(232,163,61,.7);
+    animation: breathe 3.2s ease-in-out infinite;
+  }
+  @keyframes breathe{ 0%,100%{ opacity:.55 } 50%{ opacity:1 } }
+  .brand-name{ font-family: var(--font-display); font-weight:600; font-size:13px; color: var(--text-bright); letter-spacing:.2px; }
+  .brand-name span{ color: var(--text-dim); font-weight:500; }
+
+  .titlebar-search{
+    display:flex; align-items:center; gap:8px;
+    background: var(--bg-panel-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 5px 10px;
+    color: var(--text-dim);
+    font-size:12px;
+    cursor:pointer;
+    min-width: 260px;
+    -webkit-app-region: no-drag;
+  }
+  .titlebar-search:hover{ border-color: var(--text-faint); color: var(--text-primary); }
+  .kbd-hint{ margin-left:auto; display:flex; gap:3px; }
+  .kbd{
+    font-size:10px; padding:1px 5px; border-radius:3px;
+    background: var(--bg-hover); border:1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  .icon-btn{
+    width:26px; height:26px; display:flex; align-items:center; justify-content:center;
+    background:transparent; border:1px solid transparent; border-radius: var(--radius);
+    color: var(--text-dim); cursor:pointer; -webkit-app-region: no-drag;
+  }
+  .icon-btn:hover{ background: var(--bg-hover); color: var(--text-bright); border-color: var(--border); }
+  .icon-btn.active{ background: var(--bg-active); color: var(--amber); border-color: var(--border); }
+  .icon-btn svg{ width:15px; height:15px; }
+
+  /* ---------------- body layout ---------------- */
+  .body-wrap{ flex:1 1 auto; display:flex; min-height:0; }
+
+  .activity-bar{
+    width:42px; flex:0 0 auto;
+    background: var(--bg-panel);
+    border-right:1px solid var(--border);
+    display:flex; flex-direction:column; align-items:center;
+    padding-top:10px; gap:4px;
+  }
+  .activity-bar .icon-btn{ width:30px; height:30px; }
+
+  .sidebar{
+    width:230px; flex:0 0 auto;
+    background: var(--bg-panel);
+    border-right:1px solid var(--border);
+    display:flex; flex-direction:column;
+    overflow:hidden;
+    transition: width .14s ease, opacity .14s ease;
+  }
+  .sidebar.collapsed{ width:0; opacity:0; border-right:none; }
+
+  .sidebar-header{
+    height:32px; flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+    padding: 0 10px; color: var(--text-dim); font-size:11px; letter-spacing:.3px;
+  }
+  .sidebar-section-title{ font-family: var(--font-display); font-weight:600; color:var(--text-primary); }
+  .sidebar-scroll{ flex:1 1 auto; overflow-y:auto; padding-bottom:10px; }
+
+  .tree-node{ user-select:none; }
+  .tree-row{
+    display:flex; align-items:center; gap:6px;
+    padding: 3px 10px 3px 0;
+    font-size:12.5px; color: var(--text-primary);
+    cursor:pointer; white-space:nowrap;
+    border-left:2px solid transparent;
+  }
+  .tree-row:hover{ background: var(--bg-hover); }
+  .tree-row.active{ background: var(--bg-active); border-left-color: var(--amber); color: var(--text-bright); }
+  .tree-row .chev{ width:14px; height:14px; flex:0 0 auto; color: var(--text-faint); transition: transform .12s ease; }
+  .tree-row .chev.open{ transform: rotate(90deg); }
+  .tree-row .ficon{ width:14px; height:14px; flex:0 0 auto; }
+  .tree-children{ overflow:hidden; }
+  .tree-children.closed{ display:none; }
+  .indent-1 .tree-row{ padding-left:22px; }
+  .indent-2 .tree-row{ padding-left:38px; }
+  .tree-row .dot-modified{ margin-left:auto; width:6px; height:6px; border-radius:50%; background: var(--amber); flex: 0 0 auto; }
+
+  .sidebar-meta{
+    padding:10px; border-top:1px solid var(--border-soft);
+    font-size:11px; color: var(--text-faint); display:flex; flex-direction:column; gap:4px;
+  }
+  .meta-row{ display:flex; justify-content:space-between; }
+  .meta-row b{ color: var(--text-dim); font-weight:500; }
+
+  /* ---------------- editor column ---------------- */
+  .editor-col{ flex:1 1 auto; display:flex; flex-direction:column; min-width:0; min-height:0; }
+
+  .tabs{
+    height: var(--tabs-h); flex:0 0 auto;
+    display:flex; align-items:stretch;
+    background: var(--bg-panel);
+    border-bottom:1px solid var(--border);
+    overflow-x:auto; overflow-y:hidden;
+  }
+  .tab{
+    display:flex; align-items:center; gap:7px;
+    padding: 0 10px 0 12px;
+    border-right:1px solid var(--border-soft);
+    color: var(--text-dim);
+    font-size:12.5px;
+    cursor:pointer;
+    white-space:nowrap;
+    position:relative;
+    background: var(--bg-panel);
+  }
+  .tab.active{ color: var(--text-bright); background: var(--bg-editor); }
+  .tab.active::after{
+    content:""; position:absolute; left:0; right:0; top:-1px; height:2px; background: var(--amber);
+  }
+  .tab .ficon{ width:13px; height:13px; }
+  .tab .tab-close{
+    width:16px; height:16px; border-radius:3px; display:flex; align-items:center; justify-content:center;
+    color: var(--text-faint); flex:0 0 auto;
+  }
+  .tab .tab-close:hover{ background: var(--bg-hover); color: var(--text-bright); }
+  .tab .dot-modified{ width:6px; height:6px; border-radius:50%; background: var(--amber); flex:0 0 auto; }
+
+  .breadcrumbs{
+    height: var(--crumbs-h); flex:0 0 auto;
+    display:flex; align-items:center; gap:5px;
+    padding: 0 12px; font-size:11.5px; color: var(--text-faint);
+    background: var(--bg-editor); border-bottom:1px solid var(--border-soft);
+  }
+  .breadcrumbs .sep{ color: var(--text-faint); opacity:.6; }
+  .breadcrumbs .crumb-current{ color: var(--text-dim); }
+
+  .editor-stage{ flex:1 1 auto; display:flex; min-height:0; position:relative; }
+  .editor-host{ flex:1 1 auto; min-width:0; overflow:hidden; background: var(--bg-editor); }
+  .cm-editor{ height:100%; }
+
+  .minimap-wrap{
+    width:84px; flex:0 0 auto; background: var(--bg-editor-gutter);
+    border-left:1px solid var(--border-soft); position:relative; cursor:pointer;
+  }
+  #minimap{ display:block; width:100%; }
+  .minimap-viewport{
+    position:absolute; left:0; right:0; background: rgba(232,163,61,.10);
+    border-top:1px solid rgba(232,163,61,.5); border-bottom:1px solid rgba(232,163,61,.5);
+    pointer-events:none;
+  }
+
+  /* ---------------- editor empty state ---------------- */
+  .editor-empty-state{
+    position:absolute; inset:0; z-index:5;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+    background: var(--bg-editor); color: var(--text-dim); text-align:center; padding:20px;
+  }
+  .editor-empty-state.hidden{ display:none; }
+  .empty-icon{ color: var(--text-faint); margin-bottom:4px; }
+  .empty-icon svg{ width:34px; height:34px; }
+  .empty-title{ font-family:var(--font-display); font-weight:600; color: var(--text-bright); font-size:15px; }
+  .empty-sub{ font-size:12px; max-width:260px; line-height:1.5; }
+  .empty-actions{ display:flex; gap:8px; margin-top:8px; }
+  .empty-btn{
+    font-family:inherit; font-size:12px; padding:7px 14px; border-radius: var(--radius);
+    border:1px solid var(--border); background: var(--bg-panel-raised); color: var(--text-primary); cursor:pointer;
+  }
+  .empty-btn:hover{ border-color: var(--text-faint); color: var(--text-bright); }
+
+  /* ---------------- drag & drop ---------------- */
+  .editor-stage.drag-over::after{
+    content:""; position:absolute; inset:0; z-index:9;
+    background: rgba(232,163,61,.08); border:2px dashed var(--amber); pointer-events:none;
+  }
+
+  /* ---------------- live preview pane ---------------- */
+  .preview-pane{
+    width:40%; min-width:220px; flex:0 0 auto;
+    display:flex; flex-direction:column;
+    border-left:1px solid var(--border);
+  }
+  .preview-pane.hidden{ display:none; }
+  .preview-header{
+    height:30px; flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+    padding:0 6px 0 12px; background: var(--bg-panel); border-bottom:1px solid var(--border);
+    color: var(--text-dim); font-size:11px; letter-spacing:.3px;
+  }
+  .preview-actions{ display:flex; gap:1px; }
+  .preview-actions .icon-btn{ width:22px; height:22px; }
+  .preview-actions .icon-btn svg{ width:12px; height:12px; }
+  .preview-body{ flex:1 1 auto; position:relative; background:#fff; }
+  #preview-frame{ width:100%; height:100%; border:none; background:#fff; display:block; }
+  #preview-frame.hidden{ display:none; }
+  .preview-empty{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    padding:20px; text-align:center; color:#8c8371; font-size:12px; background:#f4f1ea;
+  }
+  .preview-empty.hidden{ display:none; }
+
+  /* ---------------- search panel ---------------- */
+  .search-input-row{
+    margin:8px 10px; display:flex; align-items:center; gap:7px;
+    background: var(--bg-panel-raised); border:1px solid var(--border); border-radius: var(--radius);
+    padding:6px 9px;
+  }
+  .search-input-row svg{ width:12px; height:12px; flex:0 0 auto; color: var(--text-faint); }
+  .search-input-row input{
+    flex:1; background:transparent; border:none; outline:none; color: var(--text-bright);
+    font-family: var(--font-mono); font-size:11.5px;
+  }
+  .search-file-group{ margin-bottom:2px; }
+  .search-file-header{
+    display:flex; align-items:center; gap:6px; padding:4px 10px;
+    font-size:11.5px; color: var(--text-primary); font-weight:500;
+  }
+  .search-file-header .ficon{ width:13px; height:13px; }
+  .search-file-count{
+    margin-left:auto; font-size:10px; color: var(--text-faint); background: var(--bg-hover);
+    border-radius:20px; padding:0 6px;
+  }
+  .search-matches{ display:flex; flex-direction:column; }
+  .search-match-row{
+    display:flex; gap:8px; padding:3px 10px 3px 30px; font-size:11.5px; cursor:pointer;
+    color: var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .search-match-row:hover{ background: var(--bg-hover); }
+  .search-line-no{ color: var(--text-faint); flex:0 0 auto; min-width:16px; text-align:right; }
+  .search-line-text mark{ background: rgba(232,163,61,.35); color: var(--text-bright); border-radius:2px; }
+
+  /* ---------------- bottom panel (terminal) ---------------- */
+  .bottom-panel{
+    flex:0 0 auto; height:200px; display:flex; flex-direction:column;
+    background: var(--bg-panel); border-top:1px solid var(--border);
+  }
+  .bottom-panel.collapsed{ height:0 !important; overflow:hidden; border-top:none; }
+  .panel-resize{ height:4px; flex:0 0 auto; cursor:row-resize; background:transparent; }
+  .panel-resize:hover{ background: var(--amber-dim); opacity:.4; }
+  .panel-tabs{
+    height:30px; flex:0 0 auto; display:flex; align-items:center; gap:2px;
+    padding:0 10px; border-bottom:1px solid var(--border-soft);
+  }
+  .panel-tab{
+    padding:4px 10px; font-size:11.5px; color: var(--text-dim); cursor:pointer; border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .panel-tab.active{ color: var(--text-bright); background: var(--bg-panel-raised); }
+  .panel-tab:hover:not(.active){ color: var(--text-primary); }
+  .panel-tabs .spacer{ flex:1; }
+  .panel-body{ flex:1 1 auto; overflow-y:auto; padding:8px 12px; font-size:12px; }
+  .term-line{ display:flex; gap:8px; line-height:1.65; color: var(--text-primary); white-space:pre-wrap; word-break:break-word; }
+  .term-line .prompt{ color: var(--teal); flex:0 0 auto; }
+  .term-line.err{ color: var(--red); }
+  .term-line.info{ color: var(--text-dim); }
+  .term-input-row{ display:flex; gap:8px; align-items:center; }
+  .term-input-row .prompt{ color: var(--teal); }
+  .term-input{
+    flex:1; background:transparent; border:none; outline:none; color: var(--text-bright);
+    font-family: var(--font-mono); font-size:12px; caret-color: var(--amber);
+  }
+
+  /* ---------------- status bar ---------------- */
+  .statusbar{
+    height: var(--statusbar-h); flex:0 0 auto;
+    background: var(--amber-dim);
+    color: #1a1409;
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 0 10px; font-size:11px; font-weight:500;
+  }
+  [data-theme="paper"] .statusbar{ color: #fbf7ec; }
+  .statusbar-group{ display:flex; align-items:center; gap:14px; height:100%; }
+  .status-item{ display:flex; align-items:center; gap:5px; cursor:default; opacity:.92; }
+  .status-item.clickable{ cursor:pointer; }
+  .status-item.clickable:hover{ opacity:1; text-decoration: underline; }
+  .status-item svg{ width:12px; height:12px; }
+  .status-item.hidden{ display:none; }
+
+  /* ---------------- command palette ---------------- */
+  .palette-overlay{
+    position:fixed; inset:0; background: rgba(10,9,7,.55);
+    display:flex; align-items:flex-start; justify-content:center;
+    padding-top:12vh; z-index:100;
+  }
+  .palette-overlay.hidden{ display:none; }
+  .palette{
+    width:560px; max-width:90vw; max-height:60vh;
+    background: var(--bg-panel-raised); border:1px solid var(--border);
+    border-radius:6px; box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .palette-input-row{ display:flex; align-items:center; gap:8px; padding:12px 14px; border-bottom:1px solid var(--border-soft); }
+  .palette-input-row svg{ width:15px; height:15px; color: var(--text-faint); flex:0 0 auto; }
+  .palette-input{
+    flex:1; background:transparent; border:none; outline:none; color: var(--text-bright);
+    font-family: var(--font-mono); font-size:14px;
+  }
+  .palette-list{ overflow-y:auto; padding:6px; }
+  .palette-item{
+    display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius: var(--radius);
+    cursor:pointer; color: var(--text-primary); font-size:12.5px;
+  }
+  .palette-item .ficon, .palette-item .cmd-icon{ width:14px; height:14px; color: var(--text-dim); flex:0 0 auto; }
+  .palette-item .pname{ flex:1; }
+  .palette-item .pmeta{ color: var(--text-faint); font-size:11px; }
+  .palette-item.sel{ background: var(--bg-active); color: var(--text-bright); }
+  .palette-item.sel .cmd-icon{ color: var(--amber); }
+  .palette-empty{ padding:20px; text-align:center; color: var(--text-faint); font-size:12px; }
+
+  /* ---------------- toasts ---------------- */
+  .toasts{ position:fixed; bottom:36px; right:14px; display:flex; flex-direction:column; gap:8px; z-index:200; }
+  .toast{
+    background: var(--bg-panel-raised); border:1px solid var(--border); border-left:3px solid var(--amber);
+    color: var(--text-bright); padding:9px 14px; border-radius: 4px; font-size:12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    animation: toast-in .18s ease;
+  }
+  @keyframes toast-in{ from{ transform: translateY(6px); opacity:0 } to{ transform: translateY(0); opacity:1 } }
+
+  .visually-hidden{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+
+  /* ---------------- menu bar (File button) ---------------- */
+  .menubar-btn{
+    -webkit-app-region: no-drag;
+    background:transparent; border:1px solid transparent; border-radius: var(--radius);
+    color: var(--text-primary); font-family: inherit; font-size:12.5px;
+    padding: 4px 9px; cursor:pointer;
+  }
+  .menubar-btn:hover, .menubar-btn.open{ background: var(--bg-hover); color: var(--text-bright); border-color: var(--border); }
+
+  /* ---------------- floating menus (dropdown + context menu share this look) ---------------- */
+  .flyout-menu{
+    position:fixed; z-index:300; min-width:200px;
+    background: var(--bg-panel-raised); border:1px solid var(--border);
+    border-radius:6px; box-shadow: 0 14px 40px rgba(0,0,0,.45);
+    padding:5px; font-size:12.5px;
+  }
+  .flyout-menu.hidden{ display:none; }
+  .flyout-item{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    padding:6px 9px; border-radius: var(--radius); color: var(--text-primary); cursor:pointer; white-space:nowrap;
+  }
+  .flyout-item:hover{ background: var(--bg-active); color: var(--text-bright); }
+  .flyout-item.danger:hover{ background: rgba(217,99,74,.18); color: var(--red); }
+  .flyout-item .flyout-meta{ color: var(--text-faint); font-size:10.5px; }
+  .flyout-sep{ height:1px; margin:5px 2px; background: var(--border-soft); }
+
+  /* ---------------- extensions view ---------------- */
+  .sidebar-view.hidden{ display:none; }
+  .ext-search{
+    margin:8px 10px; padding:6px 9px; display:flex; align-items:center; gap:7px;
+    background: var(--bg-panel-raised); border:1px solid var(--border); border-radius: var(--radius);
+    color: var(--text-faint); font-size:11.5px;
+  }
+  .ext-search svg{ width:12px; height:12px; flex:0 0 auto; }
+  .ext-list{ display:flex; flex-direction:column; gap:2px; padding:0 6px; }
+  .ext-card{ display:flex; gap:9px; padding:9px 6px; border-radius: var(--radius); align-items:flex-start; }
+  .ext-card:hover{ background: var(--bg-hover); }
+  .ext-icon{ flex:0 0 auto; }
+  .ext-body{ flex:1 1 auto; min-width:0; }
+  .ext-name{ display:flex; align-items:center; gap:6px; color: var(--text-bright); font-weight:500; font-size:12.5px; }
+  .ext-badge{
+    font-size:9.5px; font-weight:600; letter-spacing:.3px; text-transform:uppercase;
+    color: var(--teal); border:1px solid var(--teal-dim); border-radius:20px; padding:1px 6px;
+  }
+  .ext-desc{ color: var(--text-dim); font-size:11.5px; line-height:1.45; margin-top:2px; }
+  .ext-btn{
+    margin-top:5px; font-family:inherit; font-size:11px; font-weight:500; cursor:pointer;
+    border-radius: var(--radius); padding:4px 10px; border:1px solid var(--border);
+    background: var(--bg-panel); color: var(--text-primary);
+  }
+  .ext-btn:hover{ border-color: var(--text-faint); color: var(--text-bright); }
+  .ext-btn.uninstall{ color: var(--red); }
+  .ext-placeholder{ padding:20px 16px; color: var(--text-faint); font-size:12px; line-height:1.6; }
+
+  /* ---------------- source control view ---------------- */
+  .scm-commit-box{ margin:8px 10px 10px; display:flex; flex-direction:column; gap:6px; }
+  .scm-commit-box textarea{
+    width:100%; resize:vertical; min-height:44px; background: var(--bg-panel-raised); border:1px solid var(--border);
+    border-radius: var(--radius); color: var(--text-bright); font-family: var(--font-mono); font-size:11.5px;
+    padding:7px 9px; outline:none;
+  }
+  .scm-commit-box textarea:focus{ border-color: var(--text-faint); }
+  .scm-commit-box .ext-btn{ align-self:flex-end; }
+  .scm-section-title{
+    padding:6px 10px 4px; font-size:11px; letter-spacing:.3px; color: var(--text-faint);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .scm-file-row{ display:flex; align-items:center; gap:6px; padding:4px 10px; font-size:12px; color: var(--text-primary); cursor:pointer; }
+  .scm-file-row:hover{ background: var(--bg-hover); }
+  .scm-file-row .ficon{ width:13px; height:13px; flex:0 0 auto; }
+  .scm-file-name{ flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .scm-stat{ font-size:10.5px; flex:0 0 auto; display:flex; gap:5px; }
+  .scm-stat .added{ color: var(--teal); }
+  .scm-stat .removed{ color: var(--red); }
+  .scm-row-actions{ display:flex; flex:0 0 auto; }
+  .scm-row-btn{
+    width:20px; height:20px; display:flex; align-items:center; justify-content:center; border-radius:3px;
+    color: var(--text-dim); flex:0 0 auto; background:transparent; border:none; cursor:pointer; font-size:13px;
+  }
+  .scm-row-btn:hover{ background: var(--bg-active); color: var(--text-bright); }
+  .scm-empty{ padding:8px 14px 14px; color: var(--text-faint); font-size:11.5px; }
+  .scm-history-item{ padding:5px 10px; font-size:11px; color: var(--text-dim); display:flex; gap:8px; }
+  .scm-history-item .hash{ color: var(--amber); font-weight:600; flex:0 0 auto; }
+
+  /* ---------------- zen mode ---------------- */
+  .app.zen .activity-bar,
+  .app.zen .sidebar,
+  .app.zen .statusbar,
+  .app.zen .tabs,
+  .app.zen .titlebar,
+  .app.zen .bottom-panel{ display:none !important; }
+  .app.zen .breadcrumbs{ display:none; }
+
+  /* ---------------- extension effects rendered inside the editor ---------------- */
+  .cm-todo-mark{ background: rgba(232,163,61,.22); color: var(--amber); border-radius:2px; padding:0 2px; font-weight:700; }
+  .cm-trailing-ws{ background: rgba(217,99,74,.38); border-radius:2px; }
+  .cm-color-swatch{ display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:3px; vertical-align:middle; border:1px solid rgba(255,255,255,.3); }
+
+  /* ---- extension: bracket pair colorizer ---- */
+  .cm-bracket-0{ color: var(--amber); font-weight:700; }
+  .cm-bracket-1{ color: var(--teal); font-weight:700; }
+  .cm-bracket-2{ color: var(--clay); font-weight:700; }
+  .cm-bracket-3{ color: var(--red); font-weight:700; }
+  .cm-bracket-4{ color: #7fb0e0; font-weight:700; }
+  .cm-bracket-5{ color: var(--text-bright); font-weight:700; }
+
+  /* ---- extension: indent rainbow ---- */
+  .cm-indent-0{ background: rgba(232,163,61,.10); }
+  .cm-indent-1{ background: rgba(103,179,163,.10); }
+  .cm-indent-2{ background: rgba(217,138,95,.10); }
+  .cm-indent-3{ background: rgba(217,99,74,.10); }
+
+  /* ---- extension: better comments ---- */
+  .cm-comment-bang{ color: var(--red) !important; font-weight:700; font-style:normal !important; }
+  .cm-comment-question{ color: var(--teal) !important; font-style:normal !important; }
+  .cm-comment-star{ color: var(--amber) !important; font-weight:600; font-style:normal !important; }
+
+  /* ---- extension: inline blame ---- */
+  .cm-blame-hint{ color: var(--text-faint); opacity:.75; font-size:.85em; margin-left:14px; user-select:none; }
+
+  @media (prefers-reduced-motion: reduce){
+    .brand-led{ animation:none; }
+    .toast{ animation:none; }
+  }
+</style>
+</head>
+<body data-theme="dark">
+<div class="app">
+
+  <!-- ================= TITLEBAR ================= -->
+  <div class="titlebar">
+    <div class="titlebar-left">
+      <div class="brand">
+        <span class="brand-led" aria-hidden="true"></span>
+        <span class="brand-name">Panel <span>/ instrument-panel</span></span>
+      </div>
+      <button class="menubar-btn" id="btn-file-menu">File</button>
+      <button class="menubar-btn" id="btn-edit-menu">Edit</button>
+      <button class="menubar-btn" id="btn-view-menu">View</button>
+      <button class="icon-btn active" id="btn-toggle-sidebar" title="Toggle explorer (Ctrl+B)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="1.5"/><line x1="9" y1="4" x2="9" y2="20"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-toggle-terminal" title="Toggle terminal (Ctrl+`)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+      </button>
+    </div>
+
+    <div class="titlebar-search" id="btn-open-palette">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>
+      <span>Go to file, or run a command…</span>
+      <span class="kbd-hint"><span class="kbd">⌘</span><span class="kbd">K</span></span>
+    </div>
+
+    <div class="titlebar-right">
+      <button class="icon-btn" id="btn-toggle-preview" title="Toggle live preview (HTML files)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-font-minus" title="Decrease font size">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-font-plus" title="Increase font size">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-toggle-theme" title="Toggle theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= BODY ================= -->
+  <div class="body-wrap">
+
+    <div class="activity-bar">
+      <button class="icon-btn active" id="btn-activity-explorer" title="Explorer" data-view="explorer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l2-3h5l2 3h9v11a1 1 0 01-1 1H4a1 1 0 01-1-1V7z"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-activity-search" title="Search" data-view="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-activity-scm" title="Source control" data-view="scm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="12" r="2.4"/><path d="M6 8.4V15.6M8.2 12H15.8M8.2 12A6 6 0 006 8.4"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-activity-extensions" title="Extensions" data-view="extensions">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>
+      </button>
+    </div>
+
+    <!-- ============= SIDEBAR ============= -->
+    <div class="sidebar" id="sidebar">
+
+      <!-- ---- explorer view ---- -->
+      <div class="sidebar-view" id="view-explorer">
+        <div class="sidebar-header">
+          <span class="sidebar-section-title">Explorer</span>
+          <span id="file-count">5 files</span>
+        </div>
+        <div class="sidebar-scroll">
+          <div class="tree-node">
+            <div class="tree-row" data-toggle="root">
+              <svg class="chev open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              <svg class="ficon" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.6"><path d="M3 7l2-3h5l2 3h9v11a1 1 0 01-1 1H4a1 1 0 01-1-1V7z"/></svg>
+              instrument-panel
+            </div>
+            <div class="tree-children" id="root-children">
+              <div class="tree-node indent-1">
+                <div class="tree-row" data-toggle="src">
+                  <svg class="chev open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                  <svg class="ficon" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.6"><path d="M3 7l2-3h5l2 3h9v11a1 1 0 01-1 1H4a1 1 0 01-1-1V7z"/></svg>
+                  src
+                </div>
+                <div class="tree-children" id="src-children">
+                  <div class="indent-2" id="src-files">
+                    <div class="tree-row" data-file="index.html">
+                      <svg class="ficon" viewBox="0 0 24 24" fill="none" stroke="var(--clay)" stroke-width="1.6"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                      index.html
+                    </div>
+                    <div class="tree-row" data-file="styles.css">
+                      <svg class="ficon" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg>
+                      styles.css
+                    </div>
+                    <div class="tree-row" data-file="app.js">
+                      <svg class="ficon" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.6"><path d="M8 3L4 12l4 9M16 3l4 9-4 9"/></svg>
+                      app.js
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="indent-1" id="root-files">
+                <div class="tree-row" data-file="server.py">
+                  <svg class="ficon" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.6"><path d="M8 3L4 12l4 9M16 3l4 9-4 9"/></svg>
+                  server.py
+                </div>
+                <div class="tree-row" data-file="README.md">
+                  <svg class="ficon" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="1.6"><path d="M4 4h16v16H4z"/><path d="M8 9h3M8 13h8M8 17h5"/></svg>
+                  README.md
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sidebar-meta">
+          <div class="meta-row"><span>Branch</span><b id="meta-branch">main</b></div>
+          <div class="meta-row"><span>Files open</span><b id="meta-open-count">1</b></div>
+          <div class="meta-row"><span>Editor</span><b>CodeMirror 6</b></div>
+        </div>
+      </div>
+
+      <!-- ---- extensions view ---- -->
+      <div class="sidebar-view hidden" id="view-extensions">
+        <div class="sidebar-header">
+          <span class="sidebar-section-title">Extensions</span>
+          <span id="ext-installed-count">0 installed</span>
+        </div>
+        <div class="sidebar-scroll">
+          <div class="ext-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>
+            Search Extensions in Marketplace
+          </div>
+          <div class="ext-list" id="extensions-list"></div>
+        </div>
+      </div>
+
+      <!-- ---- search view ---- -->
+      <div class="sidebar-view hidden" id="view-search">
+        <div class="sidebar-header">
+          <span class="sidebar-section-title">Search</span>
+          <span id="search-result-count"></span>
+        </div>
+        <div class="search-input-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>
+          <input id="search-input" placeholder="Search across all files…" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="sidebar-scroll" id="search-results">
+          <div class="ext-placeholder">Type to search file contents. Click a result to jump straight to that line.</div>
+        </div>
+      </div>
+
+      <!-- ---- source control view ---- -->
+      <div class="sidebar-view hidden" id="view-scm">
+        <div class="sidebar-header">
+          <span class="sidebar-section-title">Source Control</span>
+          <span id="scm-change-count"></span>
+        </div>
+        <div class="sidebar-scroll" id="scm-scroll">
+          <div class="scm-commit-box">
+            <textarea id="scm-message" placeholder="Commit message" rows="2"></textarea>
+            <button class="ext-btn" id="scm-commit-btn">✓ Commit</button>
+          </div>
+          <div id="scm-staged-section"></div>
+          <div id="scm-changes-section"></div>
+          <div id="scm-history-section"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============= EDITOR COLUMN ============= -->
+    <div class="editor-col">
+      <div class="tabs" id="tabs"></div>
+      <div class="breadcrumbs" id="breadcrumbs"></div>
+
+      <div class="editor-stage" id="editor-stage">
+        <div class="editor-empty-state hidden" id="editor-empty">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="empty-title">No editor open</div>
+          <div class="empty-sub">Pick a file from the sidebar, or start something new.</div>
+          <div class="empty-actions">
+            <button class="empty-btn" id="empty-new-file">New File</button>
+            <button class="empty-btn" id="empty-open-file">Open File…</button>
+          </div>
+        </div>
+        <div class="editor-host" id="editor-host"></div>
+        <div class="minimap-wrap" id="minimap-wrap" title="Minimap — click to jump">
+          <canvas id="minimap"></canvas>
+          <div class="minimap-viewport" id="minimap-viewport"></div>
+        </div>
+        <div class="preview-pane hidden" id="preview-pane">
+          <div class="preview-header">
+            <span>Live Preview</span>
+            <div class="preview-actions">
+              <button class="icon-btn" id="btn-preview-refresh" title="Refresh preview">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 11-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
+              </button>
+              <button class="icon-btn" id="btn-preview-newtab" title="Open in new tab">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </button>
+              <button class="icon-btn" id="btn-preview-close" title="Close preview">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="preview-body">
+            <iframe id="preview-frame" class="hidden" sandbox="allow-scripts allow-modals allow-forms allow-popups"></iframe>
+            <div class="preview-empty" id="preview-empty">Open an HTML file to see a live preview.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-resize" id="panel-resize"></div>
+      <div class="bottom-panel" id="bottom-panel">
+        <div class="panel-tabs">
+          <div class="panel-tab active" data-panel-tab="terminal">Terminal</div>
+          <div class="panel-tab" data-panel-tab="problems">Problems</div>
+          <div class="panel-tab" data-panel-tab="output">Output</div>
+          <div class="spacer"></div>
+          <button class="icon-btn" id="btn-clear-terminal" title="Clear terminal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13"/></svg>
+          </button>
+          <button class="icon-btn" id="btn-close-panel" title="Close panel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+          </button>
+        </div>
+        <div class="panel-body" id="terminal-body">
+          <div class="term-line info">Panel Terminal — type <b style="color:var(--amber)">help</b> for a list of commands.</div>
+          <div class="term-input-row">
+            <span class="prompt">➜ instrument-panel git:(main) ✗</span>
+            <input class="term-input" id="term-input" autocomplete="off" spellcheck="false" aria-label="Terminal input">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= STATUS BAR ================= -->
+  <div class="statusbar">
+    <div class="statusbar-group">
+      <span class="status-item clickable" id="status-branch">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="12" r="2.2"/><path d="M6 8.2V15.8M8.2 12H15.8M8.2 12A6 6 0 006 8.2"/></svg>
+        <span id="status-branch-name">main</span>
+      </span>
+      <span class="status-item" id="status-errors">0 ⊘ · 0 △</span>
+    </div>
+    <div class="statusbar-group">
+      <span class="status-item" id="status-position">Ln 1, Col 1</span>
+      <span class="status-item hidden" id="status-wordcount">0 words</span>
+      <span class="status-item" id="status-indent">Spaces: 2</span>
+      <span class="status-item" id="status-encoding">UTF-8</span>
+      <span class="status-item" id="status-lang">Plain Text</span>
+    </div>
+  </div>
+</div>
+
+<!-- ================= COMMAND PALETTE ================= -->
+<div class="palette-overlay hidden" id="palette-overlay">
+  <div class="palette" role="dialog" aria-label="Command palette">
+    <div class="palette-input-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>
+      <input class="palette-input" id="palette-input" placeholder="Type a command or search files…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="palette-list" id="palette-list"></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<div class="flyout-menu hidden" id="flyout-menu" role="menu"></div>
+<input type="file" id="file-input-hidden" class="visually-hidden" tabindex="-1">
+
+<script type="module">
+import { EditorView, basicSetup } from "https://esm.sh/codemirror@6.0.1";
+import { Decoration, ViewPlugin, WidgetType } from "https://esm.sh/@codemirror/view@6.26.3";
+import { EditorState, Compartment } from "https://esm.sh/@codemirror/state@6.4.1";
+import { javascript } from "https://esm.sh/@codemirror/lang-javascript@6.2.2";
+import { python } from "https://esm.sh/@codemirror/lang-python@6.1.6";
+import { css as cssLang } from "https://esm.sh/@codemirror/lang-css@6.2.1";
+import { html as htmlLang } from "https://esm.sh/@codemirror/lang-html@6.4.9";
+import { markdown } from "https://esm.sh/@codemirror/lang-markdown@6.2.5";
+import { HighlightStyle, syntaxHighlighting } from "https://esm.sh/@codemirror/language@6.10.1";
+import { tags as t } from "https://esm.sh/@lezer/highlight@1.2.0";
+import { undo, redo, selectAll } from "https://esm.sh/@codemirror/commands@6.5.0";
+import { openSearchPanel } from "https://esm.sh/@codemirror/search@6.5.6";
+
+/* ======================================================================
+   SAMPLE FILES
+   ====================================================================== */
+const FILES = {
+  "index.html": {
+    icon: "html", lang: "HTML",
+    content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Instrument Panel</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="panel" data-state="idle">
+    <h1>Signal Monitor</h1>
+    <div class="dial" id="dial" role="slider" aria-valuenow="42"></div>
+    <button id="engage">Engage</button>
+  </main>
+  <script src="app.js"><\/script>
+</body>
+</html>
+`
+  },
+  "styles.css": {
+    icon: "css", lang: "CSS",
+    content: `:root {
+  --panel-bg: #1a1815;
+  --amber: #e8a33d;
+  --teal: #67b3a3;
+}
+
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid #322d24;
+  border-radius: 6px;
+  padding: 32px;
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+}
+
+.dial {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 6px solid var(--amber);
+  transition: transform .25s ease;
+}
+
+.dial[aria-valuenow="100"] {
+  border-color: var(--teal);
+  transform: rotate(180deg);
+}
+
+button#engage {
+  font: inherit;
+  padding: 8px 18px;
+  background: transparent;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  cursor: pointer;
+}
+`
+  },
+  "app.js": {
+    icon: "js", lang: "JavaScript",
+    content: `// Signal monitor controller
+class Dial {
+  constructor(el, { min = 0, max = 100 } = {}) {
+    this.el = el;
+    this.min = min;
+    this.max = max;
+    this.value = 42;
+    this.render();
+  }
+
+  set(value) {
+    this.value = Math.min(this.max, Math.max(this.min, value));
+    this.render();
+    return this.value;
+  }
+
+  render() {
+    this.el.setAttribute("aria-valuenow", String(this.value));
+    const angle = (this.value / this.max) * 270 - 135;
+    this.el.style.setProperty("--angle", \`\${angle}deg\`);
+  }
+}
+
+const dial = new Dial(document.getElementById("dial"));
+const engage = document.getElementById("engage");
+
+engage.addEventListener("click", () => {
+  const next = dial.value >= 100 ? 0 : dial.value + 20;
+  const applied = dial.set(next);
+  console.log(\`dial engaged -> \${applied}\`);
+});
+
+export default Dial;
+`
+  },
+  "server.py": {
+    icon: "py", lang: "Python",
+    content: `"""Tiny status server for the instrument panel."""
+from dataclasses import dataclass, field
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
+import time
+
+
+@dataclass
+class PanelState:
+    value: int = 42
+    updated_at: float = field(default_factory=time.time)
+
+    def bump(self, amount: int) -> int:
+        self.value = max(0, min(100, self.value + amount))
+        self.updated_at = time.time()
+        return self.value
+
+
+state = PanelState()
+
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == "/status":
+            payload = json.dumps({"value": state.value, "updated_at": state.updated_at})
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(payload.encode("utf-8"))
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+
+def run(port: int = 8080) -> None:
+    server = HTTPServer(("0.0.0.0", port), Handler)
+    print(f"panel server listening on :{port}")
+    server.serve_forever()
+
+
+if __name__ == "__main__":
+    run()
+`
+  },
+  "README.md": {
+    icon: "md", lang: "Markdown",
+    content: `# Instrument Panel
+
+A small demo project used to show off the editor.
+
+## Structure
+
+- \`src/index.html\` — markup for the panel
+- \`src/styles.css\` — amber-and-teal panel styling
+- \`src/app.js\` — dial controller
+- \`server.py\` — tiny status server
+
+## Notes
+
+This file, and everything in this project tree, is editable. Open the
+command palette with **Ctrl/Cmd + K** to jump between files or run a
+command.
+`
+  }
+};
+
+const FILE_PATHS = {
+  "index.html": "src / index.html",
+  "styles.css": "src / styles.css",
+  "app.js": "src / app.js",
+  "server.py": "server.py",
+  "README.md": "README.md"
+};
+
+/* fileBaseline holds each file's content as of the last commit — used by Source Control to diff */
+const fileBaseline = new Map();
+for (const name of Object.keys(FILES)) fileBaseline.set(name, FILES[name].content);
+
+/* ======================================================================
+   THEME + SYNTAX HIGHLIGHTING (custom "instrument panel" palette)
+   ====================================================================== */
+function cssVar(name) {
+  return getComputedStyle(document.body).getPropertyValue(name).trim();
+}
+
+const highlightStyle = HighlightStyle.define([
+  { tag: t.keyword, color: "var(--amber)" },
+  { tag: [t.definitionKeyword, t.modifier], color: "var(--amber)" },
+  { tag: [t.string, t.special(t.string)], color: "var(--teal)" },
+  { tag: t.comment, color: "var(--text-faint)", fontStyle: "italic" },
+  { tag: [t.function(t.variableName), t.function(t.propertyName)], color: "var(--clay)" },
+  { tag: t.definition(t.variableName), color: "var(--text-bright)" },
+  { tag: [t.number, t.bool, t.null], color: "var(--clay)" },
+  { tag: [t.className, t.typeName], color: "var(--teal)" },
+  { tag: t.propertyName, color: "#d7cdb8" },
+  { tag: t.operator, color: "var(--text-dim)" },
+  { tag: [t.tagName], color: "var(--amber)" },
+  { tag: [t.attributeName], color: "var(--teal)" },
+  { tag: t.angleBracket, color: "var(--text-dim)" },
+  { tag: t.punctuation, color: "var(--text-dim)" },
+  { tag: t.meta, color: "var(--text-faint)" },
+  { tag: t.heading, color: "var(--amber)", fontWeight: "700" },
+  { tag: t.link, color: "var(--teal)", textDecoration: "underline" },
+  { tag: t.strong, fontWeight: "700", color: "var(--text-bright)" },
+  { tag: t.emphasis, fontStyle: "italic" },
+  { tag: t.invalid, color: "var(--red)" }
+]);
+
+function buildEditorTheme() {
+  return EditorView.theme({
+    "&": {
+      color: "var(--text-primary)",
+      backgroundColor: "var(--bg-editor)",
+      height: "100%",
+      fontSize: "var(--editor-font-size)"
+    },
+    ".cm-content": { caretColor: "var(--amber)", fontFamily: "var(--font-mono)", padding: "10px 0" },
+    ".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--amber)", borderLeftWidth: "2px" },
+    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
+      backgroundColor: "rgba(232,163,61,.20)"
+    },
+    ".cm-panels": { backgroundColor: "var(--bg-panel-raised)", color: "var(--text-primary)" },
+    ".cm-panels.cm-panels-top": { borderBottom: "1px solid var(--border)" },
+    ".cm-searchMatch": { backgroundColor: "rgba(103,179,163,.25)", outline: "1px solid var(--teal-dim)" },
+    ".cm-searchMatch.cm-searchMatch-selected": { backgroundColor: "rgba(232,163,61,.35)" },
+    ".cm-activeLine": { backgroundColor: "rgba(255,255,255,.028)" },
+    ".cm-activeLineGutter": { backgroundColor: "rgba(255,255,255,.035)", color: "var(--text-bright)" },
+    ".cm-gutters": {
+      backgroundColor: "var(--bg-editor-gutter)",
+      color: "var(--text-faint)",
+      border: "none",
+      borderRight: "1px solid var(--border-soft)"
+    },
+    ".cm-lineNumbers .cm-gutterElement": { padding: "0 12px 0 14px" },
+    ".cm-foldPlaceholder": {
+      backgroundColor: "var(--bg-hover)", border: "1px solid var(--border)", color: "var(--text-dim)"
+    },
+    ".cm-matchingBracket, .cm-nonmatchingBracket": {
+      backgroundColor: "rgba(232,163,61,.18)", outline: "1px solid var(--amber-dim)"
+    },
+    ".cm-tooltip": {
+      backgroundColor: "var(--bg-panel-raised)", border: "1px solid var(--border)", color: "var(--text-primary)"
+    },
+    ".cm-tooltip-autocomplete ul li[aria-selected]": {
+      backgroundColor: "var(--bg-active)", color: "var(--text-bright)"
+    },
+    ".cm-scroller": { fontFamily: "var(--font-mono)" }
+  }, { dark: true });
+}
+
+function langFor(filename) {
+  if (filename.endsWith(".html")) return htmlLang();
+  if (filename.endsWith(".css")) return cssLang();
+  if (filename.endsWith(".js")) return javascript();
+  if (filename.endsWith(".py")) return python();
+  if (filename.endsWith(".md")) return markdown();
+  return [];
+}
+
+/* ======================================================================
+   EDITOR SETUP — one live EditorView, state swapped per open file
+   ====================================================================== */
+const languageConf = new Compartment();
+const themeConf = new Compartment();
+const fontSizeConf = new Compartment();
+const colorHighlightConf = new Compartment();
+const todoHighlightConf = new Compartment();
+const trailingWsConf = new Compartment();
+const bracketColorConf = new Compartment();
+const indentRainbowConf = new Compartment();
+const betterCommentsConf = new Compartment();
+const gitBlameConf = new Compartment();
+
+const fileStates = new Map();   // filename -> EditorState (persists edits + history)
+const openTabs = [];            // ordered list of filenames currently open
+let activeFile = null;
+
+function updateListenerExtension(filename) {
+  return EditorView.updateListener.of((update) => {
+    if (update.docChanged) markModified(filename, true);
+    if (update.selectionSet || update.docChanged) updateStatusPosition();
+    if (update.docChanged || update.geometryChanged) scheduleMinimapRender();
+    if (update.docChanged) schedulePreviewRefresh();
+  });
+}
+
+/* ---- extension: Color Highlight — swatch next to hex color codes ---- */
+class ColorSwatchWidget extends WidgetType {
+  constructor(color) { super(); this.color = color; }
+  eq(other) { return other.color === this.color; }
+  toDOM() {
+    const span = document.createElement("span");
+    span.className = "cm-color-swatch";
+    span.style.background = this.color;
+    return span;
+  }
+  ignoreEvent() { return true; }
+}
+function forEachVisibleLine(view, cb) {
+  for (const { from, to } of view.visibleRanges) {
+    const lineFrom = view.state.doc.lineAt(from).number;
+    const lineTo = view.state.doc.lineAt(to).number;
+    for (let ln = lineFrom; ln <= lineTo; ln++) cb(view.state.doc.line(ln));
+  }
+}
+function colorDecorations(view) {
+  const widgets = [];
+  const re = /#[0-9a-fA-F]{3,8}\b/g;
+  forEachVisibleLine(view, (line) => {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(line.text))) {
+      widgets.push(Decoration.widget({ widget: new ColorSwatchWidget(m[0]), side: -1 }).range(line.from + m.index));
+    }
+  });
+  return Decoration.set(widgets);
+}
+const colorHighlightExtension = ViewPlugin.fromClass(class {
+  decorations;
+  constructor(view) { this.decorations = colorDecorations(view); }
+  update(update) { if (update.docChanged || update.viewportChanged) this.decorations = colorDecorations(update.view); }
+}, { decorations: (v) => v.decorations });
+
+/* ---- extension: TODO Highlighter — marks TODO / FIXME / NOTE / HACK ---- */
+function todoDecorations(view) {
+  const marks = [];
+  const re = /\b(TODO|FIXME|NOTE|HACK)\b/g;
+  forEachVisibleLine(view, (line) => {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(line.text))) {
+      const start = line.from + m.index;
+      marks.push(Decoration.mark({ class: "cm-todo-mark" }).range(start, start + m[0].length));
+    }
+  });
+  return Decoration.set(marks, true);
+}
+const todoHighlightExtension = ViewPlugin.fromClass(class {
+  decorations;
+  constructor(view) { this.decorations = todoDecorations(view); }
+  update(update) { if (update.docChanged || update.viewportChanged) this.decorations = todoDecorations(update.view); }
+}, { decorations: (v) => v.decorations });
+
+/* ---- extension: Trailing Whitespace — flags trailing spaces/tabs ---- */
+function trailingWsDecorations(view) {
+  const marks = [];
+  const re = /[ \t]+$/;
+  forEachVisibleLine(view, (line) => {
+    const m = re.exec(line.text);
+    if (m && m[0].length) marks.push(Decoration.mark({ class: "cm-trailing-ws" }).range(line.from + m.index, line.to));
+  });
+  return Decoration.set(marks, true);
+}
+const trailingWsExtension = ViewPlugin.fromClass(class {
+  decorations;
+  constructor(view) { this.decorations = trailingWsDecorations(view); }
+  update(update) { if (update.docChanged || update.viewportChanged) this.decorations = trailingWsDecorations(update.view); }
+}, { decorations: (v) => v.decorations });
+
+/* ---- extension: Bracket Pair Colorizer — nesting-depth colored brackets ---- */
+const BRACKET_OPEN = { "(": ")", "[": "]", "{": "}" };
+const BRACKET_CLOSE = { ")": "(", "]": "[", "}": "{" };
+function bracketColorDecorations(view) {
+  const marks = [];
+  const text = view.state.doc.toString();
+  const stack = [];
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (BRACKET_OPEN[ch]) {
+      const depth = stack.length % 6;
+      marks.push(Decoration.mark({ class: `cm-bracket-${depth}` }).range(i, i + 1));
+      stack.push(ch);
+    } else if (BRACKET_CLOSE[ch]) {
+      if (stack.length && stack[stack.length - 1] === BRACKET_CLOSE[ch]) stack.pop();
+      const depth = Math.max(0, stack.length) % 6;
+      marks.push(Decoration.mark({ class: `cm-bracket-${depth}` }).range(i, i + 1));
+    }
+  }
+  marks.sort((a, b) => a.from - b.from || a.to - b.to);
+  return Decoration.set(marks, true);
+}
+const bracketColorExtension = ViewPlugin.fromClass(class {
+  decorations;
+  constructor(view) { this.decorations = bracketColorDecorations(view); }
+  update(update) { if (update.docChanged) this.decorations = bracketColorDecorations(update.view); }
+}, { decorations: (v) => v.decorations });
+
+/* ---- extension: Indent Rainbow — tints leading whitespace by nesting depth ---- */
+function indentRainbowDecorations(view) {
+  const marks = [];
+  forEachVisibleLine(view, (line) => {
+    const text = line.text;
+    const leading = text.match(/^[ \t]+/);
+    if (!leading) return;
+    const size = leading[0].length;
+    const step = 2;
+    for (let i = 0; i < size; i += step) {
+      const depth = Math.floor(i / step) % 4;
+      const end = Math.min(i + step, size);
+      marks.push(Decoration.mark({ class: `cm-indent-${depth}` }).range(line.from + i, line.from + end));
+    }
+  });
+  return Decoration.set(marks, true);
+}
+const indentRainbowExtension = ViewPlugin.fromClass(class {
+  decorations;
+  constructor(view) { this.decorations = indentRainbowDecorations(view); }
+  update(update) { if (update.docChanged || update.viewportChanged) this.decorations = indentRainbowDecorations(update.view); }
+}, { decorations: (v) => v.decorations });
+
+/* ---- extension: Better Comments — styles // !, // ?, // * comment markers ---- */
+const BETTER_COMMENT_RE = /^(\s*)(\/\/|#|<!--|\*)\s?([!?*])(.*)$/;
+function betterCommentsDecorations(view) {
+  const marks = [];
+  forEachVisibleLine(view, (line) => {
+    const m = BETTER_COMMENT_RE.exec(line.text);
+    if (!m) return;
+    const cls = m[3] === "!" ? "cm-comment-bang" : m[3] === "?" ? "cm-comment-question" : "cm-comment-star";
+    const start = line.from + m[1].length;
+    marks.push(Decoration.mark({ class: cls }).range(start, line.to));
+  });
+  return Decoration.set(marks, true);
+}
+const betterCommentsExtension = ViewPlugin.fromClass(class {
+  decorations;
+  constructor(view) { this.decorations = betterCommentsDecorations(view); }
+  update(update) { if (update.docChanged || update.viewportChanged) this.decorations = betterCommentsDecorations(update.view); }
+}, { decorations: (v) => v.decorations });
+
+/* ---- extension: GitLens-style inline blame hint on the active line ---- */
+class BlameWidget extends WidgetType {
+  constructor(text) { super(); this.text = text; }
+  eq(other) { return other.text === this.text; }
+  toDOM() {
+    const span = document.createElement("span");
+    span.className = "cm-blame-hint";
+    span.textContent = this.text;
+    return span;
+  }
+  ignoreEvent() { return true; }
+}
+function gitBlameDecorations(view) {
+  const widgets = [];
+  const sel = view.state.selection.main;
+  if (!sel.empty) return Decoration.set([]);
+  const line = view.state.doc.lineAt(sel.head);
+  const label = modifiedFiles.has(activeFile) ? "you, uncommitted changes" : "you, last commit";
+  widgets.push(Decoration.widget({ widget: new BlameWidget(`— ${label}`), side: 1 }).range(line.to));
+  return Decoration.set(widgets);
+}
+const gitBlameExtension = ViewPlugin.fromClass(class {
+  decorations;
+  constructor(view) { this.decorations = gitBlameDecorations(view); }
+  update(update) { if (update.docChanged || update.selectionSet) this.decorations = gitBlameDecorations(update.view); }
+}, { decorations: (v) => v.decorations });
+
+let colorHighlightEnabled = false;
+let todoHighlightEnabled = false;
+let trailingWsEnabled = false;
+let bracketColorEnabled = false;
+let indentRainbowEnabled = false;
+let betterCommentsEnabled = false;
+let gitBlameEnabled = false;
+let wordCountEnabled = false;
+let activeColorTheme = null;
+
+function reconfigureAll(compartment, ext) {
+  view.dispatch({ effects: compartment.reconfigure(ext) });
+  for (const [filename, state] of fileStates) {
+    if (filename === activeFile) continue;
+    fileStates.set(filename, state.update({ effects: compartment.reconfigure(ext) }).state);
+  }
+}
+function setColorHighlightEnabled(enabled) { colorHighlightEnabled = enabled; reconfigureAll(colorHighlightConf, enabled ? colorHighlightExtension : []); }
+function setTodoHighlightEnabled(enabled) { todoHighlightEnabled = enabled; reconfigureAll(todoHighlightConf, enabled ? todoHighlightExtension : []); }
+function setTrailingWsEnabled(enabled) { trailingWsEnabled = enabled; reconfigureAll(trailingWsConf, enabled ? trailingWsExtension : []); }
+function setBracketColorEnabled(enabled) { bracketColorEnabled = enabled; reconfigureAll(bracketColorConf, enabled ? bracketColorExtension : []); }
+function setIndentRainbowEnabled(enabled) { indentRainbowEnabled = enabled; reconfigureAll(indentRainbowConf, enabled ? indentRainbowExtension : []); }
+function setBetterCommentsEnabled(enabled) { betterCommentsEnabled = enabled; reconfigureAll(betterCommentsConf, enabled ? betterCommentsExtension : []); }
+function setGitBlameEnabled(enabled) { gitBlameEnabled = enabled; reconfigureAll(gitBlameConf, enabled ? gitBlameExtension : []); }
+function setWordCountEnabled(enabled) {
+  wordCountEnabled = enabled;
+  document.getElementById("status-wordcount").classList.toggle("hidden", !enabled);
+  updateWordCount();
+}
+function setColorTheme(themeId, enabled) {
+  if (enabled) {
+    activeColorTheme = themeId;
+    document.body.dataset.colorTheme = themeId;
+  } else if (activeColorTheme === themeId) {
+    activeColorTheme = null;
+    delete document.body.dataset.colorTheme;
+  }
+  scheduleMinimapRender();
+}
+
+function createStateForFile(filename) {
+  return EditorState.create({
+    doc: FILES[filename].content,
+    extensions: [
+      basicSetup,
+      languageConf.of(langFor(filename)),
+      themeConf.of(buildEditorTheme()),
+      syntaxHighlighting(highlightStyle),
+      EditorView.lineWrapping,
+      colorHighlightConf.of(colorHighlightEnabled ? colorHighlightExtension : []),
+      todoHighlightConf.of(todoHighlightEnabled ? todoHighlightExtension : []),
+      trailingWsConf.of(trailingWsEnabled ? trailingWsExtension : []),
+      bracketColorConf.of(bracketColorEnabled ? bracketColorExtension : []),
+      indentRainbowConf.of(indentRainbowEnabled ? indentRainbowExtension : []),
+      betterCommentsConf.of(betterCommentsEnabled ? betterCommentsExtension : []),
+      gitBlameConf.of(gitBlameEnabled ? gitBlameExtension : []),
+      updateListenerExtension(filename)
+    ]
+  });
+}
+
+function getStateFor(filename) {
+  if (!fileStates.has(filename)) fileStates.set(filename, createStateForFile(filename));
+  return fileStates.get(filename);
+}
+
+const editorHost = document.getElementById("editor-host");
+const view = new EditorView({
+  state: getStateFor("README.md"),
+  parent: editorHost
+});
+view.scrollDOM.addEventListener("scroll", updateMinimapViewport);
+
+const modifiedFiles = new Set();
+
+function markModified(filename, isModified) {
+  if (isModified) modifiedFiles.add(filename); else modifiedFiles.delete(filename);
+  renderTabs();
+  renderTree();
+  renderSCM();
+}
+
+/* ======================================================================
+   TABS + TREE + BREADCRUMBS
+   ====================================================================== */
+const ICONS = {
+  html: `<svg class="ficon" viewBox="0 0 24 24" fill="none" stroke="var(--clay)" stroke-width="1.6"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
+  css: `<svg class="ficon" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg>`,
+  js: `<svg class="ficon" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.6"><path d="M8 3L4 12l4 9M16 3l4 9-4 9"/></svg>`,
+  py: `<svg class="ficon" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.6"><path d="M8 3L4 12l4 9M16 3l4 9-4 9"/></svg>`,
+  md: `<svg class="ficon" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="1.6"><path d="M4 4h16v16H4z"/><path d="M8 9h3M8 13h8M8 17h5"/></svg>`
+};
+const LANG_NAMES = { html: "HTML", css: "CSS", js: "JavaScript", py: "Python", md: "Markdown" };
+function iconForExt(name) {
+  const ext = name.split(".").pop().toLowerCase();
+  const map = { html: "html", htm: "html", css: "css", js: "js", mjs: "js", ts: "js", jsx: "js", py: "py", md: "md" };
+  return map[ext] || "md";
+}
+function langNameFor(icon) { return LANG_NAMES[icon] || "Plain Text"; }
+
+function openFile(filename, { focus = true } = {}) {
+  hideEmptyState();
+  if (activeFile) fileStates.set(activeFile, view.state);
+  if (!openTabs.includes(filename)) openTabs.push(filename);
+  activeFile = filename;
+  if (isHtmlFile(filename)) previewTarget = filename;
+  view.setState(getStateFor(filename));
+  renderTabs();
+  renderTree();
+  renderBreadcrumbs();
+  updateStatusForFile(filename);
+  scheduleMinimapRender();
+  schedulePreviewRefresh();
+  document.getElementById("meta-open-count").textContent = String(openTabs.length);
+  if (focus) requestAnimationFrame(() => view.focus());
+}
+
+function closeTab(filename, evt) {
+  if (evt) evt.stopPropagation();
+  const idx = openTabs.indexOf(filename);
+  if (idx === -1) return;
+  openTabs.splice(idx, 1);
+  if (activeFile === filename) {
+    const next = openTabs[idx] || openTabs[idx - 1];
+    if (next) { activeFile = null; openFile(next); }
+    else { activeFile = null; showEmptyState(); }
+  }
+  renderTabs();
+  renderTree();
+  document.getElementById("meta-open-count").textContent = String(openTabs.length);
+}
+
+function showEmptyState() {
+  document.getElementById("editor-empty").classList.remove("hidden");
+  document.getElementById("editor-host").style.visibility = "hidden";
+  document.getElementById("breadcrumbs").innerHTML = "";
+  document.getElementById("status-lang").textContent = "Plain Text";
+  document.getElementById("status-position").textContent = "";
+}
+function hideEmptyState() {
+  document.getElementById("editor-empty").classList.add("hidden");
+  document.getElementById("editor-host").style.visibility = "visible";
+}
+document.getElementById("empty-new-file").addEventListener("click", () => newFileFlow());
+document.getElementById("empty-open-file").addEventListener("click", () => openFileFromDisk());
+
+function renderTabs() {
+  const el = document.getElementById("tabs");
+  el.innerHTML = "";
+  for (const filename of openTabs) {
+    const tab = document.createElement("div");
+    tab.className = "tab" + (filename === activeFile ? " active" : "");
+    tab.innerHTML = `${ICONS[FILES[filename].icon]}<span>${filename}</span>`;
+    if (modifiedFiles.has(filename)) {
+      tab.innerHTML += `<span class="dot-modified"></span>`;
+    } else {
+      const close = document.createElement("span");
+      close.className = "tab-close";
+      close.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>`;
+      close.addEventListener("click", (e) => closeTab(filename, e));
+      tab.appendChild(close);
+    }
+    tab.addEventListener("click", () => { if (filename !== activeFile) openFile(filename); });
+    el.appendChild(tab);
+  }
+}
+
+function renderTree() {
+  document.querySelectorAll(".tree-row[data-file]").forEach((row) => {
+    const filename = row.dataset.file;
+    row.classList.toggle("active", filename === activeFile);
+    let dot = row.querySelector(".dot-modified");
+    if (modifiedFiles.has(filename)) {
+      if (!dot) { dot = document.createElement("span"); dot.className = "dot-modified"; row.appendChild(dot); }
+    } else if (dot) {
+      dot.remove();
+    }
+  });
+}
+
+function renderBreadcrumbs() {
+  const el = document.getElementById("breadcrumbs");
+  const path = FILE_PATHS[activeFile].split(" / ");
+  el.innerHTML = path.map((part, i) =>
+    (i === path.length - 1)
+      ? `<span class="crumb-current">${part}</span>`
+      : `<span>${part}</span><span class="sep">/</span>`
+  ).join("");
+}
+
+function bindFileRow(row) {
+  const filename = row.dataset.file;
+  row.addEventListener("click", () => openFile(filename));
+  row.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    openFlyout(e.clientX, e.clientY, buildFileMenuItems(filename));
+  });
+}
+function bindToggleRow(row) {
+  row.addEventListener("click", () => {
+    const key = row.dataset.toggle;
+    const children = document.getElementById(`${key}-children`);
+    const chev = row.querySelector(".chev");
+    children.classList.toggle("closed");
+    chev.classList.toggle("open");
+  });
+  row.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    const key = row.dataset.toggle;
+    const name = key === "root" ? "instrument-panel" : key;
+    openFlyout(e.clientX, e.clientY, buildFolderMenuItems(key, name));
+  });
+}
+document.querySelectorAll(".tree-row[data-file]").forEach(bindFileRow);
+document.querySelectorAll(".tree-row[data-toggle]").forEach(bindToggleRow);
+
+function updateFileCount() {
+  const n = Object.keys(FILES).length;
+  document.getElementById("file-count").textContent = `${n} file${n === 1 ? "" : "s"}`;
+}
+
+function addTreeRowForNewFile(name, folder) {
+  const container = document.getElementById(folder === "src" ? "src-files" : "root-files");
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = `<div class="tree-row" data-file="${name}">${ICONS[FILES[name].icon]}${name}</div>`;
+  const row = wrapper.firstElementChild;
+  container.appendChild(row);
+  bindFileRow(row);
+  updateFileCount();
+}
+
+function registerNewFile(name, content, folder = "root") {
+  const icon = iconForExt(name);
+  FILES[name] = { icon, lang: langNameFor(icon), content };
+  FILE_PATHS[name] = folder === "src" ? `src / ${name}` : name;
+  if (!fileBaseline.has(name)) fileBaseline.set(name, "");
+  if (!document.querySelector(`.tree-row[data-file="${CSS.escape(name)}"]`)) addTreeRowForNewFile(name, folder);
+}
+
+/* ======================================================================
+   DOWNLOAD / ZIP / NEW FILE / OPEN FROM DISK
+   ====================================================================== */
+function getLatestContent(filename) {
+  if (filename === activeFile) return view.state.doc.toString();
+  if (fileStates.has(filename)) return fileStates.get(filename).doc.toString();
+  return FILES[filename].content;
+}
+
+function triggerDownload(data, filename) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function downloadFile(filename) {
+  triggerDownload(getLatestContent(filename), filename);
+  showToast(`Downloaded ${filename}`);
+}
+
+function copyPath(filename) {
+  const path = FILE_PATHS[filename] || filename;
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(path).then(
+      () => showToast(`Copied path: ${path}`),
+      () => showToast("Couldn't copy — clipboard access was blocked")
+    );
+  } else {
+    showToast("Clipboard isn't available here");
+  }
+}
+
+function buildZipEntries(folderKey) {
+  if (folderKey === "root") {
+    return Object.keys(FILES).map((f) => ({
+      path: `instrument-panel/${FILE_PATHS[f].replace(/ \/ /g, "/")}`,
+      content: getLatestContent(f)
+    }));
+  }
+  if (folderKey === "src") {
+    return ["index.html", "styles.css", "app.js"].map((f) => ({ path: `src/${f}`, content: getLatestContent(f) }));
+  }
+  return [];
+}
+
+async function downloadFolderAsZip(folderKey, folderName) {
+  showToast(`Zipping ${folderName}…`);
+  try {
+    const { default: JSZip } = await import("https://esm.sh/jszip@3.10.1");
+    const zip = new JSZip();
+    for (const { path, content } of buildZipEntries(folderKey)) zip.file(path, content);
+    const blob = await zip.generateAsync({ type: "blob" });
+    triggerDownload(blob, `${folderName}.zip`);
+    showToast(`Downloaded ${folderName}.zip`);
+  } catch (err) {
+    showToast(`Couldn't create the zip: ${err.message}`);
+  }
+}
+
+function newFileFlow(folder = "root") {
+  const name = (prompt("New file name (e.g. notes.txt):") || "").trim();
+  if (!name) return;
+  if (FILES[name]) { showToast(`${name} already exists`); openFile(name); return; }
+  registerNewFile(name, "", folder);
+  openFile(name);
+  showToast(`Created ${name}`);
+}
+
+function openFileFromDisk() {
+  const input = document.getElementById("file-input-hidden");
+  input.value = "";
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      registerNewFile(file.name, String(reader.result ?? ""));
+      openFile(file.name);
+      showToast(`Opened ${file.name}`);
+    };
+    reader.onerror = () => showToast(`Couldn't read ${file.name}`);
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function saveAsFlow() {
+  if (!activeFile) return;
+  const name = (prompt("Save as:", activeFile) || "").trim();
+  if (!name) return;
+  triggerDownload(getLatestContent(activeFile), name);
+  showToast(`Downloaded ${name}`);
+}
+
+function closeAllTabs() {
+  [...openTabs].forEach((f) => closeTab(f));
+}
+
+function deleteFile(filename) {
+  if (!confirm(`Delete ${filename}? This can't be undone.`)) return;
+  if (openTabs.includes(filename)) closeTab(filename);
+  delete FILES[filename];
+  delete FILE_PATHS[filename];
+  fileStates.delete(filename);
+  fileBaseline.delete(filename);
+  modifiedFiles.delete(filename);
+  staged.delete(filename);
+  const row = document.querySelector(`.tree-row[data-file="${CSS.escape(filename)}"]`);
+  if (row) row.remove();
+  updateFileCount();
+  renderSCM();
+  showToast(`Deleted ${filename}`);
+}
+
+function renameFile(filename) {
+  const newName = (prompt("Rename to:", filename) || "").trim();
+  if (!newName || newName === filename) return;
+  if (FILES[newName]) { showToast(`${newName} already exists`); return; }
+  const wasActive = activeFile === filename;
+  const wasOpen = openTabs.includes(filename);
+  const wasModified = modifiedFiles.has(filename);
+  const wasStaged = staged.has(filename);
+  const content = getLatestContent(filename);
+  const folder = (FILE_PATHS[filename] || "").includes(" / ") ? "src" : "root";
+  const baseline = fileBaseline.has(filename) ? fileBaseline.get(filename) : content;
+
+  if (wasOpen) closeTab(filename);
+  delete FILES[filename];
+  delete FILE_PATHS[filename];
+  fileStates.delete(filename);
+  fileBaseline.delete(filename);
+  modifiedFiles.delete(filename);
+  staged.delete(filename);
+  const row = document.querySelector(`.tree-row[data-file="${CSS.escape(filename)}"]`);
+  if (row) row.remove();
+
+  registerNewFile(newName, content, folder);
+  fileBaseline.set(newName, baseline);
+  if (wasModified) modifiedFiles.add(newName);
+  if (wasStaged) staged.add(newName);
+  if (wasOpen) openFile(newName, { focus: wasActive });
+  updateFileCount();
+  renderTree();
+  renderSCM();
+  showToast(`Renamed to ${newName}`);
+}
+
+function duplicateFile(filename) {
+  const dotIdx = filename.lastIndexOf(".");
+  const base = dotIdx > 0 ? filename.slice(0, dotIdx) : filename;
+  const ext = dotIdx > 0 ? filename.slice(dotIdx) : "";
+  let copyName = `${base} copy${ext}`;
+  let n = 2;
+  while (FILES[copyName]) { copyName = `${base} copy ${n}${ext}`; n++; }
+  const folder = (FILE_PATHS[filename] || "").includes(" / ") ? "src" : "root";
+  registerNewFile(copyName, getLatestContent(filename), folder);
+  openFile(copyName);
+  showToast(`Duplicated as ${copyName}`);
+}
+
+/* ======================================================================
+   DRAG & DROP — drop files from the OS straight into the editor
+   ====================================================================== */
+const editorStageEl = document.getElementById("editor-stage");
+let dragDepth = 0;
+editorStageEl.addEventListener("dragenter", (e) => {
+  e.preventDefault();
+  dragDepth++;
+  editorStageEl.classList.add("drag-over");
+});
+editorStageEl.addEventListener("dragover", (e) => e.preventDefault());
+editorStageEl.addEventListener("dragleave", () => {
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (dragDepth === 0) editorStageEl.classList.remove("drag-over");
+});
+editorStageEl.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dragDepth = 0;
+  editorStageEl.classList.remove("drag-over");
+  const files = [...(e.dataTransfer?.files || [])];
+  if (!files.length) return;
+  let loaded = 0;
+  files.forEach((file, i) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      registerNewFile(file.name, String(reader.result ?? ""));
+      loaded++;
+      if (i === 0) openFile(file.name);
+      if (loaded === files.length) showToast(`Opened ${files.length} file${files.length === 1 ? "" : "s"}`);
+    };
+    reader.readAsText(file);
+  });
+});
+
+/* ======================================================================
+   LIVE PREVIEW — renders HTML files (with local CSS/JS inlined) in an iframe
+   ====================================================================== */
+let previewOpen = false;
+let previewTarget = null;
+let previewRaf = null;
+
+function isHtmlFile(filename) {
+  return !!filename && filename.toLowerCase().endsWith(".html");
+}
+function resolveLocalDep(href) {
+  if (!href || /^https?:|^data:|^\/\//i.test(href)) return null;
+  const name = href.split("/").pop().split("?")[0].split("#")[0];
+  return FILES[name] ? name : null;
+}
+function buildPreviewDoc(filename) {
+  let html = getLatestContent(filename);
+  html = html.replace(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/gi, (match) => {
+    const hrefMatch = match.match(/href=["']([^"']+)["']/i);
+    const dep = hrefMatch ? resolveLocalDep(hrefMatch[1]) : null;
+    return dep ? `<style>\n${getLatestContent(dep)}\n</style>` : match;
+  });
+  html = html.replace(/<script\b([^>]*)\bsrc=["']([^"']+)["']([^>]*)>\s*<\/script>/gi, (match, pre, src) => {
+    const dep = resolveLocalDep(src);
+    return dep ? `<script type="module">\n${getLatestContent(dep)}\n<\/script>` : match;
+  });
+  return html;
+}
+function refreshPreview() {
+  if (!previewOpen) return;
+  const iframe = document.getElementById("preview-frame");
+  const empty = document.getElementById("preview-empty");
+  if (isHtmlFile(previewTarget)) {
+    empty.classList.add("hidden");
+    iframe.classList.remove("hidden");
+    iframe.srcdoc = buildPreviewDoc(previewTarget);
+  } else {
+    iframe.classList.add("hidden");
+    empty.classList.remove("hidden");
+  }
+}
+function schedulePreviewRefresh() {
+  if (!previewOpen) return;
+  if (previewRaf) cancelAnimationFrame(previewRaf);
+  previewRaf = requestAnimationFrame(refreshPreview);
+}
+function setPreviewOpen(open) {
+  previewOpen = open;
+  if (open && !isHtmlFile(previewTarget)) {
+    previewTarget = isHtmlFile(activeFile) ? activeFile : (FILES["index.html"] ? "index.html" : null);
+  }
+  document.getElementById("preview-pane").classList.toggle("hidden", !open);
+  document.getElementById("btn-toggle-preview").classList.toggle("active", open);
+  if (open) refreshPreview();
+}
+document.getElementById("btn-toggle-preview").addEventListener("click", () => {
+  if (!previewOpen && !isHtmlFile(activeFile) && !isHtmlFile(previewTarget) && !FILES["index.html"]) {
+    showToast("Open an HTML file to preview it — the panel will show a hint until then");
+  }
+  setPreviewOpen(!previewOpen);
+});
+document.getElementById("btn-preview-close").addEventListener("click", () => setPreviewOpen(false));
+document.getElementById("btn-preview-refresh").addEventListener("click", () => { refreshPreview(); showToast("Preview refreshed"); });
+document.getElementById("btn-preview-newtab").addEventListener("click", () => {
+  if (!isHtmlFile(previewTarget)) { showToast("Open an HTML file first"); return; }
+  const blob = new Blob([buildPreviewDoc(previewTarget)], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank");
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+});
+
+/* ======================================================================
+   SEARCH — full-text search across every open project file
+   ====================================================================== */
+function escapeHtml(s) {
+  return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+function jumpToMatch(filename, lineNumber, colIndex) {
+  openFile(filename);
+  requestAnimationFrame(() => {
+    const line = view.state.doc.line(Math.min(lineNumber, view.state.doc.lines));
+    const pos = Math.min(line.from + colIndex, line.to);
+    view.dispatch({ selection: { anchor: pos, head: pos }, effects: EditorView.scrollIntoView(pos, { y: "center" }) });
+    view.focus();
+  });
+}
+function runSearch(query) {
+  const resultsEl = document.getElementById("search-results");
+  const countEl = document.getElementById("search-result-count");
+  const q = query.trim();
+  resultsEl.innerHTML = "";
+  if (!q) {
+    countEl.textContent = "";
+    resultsEl.innerHTML = `<div class="ext-placeholder">Type to search file contents. Click a result to jump straight to that line.</div>`;
+    return;
+  }
+  const qLower = q.toLowerCase();
+  let totalMatches = 0;
+  for (const filename of Object.keys(FILES).sort()) {
+    const lines = getLatestContent(filename).split("\n");
+    const fileMatches = [];
+    lines.forEach((lineText, i) => {
+      const idx = lineText.toLowerCase().indexOf(qLower);
+      if (idx !== -1) fileMatches.push({ line: i + 1, text: lineText, idx });
+    });
+    if (!fileMatches.length) continue;
+    totalMatches += fileMatches.length;
+    const group = document.createElement("div");
+    group.className = "search-file-group";
+    const header = document.createElement("div");
+    header.className = "search-file-header";
+    header.innerHTML = `${ICONS[FILES[filename].icon]}<span>${filename}</span><span class="search-file-count">${fileMatches.length}</span>`;
+    group.appendChild(header);
+    const list = document.createElement("div");
+    list.className = "search-matches";
+    fileMatches.slice(0, 60).forEach((m) => {
+      const row = document.createElement("div");
+      row.className = "search-match-row";
+      const before = escapeHtml(m.text.slice(0, m.idx));
+      const hit = escapeHtml(m.text.slice(m.idx, m.idx + q.length));
+      const after = escapeHtml(m.text.slice(m.idx + q.length));
+      row.innerHTML = `<span class="search-line-no">${m.line}</span><span class="search-line-text">${before}<mark>${hit}</mark>${after}</span>`;
+      row.addEventListener("click", () => jumpToMatch(filename, m.line, m.idx));
+      list.appendChild(row);
+    });
+    group.appendChild(list);
+    resultsEl.appendChild(group);
+  }
+  countEl.textContent = totalMatches ? `${totalMatches} result${totalMatches === 1 ? "" : "s"}` : "";
+  if (!totalMatches) resultsEl.innerHTML = `<div class="ext-placeholder">No matches for "${escapeHtml(q)}"</div>`;
+}
+let searchDebounce = null;
+document.getElementById("search-input").addEventListener("input", (e) => {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => runSearch(e.target.value), 120);
+});
+
+/* ======================================================================
+   SOURCE CONTROL — a small but real stage / commit / discard workflow
+   ====================================================================== */
+const staged = new Set();
+let commitHistory = []; // { hash, message, count }
+let currentBranch = "main";
+
+function fileHasChanges(filename) {
+  if (!FILES[filename]) return false;
+  const baseline = fileBaseline.has(filename) ? fileBaseline.get(filename) : "";
+  return getLatestContent(filename) !== baseline;
+}
+
+function diffStats(filename) {
+  const oldLines = (fileBaseline.has(filename) ? fileBaseline.get(filename) : "").split("\n");
+  const newLines = getLatestContent(filename).split("\n");
+  let added = 0, removed = 0;
+  const maxLen = Math.max(oldLines.length, newLines.length);
+  for (let i = 0; i < maxLen; i++) {
+    if (oldLines[i] === undefined) added++;
+    else if (newLines[i] === undefined) removed++;
+    else if (oldLines[i] !== newLines[i]) { added++; removed++; }
+  }
+  return { added, removed };
+}
+
+function renderSCM() {
+  const stagedSection = document.getElementById("scm-staged-section");
+  const changesSection = document.getElementById("scm-changes-section");
+  const historySection = document.getElementById("scm-history-section");
+  const countEl = document.getElementById("scm-change-count");
+  if (!stagedSection || !changesSection || !historySection) return;
+
+  const changed = Object.keys(FILES).filter(fileHasChanges);
+  [...staged].forEach((f) => { if (!changed.includes(f)) staged.delete(f); });
+  const stagedList = changed.filter((f) => staged.has(f));
+  const unstaged = changed.filter((f) => !staged.has(f));
+
+  countEl.textContent = changed.length ? String(changed.length) : "";
+
+  function fileRow(filename, isStaged) {
+    const { added, removed } = diffStats(filename);
+    const row = document.createElement("div");
+    row.className = "scm-file-row";
+    row.innerHTML = `${ICONS[FILES[filename].icon]}<span class="scm-file-name">${filename}</span>
+      <span class="scm-stat"><span class="added">+${added}</span><span class="removed">-${removed}</span></span>`;
+    const actions = document.createElement("span");
+    actions.className = "scm-row-actions";
+    actions.innerHTML = isStaged
+      ? `<button class="scm-row-btn" title="Unstage" data-act="unstage">−</button>`
+      : `<button class="scm-row-btn" title="Discard changes" data-act="discard">↺</button><button class="scm-row-btn" title="Stage" data-act="stage">+</button>`;
+    row.appendChild(actions);
+    row.addEventListener("click", (e) => { if (!e.target.closest(".scm-row-btn")) openFile(filename); });
+    actions.querySelectorAll(".scm-row-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const act = btn.dataset.act;
+        if (act === "stage") { staged.add(filename); renderSCM(); }
+        else if (act === "unstage") { staged.delete(filename); renderSCM(); }
+        else if (act === "discard") discardChanges(filename);
+      });
+    });
+    return row;
+  }
+
+  stagedSection.innerHTML = "";
+  if (stagedList.length) {
+    const title = document.createElement("div");
+    title.className = "scm-section-title";
+    title.innerHTML = `<span>Staged Changes</span><span>${stagedList.length}</span>`;
+    stagedSection.appendChild(title);
+    stagedList.forEach((f) => stagedSection.appendChild(fileRow(f, true)));
+  }
+
+  changesSection.innerHTML = "";
+  const title2 = document.createElement("div");
+  title2.className = "scm-section-title";
+  title2.innerHTML = `<span>Changes</span><span>${unstaged.length}</span>`;
+  changesSection.appendChild(title2);
+  if (unstaged.length) unstaged.forEach((f) => changesSection.appendChild(fileRow(f, false)));
+  else {
+    const empty = document.createElement("div");
+    empty.className = "scm-empty";
+    empty.textContent = "No changes — working tree clean.";
+    changesSection.appendChild(empty);
+  }
+
+  historySection.innerHTML = "";
+  if (commitHistory.length) {
+    const title3 = document.createElement("div");
+    title3.className = "scm-section-title";
+    title3.innerHTML = `<span>History</span>`;
+    historySection.appendChild(title3);
+    commitHistory.slice(0, 6).forEach((c) => {
+      const item = document.createElement("div");
+      item.className = "scm-history-item";
+      item.innerHTML = `<span class="hash">${c.hash}</span><span>${escapeHtml(c.message)}</span>`;
+      historySection.appendChild(item);
+    });
+  }
+}
+
+function discardChanges(filename) {
+  if (!confirm(`Discard changes in ${filename}? This can't be undone.`)) return;
+  const baseline = fileBaseline.has(filename) ? fileBaseline.get(filename) : "";
+  FILES[filename].content = baseline;
+  fileStates.delete(filename);
+  staged.delete(filename);
+  markModified(filename, false);
+  if (filename === activeFile) {
+    view.setState(getStateFor(filename));
+    scheduleMinimapRender();
+    schedulePreviewRefresh();
+  }
+  renderSCM();
+  showToast(`Discarded changes in ${filename}`);
+}
+
+function randHash() { return Math.random().toString(16).slice(2, 9); }
+
+function commitChanges() {
+  const msgEl = document.getElementById("scm-message");
+  const message = msgEl.value.trim();
+  const filesToCommit = [...staged].filter(fileHasChanges);
+  if (!filesToCommit.length) { showToast("Stage at least one file to commit"); return; }
+  if (!message) { showToast("Enter a commit message"); return; }
+  for (const f of filesToCommit) {
+    fileBaseline.set(f, getLatestContent(f));
+    staged.delete(f);
+    markModified(f, false);
+  }
+  const hash = randHash();
+  commitHistory.unshift({ hash, message, count: filesToCommit.length });
+  msgEl.value = "";
+  showToast(`Committed ${filesToCommit.length} file${filesToCommit.length === 1 ? "" : "s"} (${hash})`);
+  renderSCM();
+}
+document.getElementById("scm-commit-btn").addEventListener("click", commitChanges);
+
+function promptText() { return `➜ instrument-panel git:(${currentBranch}) ✗`; }
+function updateBranchUI() {
+  document.getElementById("status-branch-name").textContent = currentBranch;
+  document.getElementById("meta-branch").textContent = currentBranch;
+  document.querySelectorAll(".term-input-row .prompt").forEach((p) => { p.textContent = promptText(); });
+}
+
+/* ======================================================================
+   FLYOUT MENUS (File menu dropdown + right-click context menus)
+   ====================================================================== */
+const flyoutMenu = document.getElementById("flyout-menu");
+
+function openFlyout(x, y, items) {
+  flyoutMenu.innerHTML = "";
+  for (const item of items) {
+    if (item.sep) { const s = document.createElement("div"); s.className = "flyout-sep"; flyoutMenu.appendChild(s); continue; }
+    const el = document.createElement("div");
+    el.className = "flyout-item" + (item.danger ? " danger" : "");
+    el.setAttribute("role", "menuitem");
+    el.innerHTML = `<span>${item.label}</span>${item.meta ? `<span class="flyout-meta">${item.meta}</span>` : ""}`;
+    el.addEventListener("click", () => { closeFlyout(); item.action(); });
+    flyoutMenu.appendChild(el);
+  }
+  flyoutMenu.classList.remove("hidden");
+  flyoutMenu.style.left = x + "px";
+  flyoutMenu.style.top = y + "px";
+  requestAnimationFrame(() => {
+    const rect = flyoutMenu.getBoundingClientRect();
+    if (rect.right > window.innerWidth) flyoutMenu.style.left = Math.max(4, x - rect.width) + "px";
+    if (rect.bottom > window.innerHeight) flyoutMenu.style.top = Math.max(4, y - rect.height) + "px";
+  });
+}
+function closeFlyout() {
+  flyoutMenu.classList.add("hidden");
+  document.querySelectorAll(".menubar-btn.open").forEach((b) => b.classList.remove("open"));
+}
+document.addEventListener("click", (e) => { if (!flyoutMenu.contains(e.target) && !e.target.classList.contains("menubar-btn")) closeFlyout(); });
+window.addEventListener("scroll", closeFlyout, true);
+window.addEventListener("resize", closeFlyout);
+window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeFlyout(); });
+
+function buildFileMenuItems(filename) {
+  const items = [
+    { label: "Open", action: () => openFile(filename) }
+  ];
+  if (isHtmlFile(filename)) {
+    items.push({ label: "Open Preview", action: () => { previewTarget = filename; setPreviewOpen(true); } });
+  }
+  items.push(
+    { label: "Download", action: () => downloadFile(filename) },
+    { label: "Copy Path", action: () => copyPath(filename) },
+    { label: "Duplicate", action: () => duplicateFile(filename) },
+    { label: "Rename…", action: () => renameFile(filename) },
+    { sep: true },
+    { label: "Close Tab", action: () => { if (openTabs.includes(filename)) closeTab(filename); } },
+    { sep: true },
+    { label: "Delete", danger: true, action: () => deleteFile(filename) }
+  );
+  return items;
+}
+function buildFolderMenuItems(folderKey, folderName) {
+  const folderPath = folderKey === "root" ? "instrument-panel" : "src";
+  return [
+    { label: "New File Here…", action: () => newFileFlow(folderKey === "src" ? "src" : "root") },
+    { sep: true },
+    { label: "Download as Zip", action: () => downloadFolderAsZip(folderKey, folderName) },
+    {
+      label: "Copy Path",
+      action: () => {
+        if (navigator.clipboard?.writeText) navigator.clipboard.writeText(folderPath).then(() => showToast(`Copied path: ${folderPath}`));
+        else showToast("Clipboard isn't available here");
+      }
+    }
+  ];
+}
+
+function bindMenubarButton(btnId, itemsFactory) {
+  const btn = document.getElementById(btnId);
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const wasOpen = !flyoutMenu.classList.contains("hidden") && btn.classList.contains("open");
+    closeFlyout();
+    if (wasOpen) return;
+    btn.classList.add("open");
+    const rect = btn.getBoundingClientRect();
+    openFlyout(rect.left, rect.bottom + 4, itemsFactory());
+  });
+}
+
+function execEditorClipboard(kind) {
+  view.focus();
+  try {
+    const ok = document.execCommand(kind);
+    if (!ok) throw new Error("blocked");
+  } catch {
+    showToast(`Use Ctrl+${kind === "cut" ? "X" : kind === "copy" ? "C" : "V"} — the browser blocked that menu action`);
+  }
+}
+
+function toggleZenMode(force) {
+  const appEl = document.querySelector(".app");
+  const willEnable = force !== undefined ? force : !appEl.classList.contains("zen");
+  appEl.classList.toggle("zen", willEnable);
+  if (willEnable) showToast("Zen mode on — press Esc to exit");
+}
+
+bindMenubarButton("btn-file-menu", () => [
+  { label: "New File…", action: newFileFlow },
+  { label: "Open File…", action: openFileFromDisk },
+  { sep: true },
+  { label: "Save", meta: "Ctrl+S", action: saveActiveFile },
+  { label: "Save As…", action: saveAsFlow },
+  { sep: true },
+  { label: "Download Active File", action: () => activeFile && downloadFile(activeFile) },
+  { label: "Download Project (.zip)", action: () => downloadFolderAsZip("root", "instrument-panel") },
+  { sep: true },
+  { label: "Close Editor", meta: "Ctrl+W", action: () => activeFile && closeTab(activeFile) },
+  { label: "Close All Editors", action: closeAllTabs }
+]);
+
+bindMenubarButton("btn-edit-menu", () => [
+  { label: "Undo", meta: "Ctrl+Z", action: () => { undo(view); view.focus(); } },
+  { label: "Redo", meta: "Ctrl+Y", action: () => { redo(view); view.focus(); } },
+  { sep: true },
+  { label: "Cut", meta: "Ctrl+X", action: () => execEditorClipboard("cut") },
+  { label: "Copy", meta: "Ctrl+C", action: () => execEditorClipboard("copy") },
+  { label: "Paste", meta: "Ctrl+V", action: () => execEditorClipboard("paste") },
+  { sep: true },
+  { label: "Select All", meta: "Ctrl+A", action: () => { selectAll(view); view.focus(); } },
+  { sep: true },
+  { label: "Find", meta: "Ctrl+F", action: () => openSearchPanel(view) },
+  { label: "Replace", meta: "Ctrl+H", action: () => openSearchPanel(view) },
+  { label: "Find in Files…", meta: "Ctrl+Shift+F", action: () => setActivityView("search") }
+]);
+
+bindMenubarButton("btn-view-menu", () => [
+  { label: "Command Palette…", meta: "Ctrl+K", action: () => openPalette("") },
+  { sep: true },
+  { label: "Explorer", action: () => setActivityView("explorer") },
+  { label: "Search", action: () => setActivityView("search") },
+  { label: "Source Control", action: () => setActivityView("scm") },
+  { label: "Extensions", action: () => setActivityView("extensions") },
+  { sep: true },
+  { label: "Toggle Explorer", meta: "Ctrl+B", action: () => document.getElementById("btn-toggle-sidebar").click() },
+  { label: "Toggle Terminal", meta: "Ctrl+`", action: () => toggleTerminal() },
+  { label: "Toggle Live Preview", action: () => document.getElementById("btn-toggle-preview").click() },
+  { sep: true },
+  { label: "Zen Mode", action: () => toggleZenMode() }
+]);
+
+/* ======================================================================
+   ACTIVITY BAR — switch sidebar views (Explorer / Extensions / placeholders)
+   ====================================================================== */
+const activityButtons = document.querySelectorAll(".activity-bar .icon-btn[data-view]");
+const viewExplorerEl = document.getElementById("view-explorer");
+const viewExtensionsEl = document.getElementById("view-extensions");
+const viewSearchEl = document.getElementById("view-search");
+const viewScmEl = document.getElementById("view-scm");
+function setActivityView(viewName) {
+  activityButtons.forEach((b) => b.classList.toggle("active", b.dataset.view === viewName));
+  viewExplorerEl.classList.toggle("hidden", viewName !== "explorer");
+  viewExtensionsEl.classList.toggle("hidden", viewName !== "extensions");
+  viewSearchEl.classList.toggle("hidden", viewName !== "search");
+  viewScmEl.classList.toggle("hidden", viewName !== "scm");
+  if (sidebar.classList.contains("collapsed")) {
+    sidebar.classList.remove("collapsed");
+    document.getElementById("btn-toggle-sidebar").classList.add("active");
+  }
+  if (viewName === "search") requestAnimationFrame(() => document.getElementById("search-input").focus());
+  if (viewName === "scm") renderSCM();
+}
+activityButtons.forEach((btn) => btn.addEventListener("click", () => setActivityView(btn.dataset.view)));
+document.getElementById("status-branch").addEventListener("click", () => setActivityView("scm"));
+
+/* ======================================================================
+   EXTENSIONS PANEL
+   ====================================================================== */
+const EXTENSIONS = [
+  { id: "color-highlight", name: "Color Highlight", desc: "Shows a small swatch next to hex color codes like #e8a33d right in your code.", installed: false, apply: setColorHighlightEnabled },
+  { id: "todo-tree", name: "TODO Highlighter", desc: "Highlights TODO, FIXME, NOTE and HACK comments so they pop out of the code.", installed: false, apply: setTodoHighlightEnabled },
+  { id: "trailing-ws", name: "Trailing Whitespace", desc: "Flags trailing spaces and tabs at the end of lines in red.", installed: false, apply: setTrailingWsEnabled },
+  { id: "bracket-colorizer", name: "Bracket Pair Colorizer", desc: "Colors matching ( ), [ ] and { } by nesting depth so you can trace scope at a glance.", installed: false, apply: setBracketColorEnabled },
+  { id: "indent-rainbow", name: "Indent Rainbow", desc: "Tints indentation whitespace in alternating colors so nested blocks are easy to follow.", installed: false, apply: setIndentRainbowEnabled },
+  { id: "better-comments", name: "Better Comments", desc: "Styles // !, // ? and // * comments differently so warnings, questions and highlights stand out.", installed: false, apply: setBetterCommentsEnabled },
+  { id: "git-blame-inline", name: "GitLens Blame (mini)", desc: "Shows a faint inline blame hint at the end of the active line, like a tiny GitLens.", installed: false, apply: setGitBlameEnabled },
+  { id: "word-count", name: "Word Count", desc: "Adds a live word count for the active file to the status bar.", installed: false, apply: setWordCountEnabled },
+  { id: "theme-synthwave", name: "Synthwave Glow", desc: "A neon purple-and-cyan color theme across the whole editor.", installed: false, category: "theme", apply: (on) => setColorTheme("synthwave", on) },
+  { id: "theme-dracula", name: "Dracula", desc: "A dark theme with vivid purple, pink and cyan accents.", installed: false, category: "theme", apply: (on) => setColorTheme("dracula", on) },
+  { id: "theme-one-dark", name: "One Dark Pro", desc: "Atom's iconic One Dark color theme.", installed: false, category: "theme", apply: (on) => setColorTheme("one-dark", on) },
+  { id: "theme-nord", name: "Nord", desc: "A cool, arctic-inspired blue-grey theme.", installed: false, category: "theme", apply: (on) => setColorTheme("nord", on) },
+  { id: "theme-solarized-light", name: "Solarized Light", desc: "The classic low-contrast light theme.", installed: false, category: "theme", apply: (on) => setColorTheme("solarized-light", on) },
+  { id: "theme-monokai", name: "Monokai", desc: "The legendary Sublime Text default theme.", installed: false, category: "theme", apply: (on) => setColorTheme("monokai", on) }
+];
+function extIconSvg(id) {
+  const colors = {
+    "color-highlight": "var(--amber)", "todo-tree": "var(--clay)", "trailing-ws": "var(--red)",
+    "bracket-colorizer": "#7fb0e0", "indent-rainbow": "var(--teal)", "better-comments": "var(--amber)",
+    "git-blame-inline": "var(--clay)", "word-count": "var(--text-dim)",
+    "theme-synthwave": "#ff2fd0", "theme-dracula": "#bd93f9", "theme-one-dark": "#61afef",
+    "theme-nord": "#88c0d0", "theme-solarized-light": "#b58900", "theme-monokai": "#a6e22e"
+  };
+  const letter = id.startsWith("theme-") ? id.slice(6, 7).toUpperCase() : id[0].toUpperCase();
+  return `<div style="width:30px;height:30px;border-radius:7px;background:${colors[id] || "var(--amber)"};display:flex;align-items:center;justify-content:center;color:#1a1409;font-weight:700;font-family:var(--font-display);font-size:13px;flex:0 0 auto;">${letter}</div>`;
+}
+function renderExtensions() {
+  const el = document.getElementById("extensions-list");
+  el.innerHTML = "";
+  for (const ext of EXTENSIONS) {
+    const card = document.createElement("div");
+    card.className = "ext-card";
+    card.innerHTML = `
+      ${extIconSvg(ext.id)}
+      <div class="ext-body">
+        <div class="ext-name">${ext.name}${ext.installed ? '<span class="ext-badge">On</span>' : ""}${ext.category === "theme" ? '<span class="ext-badge" style="color:var(--text-dim);border-color:var(--border);">Theme</span>' : ""}</div>
+        <div class="ext-desc">${ext.desc}</div>
+        <button class="ext-btn ${ext.installed ? "uninstall" : "install"}">${ext.installed ? "Uninstall" : "Install"}</button>
+      </div>`;
+    card.querySelector(".ext-btn").addEventListener("click", () => {
+      const turningOn = !ext.installed;
+      if (turningOn && ext.category === "theme") {
+        // color themes are mutually exclusive, like picking a theme in VS Code
+        EXTENSIONS.forEach((other) => {
+          if (other !== ext && other.category === "theme" && other.installed) {
+            other.installed = false;
+            other.apply(false);
+          }
+        });
+      }
+      ext.installed = turningOn;
+      ext.apply(ext.installed);
+      showToast(`${ext.installed ? "Installed" : "Uninstalled"} ${ext.name}`);
+      renderExtensions();
+    });
+    el.appendChild(card);
+  }
+  const installedCount = EXTENSIONS.filter((e) => e.installed).length;
+  document.getElementById("ext-installed-count").textContent = `${installedCount} installed`;
+}
+renderExtensions();
+
+/* ======================================================================
+   STATUS BAR
+   ====================================================================== */
+function updateStatusPosition() {
+  const pos = view.state.selection.main.head;
+  const line = view.state.doc.lineAt(pos);
+  const col = pos - line.from + 1;
+  const sel = view.state.selection.main;
+  const selLen = Math.abs(sel.to - sel.from);
+  document.getElementById("status-position").textContent =
+    selLen > 0 ? `Ln ${line.number}, Col ${col} (${selLen} selected)` : `Ln ${line.number}, Col ${col}`;
+  updateWordCount();
+}
+
+function updateWordCount() {
+  if (!wordCountEnabled) return;
+  const text = view.state.doc.toString();
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  document.getElementById("status-wordcount").textContent = `${words} word${words === 1 ? "" : "s"} · ${text.length} chars`;
+}
+
+function updateStatusForFile(filename) {
+  document.getElementById("status-lang").textContent = FILES[filename].lang;
+  updateStatusPosition();
+}
+
+/* ======================================================================
+   MINIMAP (decorative + click-to-scroll canvas rendering)
+   ====================================================================== */
+const minimapCanvas = document.getElementById("minimap");
+const minimapWrap = document.getElementById("minimap-wrap");
+const minimapViewport = document.getElementById("minimap-viewport");
+let minimapRaf = null;
+
+function scheduleMinimapRender() {
+  if (minimapRaf) cancelAnimationFrame(minimapRaf);
+  minimapRaf = requestAnimationFrame(renderMinimap);
+}
+
+function renderMinimap() {
+  const doc = view.state.doc;
+  const rowH = 2;
+  const width = minimapWrap.clientWidth;
+  const height = Math.max(minimapWrap.clientHeight, doc.lines * rowH);
+  const dpr = window.devicePixelRatio || 1;
+  minimapCanvas.width = width * dpr;
+  minimapCanvas.height = height * dpr;
+  minimapCanvas.style.height = height + "px";
+  const ctx = minimapCanvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+
+  const commentColor = cssVar("--text-faint") || "#5f584a";
+  const keywordColor = cssVar("--amber") || "#e8a33d";
+  const textColor = cssVar("--text-dim") || "#8c8371";
+  const keywordRe = /\b(function|const|class|def|import|export|return|if|else|for|while)\b/;
+
+  for (let i = 1; i <= doc.lines; i++) {
+    const text = doc.line(i).text;
+    const trimmed = text.trimStart();
+    if (!trimmed) continue;
+    const indent = text.length - trimmed.length;
+    let color = textColor;
+    if (/^(\/\/|#|\*|<!--)/.test(trimmed)) color = commentColor;
+    else if (keywordRe.test(trimmed)) color = keywordColor;
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.75;
+    const w = Math.min(trimmed.length * 1.15, width - indent * 0.5 - 6);
+    ctx.fillRect(4 + indent * 0.5, (i - 1) * rowH, Math.max(w, 2), rowH - 0.6);
+  }
+  ctx.globalAlpha = 1;
+  updateMinimapViewport();
+}
+
+function updateMinimapViewport() {
+  const doc = view.state.doc;
+  const rowH = 2;
+  const totalH = doc.lines * rowH;
+  const scroller = view.scrollDOM;
+  const ratioTop = scroller.scrollTop / (scroller.scrollHeight || 1);
+  const ratioH = scroller.clientHeight / (scroller.scrollHeight || 1);
+  minimapViewport.style.top = (ratioTop * totalH) + "px";
+  minimapViewport.style.height = Math.max(ratioH * totalH, 10) + "px";
+}
+
+minimapWrap.addEventListener("click", (e) => {
+  const rect = minimapWrap.getBoundingClientRect();
+  const clickRatio = (e.clientY - rect.top) / rect.height;
+  const scroller = view.scrollDOM;
+  scroller.scrollTop = clickRatio * scroller.scrollHeight - scroller.clientHeight / 2;
+});
+
+window.addEventListener("resize", scheduleMinimapRender);
+
+/* ======================================================================
+   SIDEBAR / TERMINAL / PANEL TOGGLES
+   ====================================================================== */
+const sidebar = document.getElementById("sidebar");
+const bottomPanel = document.getElementById("bottom-panel");
+
+document.getElementById("btn-toggle-sidebar").addEventListener("click", () => {
+  sidebar.classList.toggle("collapsed");
+  document.getElementById("btn-toggle-sidebar").classList.toggle("active");
+});
+
+function toggleTerminal(force) {
+  const willCollapse = force !== undefined ? !force : !bottomPanel.classList.contains("collapsed");
+  bottomPanel.classList.toggle("collapsed", willCollapse);
+  document.getElementById("btn-toggle-terminal").classList.toggle("active", !willCollapse);
+  if (!willCollapse) requestAnimationFrame(() => document.getElementById("term-input").focus());
+}
+document.getElementById("btn-toggle-terminal").addEventListener("click", () => toggleTerminal());
+document.getElementById("btn-close-panel").addEventListener("click", () => toggleTerminal(false));
+
+document.querySelectorAll(".panel-tab").forEach((tabEl) => {
+  tabEl.addEventListener("click", () => {
+    document.querySelectorAll(".panel-tab").forEach((t2) => t2.classList.remove("active"));
+    tabEl.classList.add("active");
+  });
+});
+
+/* panel resize drag */
+(function setupResize() {
+  const handle = document.getElementById("panel-resize");
+  let dragging = false;
+  handle.addEventListener("mousedown", () => { dragging = true; document.body.style.cursor = "row-resize"; });
+  window.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+    const stageBottom = document.querySelector(".editor-col").getBoundingClientRect().bottom;
+    const newHeight = Math.min(Math.max(stageBottom - e.clientY, 90), window.innerHeight * 0.7);
+    bottomPanel.style.height = newHeight + "px";
+    scheduleMinimapRender();
+  });
+  window.addEventListener("mouseup", () => { dragging = false; document.body.style.cursor = ""; });
+})();
+
+/* ======================================================================
+   TERMINAL — small simulated shell
+   ====================================================================== */
+const termBody = document.getElementById("terminal-body");
+const termInput = document.getElementById("term-input");
+const termHelp = [
+  "help          show this list",
+  "ls            list project files",
+  "date          print the current date",
+  "whoami        print current user",
+  "node -v       print node version",
+  "python3 -V    print python version",
+  "git status          show working tree status",
+  "git add <file>       stage a file (or . for all)",
+  "git commit -m \"msg\"  commit staged changes",
+  "git log              show commit history",
+  "git branch           show current branch",
+  "git checkout -b <n>  create + switch branch",
+  "echo <text>   print text back",
+  "clear         clear the terminal"
+];
+
+function termPrint(text, cls = "") {
+  const row = document.createElement("div");
+  row.className = "term-line" + (cls ? " " + cls : "");
+  row.textContent = text;
+  termBody.insertBefore(row, termBody.lastElementChild);
+  termBody.scrollTop = termBody.scrollHeight;
+}
+
+function runTerminalCommand(raw) {
+  const cmd = raw.trim();
+  const echoRow = document.createElement("div");
+  echoRow.className = "term-line";
+  echoRow.innerHTML = `<span class="prompt">➜</span> <span>${cmd || ""}</span>`;
+  termBody.insertBefore(echoRow, termBody.lastElementChild);
+  if (!cmd) return;
+
+  if (cmd === "help") termHelp.forEach((l) => termPrint(l, "info"));
+  else if (cmd === "clear") { document.getElementById("btn-clear-terminal").click(); return; }
+  else if (cmd === "ls") termPrint(Object.keys(FILES).join("   "));
+  else if (cmd === "date") termPrint(new Date().toString());
+  else if (cmd === "whoami") termPrint("panel-user");
+  else if (cmd === "node -v") termPrint("v22.4.0");
+  else if (cmd === "python3 -V" || cmd === "python3 --version") termPrint("Python 3.12.4");
+  else if (cmd === "git status") {
+    termPrint(`On branch ${currentBranch}`);
+    const changed = Object.keys(FILES).filter(fileHasChanges);
+    const stagedNow = changed.filter((f) => staged.has(f));
+    const unstagedNow = changed.filter((f) => !staged.has(f));
+    if (stagedNow.length) {
+      termPrint("Changes to be committed:", "info");
+      stagedNow.forEach((f) => termPrint("  modified:   " + f, "info"));
+    }
+    if (unstagedNow.length) {
+      termPrint("Changes not staged for commit:", "info");
+      unstagedNow.forEach((f) => termPrint("  modified:   " + f, "info"));
+    }
+    if (!changed.length) termPrint("nothing to commit, working tree clean", "info");
+  }
+  else if (cmd === "git add ." || cmd === "git add -A") {
+    const changed = Object.keys(FILES).filter(fileHasChanges);
+    changed.forEach((f) => staged.add(f));
+    renderSCM();
+    termPrint(changed.length ? `staged ${changed.length} file(s)` : "nothing to stage", "info");
+  }
+  else if (cmd.startsWith("git add ")) {
+    const f = cmd.slice(8).trim();
+    if (FILES[f]) { staged.add(f); renderSCM(); termPrint(`staged ${f}`, "info"); }
+    else termPrint(`pathspec '${f}' did not match any files`, "err");
+  }
+  else if (cmd.startsWith("git commit -m ")) {
+    const message = cmd.slice(14).trim().replace(/^["']|["']$/g, "");
+    document.getElementById("scm-message").value = message;
+    commitChanges();
+  }
+  else if (cmd === "git log") {
+    if (!commitHistory.length) termPrint("no commits yet", "info");
+    else commitHistory.slice(0, 10).forEach((c) => termPrint(`${c.hash}  ${c.message}`, "info"));
+  }
+  else if (cmd === "git branch") termPrint(`* ${currentBranch}`);
+  else if (cmd.startsWith("git checkout -b ")) {
+    const name = cmd.slice(16).trim();
+    if (!name) { termPrint("branch name required", "err"); return; }
+    currentBranch = name;
+    updateBranchUI();
+    termPrint(`Switched to a new branch '${name}'`, "info");
+  }
+  else if (cmd.startsWith("git checkout ")) {
+    const name = cmd.slice(13).trim();
+    if (!name) { termPrint("branch name required", "err"); return; }
+    currentBranch = name;
+    updateBranchUI();
+    termPrint(`Switched to branch '${name}'`, "info");
+  }
+  else if (cmd.startsWith("echo ")) termPrint(cmd.slice(5));
+  else termPrint(`command not found: ${cmd.split(" ")[0]}`, "err");
+}
+
+termInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    runTerminalCommand(termInput.value);
+    termInput.value = "";
+  }
+});
+
+document.getElementById("btn-clear-terminal").addEventListener("click", () => {
+  termBody.innerHTML = "";
+  termBody.appendChild(document.createRange().createContextualFragment(
+    `<div class="term-line info">Terminal cleared.</div>
+     <div class="term-input-row"><span class="prompt">${promptText()}</span><input class="term-input" id="term-input" autocomplete="off" spellcheck="false" aria-label="Terminal input"></div>`
+  ));
+  bindTermInput();
+});
+function bindTermInput() {
+  const el = document.getElementById("term-input");
+  el.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { runTerminalCommand(el.value); el.value = ""; }
+  });
+}
+
+/* ======================================================================
+   THEME TOGGLE + FONT SIZE
+   ====================================================================== */
+document.getElementById("btn-toggle-theme").addEventListener("click", toggleTheme);
+function toggleTheme() {
+  const isPaper = document.body.dataset.theme === "paper";
+  document.body.dataset.theme = isPaper ? "dark" : "paper";
+  scheduleMinimapRender();
+  showToast(`Switched to ${isPaper ? "dark" : "paper"} theme`);
+}
+
+let fontSize = 13.5;
+function setFontSize(delta) {
+  fontSize = Math.min(20, Math.max(10, fontSize + delta));
+  document.documentElement.style.setProperty("--editor-font-size", fontSize + "px");
+  showToast(`Font size: ${fontSize}px`);
+}
+document.getElementById("btn-font-plus").addEventListener("click", () => setFontSize(1));
+document.getElementById("btn-font-minus").addEventListener("click", () => setFontSize(-1));
+
+/* ======================================================================
+   TOASTS
+   ====================================================================== */
+function showToast(message) {
+  const container = document.getElementById("toasts");
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = message;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 2600);
+}
+
+/* ======================================================================
+   COMMAND PALETTE
+   ====================================================================== */
+const paletteOverlay = document.getElementById("palette-overlay");
+const paletteInput = document.getElementById("palette-input");
+const paletteList = document.getElementById("palette-list");
+let paletteSel = 0;
+let paletteItems = [];
+
+const COMMANDS = [
+  { name: "Go to file…", meta: "Ctrl+P", icon: "search", run: () => openPalette("") },
+  { name: "Toggle explorer", meta: "Ctrl+B", icon: "sidebar", run: () => document.getElementById("btn-toggle-sidebar").click() },
+  { name: "Toggle terminal", meta: "Ctrl+`", icon: "terminal", run: () => toggleTerminal() },
+  { name: "Toggle theme (dark / paper)", meta: "", icon: "theme", run: toggleTheme },
+  { name: "Increase font size", meta: "Ctrl+=", icon: "type", run: () => setFontSize(1) },
+  { name: "Decrease font size", meta: "Ctrl+-", icon: "type", run: () => setFontSize(-1) },
+  { name: "Save active file", meta: "Ctrl+S", icon: "save", run: saveActiveFile },
+  { name: "Format document", meta: "Shift+Alt+F", icon: "format", run: formatDocument },
+  { name: "Clear terminal", meta: "", icon: "terminal", run: () => document.getElementById("btn-clear-terminal").click() },
+  { name: "Close active tab", meta: "Ctrl+W", icon: "close", run: () => activeFile && closeTab(activeFile) },
+  { name: "New file…", meta: "", icon: "save", run: newFileFlow },
+  { name: "Open file from disk…", meta: "", icon: "save", run: openFileFromDisk },
+  { name: "Download active file", meta: "", icon: "save", run: () => activeFile && downloadFile(activeFile) },
+  { name: "Download project as .zip", meta: "", icon: "save", run: () => downloadFolderAsZip("root", "instrument-panel") },
+  { name: "Show extensions", meta: "", icon: "sidebar", run: () => setActivityView("extensions") },
+  { name: "Show search", meta: "", icon: "search", run: () => setActivityView("search") },
+  { name: "Toggle live preview", meta: "", icon: "sidebar", run: () => document.getElementById("btn-toggle-preview").click() },
+  { name: "Duplicate active file", meta: "", icon: "save", run: () => activeFile && duplicateFile(activeFile) },
+  { name: "Rename active file…", meta: "", icon: "save", run: () => activeFile && renameFile(activeFile) },
+  { name: "Delete active file", meta: "", icon: "close", run: () => activeFile && deleteFile(activeFile) },
+  { name: "Undo", meta: "Ctrl+Z", icon: "format", run: () => { undo(view); view.focus(); } },
+  { name: "Redo", meta: "Ctrl+Y", icon: "format", run: () => { redo(view); view.focus(); } },
+  { name: "Find in file", meta: "Ctrl+F", icon: "search", run: () => openSearchPanel(view) },
+  { name: "Show source control", meta: "", icon: "sidebar", run: () => setActivityView("scm") },
+  { name: "Stage all changes", meta: "", icon: "save", run: () => { Object.keys(FILES).filter(fileHasChanges).forEach((f) => staged.add(f)); renderSCM(); setActivityView("scm"); showToast("Staged all changes"); } },
+  { name: "Toggle Zen Mode", meta: "", icon: "sidebar", run: () => toggleZenMode() }
+];
+
+function cmdIconSvg(kind) {
+  const map = {
+    search: `<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.6" y2="16.6"/>`,
+    sidebar: `<rect x="3" y="4" width="18" height="16" rx="1.5"/><line x1="9" y1="4" x2="9" y2="20"/>`,
+    terminal: `<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M7 9l3 3-3 3M13 15h4"/>`,
+    theme: `<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/>`,
+    type: `<polyline points="4 7 4 4 20 4 20 7"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/>`,
+    save: `<path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>`,
+    format: `<line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="18" y2="18"/>`,
+    close: `<line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/>`
+  };
+  return `<svg class="cmd-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${map[kind] || map.search}</svg>`;
+}
+
+function saveActiveFile() {
+  if (!activeFile) return;
+  markModified(activeFile, false);
+  showToast(`Saved ${activeFile}`);
+}
+
+function formatDocument() {
+  if (!activeFile) return;
+  showToast(`Formatted ${activeFile}`);
+}
+
+function fuzzyMatch(query, text) {
+  query = query.toLowerCase();
+  text = text.toLowerCase();
+  if (!query) return true;
+  let qi = 0;
+  for (let i = 0; i < text.length && qi < query.length; i++) {
+    if (text[i] === query[qi]) qi++;
+  }
+  return qi === query.length;
+}
+
+function openPalette(prefill = "") {
+  paletteOverlay.classList.remove("hidden");
+  paletteInput.value = prefill;
+  paletteSel = 0;
+  renderPalette();
+  requestAnimationFrame(() => paletteInput.focus());
+}
+function closePalette() {
+  paletteOverlay.classList.add("hidden");
+}
+
+function renderPalette() {
+  const query = paletteInput.value.trim();
+  const fileMatches = Object.keys(FILES)
+    .filter((f) => fuzzyMatch(query.replace(/^>/, ""), f))
+    .map((f) => ({ type: "file", name: f, meta: FILE_PATHS[f], icon: FILES[f].icon, run: () => openFile(f) }));
+  const cmdMatches = query.startsWith(">") || query === "" || !fileMatches.length
+    ? COMMANDS.filter((c) => fuzzyMatch(query.replace(/^>/, ""), c.name)).map((c) => ({ type: "cmd", name: c.name, meta: c.meta, icon: c.icon, run: c.run }))
+    : [];
+
+  paletteItems = query.startsWith(">") ? cmdMatches : [...fileMatches, ...cmdMatches];
+  paletteList.innerHTML = "";
+  if (!paletteItems.length) {
+    paletteList.innerHTML = `<div class="palette-empty">No matching files or commands</div>`;
+    return;
+  }
+  paletteItems.forEach((item, i) => {
+    const row = document.createElement("div");
+    row.className = "palette-item" + (i === paletteSel ? " sel" : "");
+    const iconHtml = item.type === "file" ? ICONS[item.icon] : cmdIconSvg(item.icon);
+    row.innerHTML = `${iconHtml}<span class="pname">${item.name}</span><span class="pmeta">${item.meta || ""}</span>`;
+    row.addEventListener("click", () => { item.run(); closePalette(); });
+    paletteList.appendChild(row);
+  });
+}
+
+paletteInput.addEventListener("input", () => { paletteSel = 0; renderPalette(); });
+paletteInput.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowDown") { e.preventDefault(); paletteSel = Math.min(paletteSel + 1, paletteItems.length - 1); renderPalette(); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); paletteSel = Math.max(paletteSel - 1, 0); renderPalette(); }
+  else if (e.key === "Enter") { e.preventDefault(); const item = paletteItems[paletteSel]; if (item) { item.run(); closePalette(); } }
+  else if (e.key === "Escape") { closePalette(); }
+});
+paletteOverlay.addEventListener("mousedown", (e) => { if (e.target === paletteOverlay) closePalette(); });
+document.getElementById("btn-open-palette").addEventListener("click", () => openPalette(""));
+
+/* ======================================================================
+   GLOBAL KEYBOARD SHORTCUTS
+   ====================================================================== */
+window.addEventListener("keydown", (e) => {
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && (e.key === "k" || e.key === "K")) { e.preventDefault(); openPalette(""); }
+  else if (mod && !e.shiftKey && (e.key === "p" || e.key === "P")) { e.preventDefault(); openPalette(""); }
+  else if (mod && e.shiftKey && (e.key === "p" || e.key === "P")) { e.preventDefault(); openPalette(">"); }
+  else if (mod && (e.key === "b" || e.key === "B")) { e.preventDefault(); document.getElementById("btn-toggle-sidebar").click(); }
+  else if (mod && (e.key === "s" || e.key === "S")) { e.preventDefault(); saveActiveFile(); }
+  else if (mod && (e.key === "`")) { e.preventDefault(); toggleTerminal(); }
+  else if (mod && (e.key === "=" || e.key === "+")) { e.preventDefault(); setFontSize(1); }
+  else if (mod && (e.key === "-" || e.key === "_")) { e.preventDefault(); setFontSize(-1); }
+  else if (mod && (e.key === "w" || e.key === "W")) {
+    if (activeFile) { e.preventDefault(); closeTab(activeFile); }
+  }
+  else if (e.key === "Escape" && !paletteOverlay.classList.contains("hidden")) { closePalette(); }
+  else if (e.key === "Escape" && document.querySelector(".app").classList.contains("zen")) { toggleZenMode(false); }
+});
+
+/* ======================================================================
+   INIT
+   ====================================================================== */
+openFile("README.md");
+scheduleMinimapRender();
+renderSCM();
+</script>
+</body>
+</html>
