@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Infinite Wave Dash</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a12;
+    overflow: hidden;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: #fff;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  #gameCanvas {
+    display: block;
+    background: linear-gradient(180deg, #0d0d1a 0%, #1a0a2e 50%, #0a1a2e 100%);
+  }
+  #ui {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 24px;
+    font-size: 18px;
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(0,255,255,0.5);
+  }
+  .score-box, .record-box {
+    background: rgba(0,0,0,0.45);
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,255,255,0.3);
+    backdrop-filter: blur(8px);
+  }
+  .record-box { color: #ffd700; border-color: rgba(255,215,0,0.4); }
+  #overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5,5,15,0.85);
+    z-index: 20;
+    backdrop-filter: blur(12px);
+    transition: opacity 0.3s;
+  }
+  #overlay.hidden { opacity: 0; pointer-events: none; }
+  .title {
+    font-size: 52px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    background: linear-gradient(90deg, #00f5ff, #ff00aa, #00f5ff);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 3s linear infinite;
+    margin-bottom: 8px;
+    text-shadow: none;
+  }
+  @keyframes shine {
+    to { background-position: 200% center; }
+  }
+  .subtitle {
+    font-size: 18px;
+    color: #a0a0c0;
+    margin-bottom: 32px;
+  }
+  .controls-hint {
+    font-size: 15px;
+    color: #80e0ff;
+    margin-bottom: 20px;
+    opacity: 0.9;
+  }
+  .btn {
+    pointer-events: auto;
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    border: none;
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    padding: 14px 48px;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(0,150,255,0.5);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(0,150,255,0.7); }
+  .btn:active { transform: scale(0.97); }
+  .stats {
+    margin-top: 28px;
+    text-align: center;
+    color: #c0c0e0;
+    font-size: 16px;
+    line-height: 1.7;
+  }
+  .big-score {
+    font-size: 42px;
+    font-weight: 800;
+    color: #00f5ff;
+    margin: 12px 0;
+  }
+  .hint {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #707090;
+    font-size: 14px;
+  }
+  #difficulty-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+  }
+  #difficulty-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #00ff88, #00f5ff, #ff00aa);
+    transition: width 0.3s;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="ui">
+  <div class="hud">
+    <div class="score-box">SCORE <span id="score">0</span></div>
+    <div class="record-box">BEST <span id="best">0</span></div>
+  </div>
+  <div id="difficulty-bar"><div id="difficulty-fill"></div></div>
+</div>
+
+<div id="overlay">
+  <div class="title">WAVE DASH</div>
+  <div class="subtitle">Infinite Geometry Wave • Gets Harder Forever</div>
+  <div class="controls-hint">HOLD to go DOWN • RELEASE to go UP</div>
+  <button class="btn" id="startBtn">PLAY</button>
+  <div class="stats" id="menuStats">
+    Hold mouse / finger / Space to dive down<br>
+    Survive as long as you can
+  </div>
+  <div class="hint">Tip: Short taps work great for fine control</div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const startBtn = document.getElementById('startBtn');
+const scoreEl = document.getElementById('score');
+const bestEl = document.getElementById('best');
+const menuStats = document.getElementById('menuStats');
+const diffFill = document.getElementById('difficulty-fill');
+
+let W, H, dpr;
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ========== GAME STATE ==========
+let state = 'menu'; // menu | playing | dead
+let score = 0;
+let best = parseInt(localStorage.getItem('waveDashBest') || '0');
+bestEl.textContent = best;
+
+const player = {
+  x: 0,
+  y: 0,
+  vy: 0,
+  size: 18,
+  dir: 1, // 1 = up, -1 = down  (hold = down)
+  trail: []
+};
+
+let holding = false; // true while mouse/touch/space is held
+
+let obstacles = [];
+let particles = [];
+let stars = [];
+let cameraX = 0;
+let speed = 6;
+let baseSpeed = 6;
+let timeAlive = 0;
+let lastSpawnX = 0;
+let gapSize = 180;
+let spawnInterval = 280;
+let hue = 180;
+let shake = 0;
+let flash = 0;
+
+// Init stars
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 80; i++) {
+    stars.push({
+      x: Math.random() * 3000,
+      y: Math.random() * H,
+      s: Math.random() * 2 + 0.5,
+      a: Math.random() * 0.6 + 0.2
+    });
+  }
+}
+initStars();
+
+function resetGame() {
+  player.x = 120;
+  player.y = H / 2;
+  player.vy = 0;
+  player.dir = 1; // start going up until player holds
+  player.trail = [];
+  holding = false;
+  obstacles = [];
+  particles = [];
+  cameraX = 0;
+  speed = baseSpeed;
+  timeAlive = 0;
+  score = 0;
+  lastSpawnX = 400;
+  gapSize = 200;
+  spawnInterval = 300;
+  hue = 180;
+  shake = 0;
+  flash = 0;
+  scoreEl.textContent = '0';
+  // Pre-spawn some easy obstacles
+  for (let i = 0; i < 5; i++) spawnObstacle(true);
+}
+
+function spawnObstacle(easy = false) {
+  const x = lastSpawnX + spawnInterval + (Math.random() * 40 - 20);
+  lastSpawnX = x;
+
+  // Difficulty scaling
+  const difficulty = Math.min(timeAlive / 60, 1); // 0→1 over ~60s then continues
+  const minGap = Math.max(70, 200 - timeAlive * 0.9);
+  gapSize = Math.max(minGap, gapSize - 0.15);
+
+  const gap = gapSize + (easy ? 40 : 0) + Math.random() * 30;
+  const gapY = 80 + Math.random() * (H - 160 - gap);
+
+  // Top block
+  obstacles.push({
+    x, y: 0, w: 28 + Math.random() * 12, h: gapY,
+    type: 'block'
+  });
+  // Bottom block
+  obstacles.push({
+    x, y: gapY + gap, w: 28 + Math.random() * 12, h: H - (gapY + gap),
+    type: 'block'
+  });
+
+  // Occasional spikes or moving elements later
+  if (timeAlive > 25 && Math.random() < 0.35) {
+    const midY = gapY + gap * 0.5;
+    obstacles.push({
+      x: x + 40 + Math.random() * 60,
+      y: midY - 12,
+      w: 22, h: 24,
+      type: 'spike',
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+
+  // Extra hazard at high difficulty
+  if (timeAlive > 50 && Math.random() < 0.25) {
+    obstacles.push({
+      x: x + spawnInterval * 0.5,
+      y: 40 + Math.random() * (H - 80),
+      w: 18, h: 18,
+      type: 'orb',
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+function setHolding(isHolding) {
+  if (state !== 'playing') return;
+  const wasHolding = holding;
+  holding = isHolding;
+  player.dir = holding ? -1 : 1; // hold = down, release = up
+
+  // small particle burst only when direction actually changes
+  if (wasHolding !== holding) {
+    for (let i = 0; i < 6; i++) {
+      particles.push({
+        x: player.x, y: player.y,
+        vx: (Math.random() - 0.5) * 5,
+        vy: (Math.random() - 0.5) * 5,
+        life: 0.8,
+        color: `hsl(${hue}, 100%, 70%)`
+      });
+    }
+  }
+}
+
+function startGame() {
+  resetGame();
+  state = 'playing';
+  overlay.classList.add('hidden');
+}
+
+function die() {
+  state = 'dead';
+  shake = 12;
+  flash = 1;
+  // Explosion
+  for (let i = 0; i < 40; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const sp = Math.random() * 10 + 3;
+    particles.push({
+      x: player.x, y: player.y,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp,
+      life: 1.2,
+      color: `hsl(${Math.random() * 40 + 350}, 100%, 60%)`
+    });
+  }
+  if (score > best) {
+    best = score;
+    localStorage.setItem('waveDashBest', best);
+    bestEl.textContent = best;
+  }
+  menuStats.innerHTML = `
+    <div class="big-score">${score}</div>
+    Distance traveled<br>
+    Best: ${best}
+  `;
+  startBtn.textContent = 'RETRY';
+  setTimeout(() => {
+    overlay.classList.remove('hidden');
+  }, 600);
+}
+
+// Input — Hold to go UP, release to go DOWN
+startBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  startGame();
+});
+
+// Keyboard
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+    e.preventDefault();
+    if (state === 'menu' || state === 'dead') {
+      startGame();
+    } else {
+      setHolding(true);
+    }
+  }
+});
+window.addEventListener('keyup', e => {
+  if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+    e.preventDefault();
+    setHolding(false);
+  }
+});
+
+// Mouse / Touch / Pointer
+window.addEventListener('pointerdown', e => {
+  if (e.target === startBtn) return;
+  if (state === 'menu' || state === 'dead') {
+    startGame();
+  } else {
+    setHolding(true);
+  }
+});
+window.addEventListener('pointerup', e => {
+  setHolding(false);
+});
+window.addEventListener('pointercancel', e => {
+  setHolding(false);
+});
+// Also handle mouse leaving the window
+window.addEventListener('blur', () => setHolding(false));
+
+// ========== UPDATE ==========
+function update(dt) {
+  if (state !== 'playing') {
+    // Still update particles
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= dt * 1.5;
+      p.vy += 20 * dt;
+    });
+    particles = particles.filter(p => p.life > 0);
+    if (shake > 0) shake *= 0.9;
+    if (flash > 0) flash -= dt * 2;
+    return;
+  }
+
+  timeAlive += dt;
+  score = Math.floor(player.x / 10);
+  scoreEl.textContent = score;
+
+  // Difficulty ramp — infinite
+  speed = baseSpeed + timeAlive * 0.085 + Math.pow(timeAlive * 0.012, 1.6);
+  spawnInterval = Math.max(160, 300 - timeAlive * 1.8);
+  hue = (180 + timeAlive * 2) % 360;
+
+  // Difficulty bar (visual, caps at 100% after ~90s but game keeps getting harder)
+  const diffPct = Math.min(100, (timeAlive / 90) * 100);
+  diffFill.style.width = diffPct + '%';
+
+  // Player movement — classic wave: constant horizontal, diagonal vertical
+  const waveSpeed = speed * 1.15;
+  player.x += speed;
+  player.y += player.dir * waveSpeed * 0.85;
+
+  // Trail
+  player.trail.push({ x: player.x, y: player.y, life: 1 });
+  if (player.trail.length > 28) player.trail.shift();
+  player.trail.forEach(t => t.life -= 0.04);
+
+  // Soft clamp at top/bottom (don't force direction change)
+  const margin = 14;
+  if (player.y < margin) {
+    player.y = margin;
+  }
+  if (player.y > H - margin) {
+    player.y = H - margin;
+  }
+
+  // Camera
+  cameraX = player.x - W * 0.28;
+
+  // Spawn
+  while (lastSpawnX < player.x + W + 400) {
+    spawnObstacle();
+  }
+
+  // Clean old obstacles
+  obstacles = obstacles.filter(o => o.x + o.w > cameraX - 100);
+
+  // Collision
+  const px = player.x;
+  const py = player.y;
+  const ps = player.size * 0.55;
+  for (const o of obstacles) {
+    if (o.type === 'block') {
+      if (px + ps > o.x && px - ps < o.x + o.w &&
+          py + ps > o.y && py - ps < o.y + o.h) {
+        die();
+        return;
+      }
+    } else if (o.type === 'spike') {
+      o.phase += dt * 4;
+      const sy = o.y + Math.sin(o.phase) * 18;
+      if (px + ps > o.x && px - ps < o.x + o.w &&
+          py + ps > sy && py - ps < sy + o.h) {
+        die();
+        return;
+      }
+    } else if (o.type === 'orb') {
+      o.phase += dt * 3;
+      const ox = o.x + Math.sin(o.phase) * 30;
+      const oy = o.y + Math.cos(o.phase * 0.7) * 20;
+      const dx = px - ox, dy = py - oy;
+      if (dx * dx + dy * dy < (ps + 10) * (ps + 10)) {
+        die();
+        return;
+      }
+    }
+  }
+
+  // Particles
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= dt * 1.8;
+  });
+  particles = particles.filter(p => p.life > 0);
+
+  if (shake > 0) shake *= 0.88;
+  if (flash > 0) flash -= dt * 3;
+}
+
+// ========== DRAW ==========
+function draw() {
+  const sx = (Math.random() - 0.5) * shake;
+  const sy = (Math.random() - 0.5) * shake;
+  ctx.save();
+  ctx.translate(sx, sy);
+
+  // Background
+  ctx.fillStyle = '#0a0a14';
+  ctx.fillRect(0, 0, W, H);
+
+  // Parallax stars
+  ctx.fillStyle = '#ffffff';
+  stars.forEach(s => {
+    const sx2 = ((s.x - cameraX * 0.15) % (W + 100) + W + 100) % (W + 100) - 50;
+    ctx.globalAlpha = s.a;
+    ctx.beginPath();
+    ctx.arc(sx2, s.y, s.s, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // Grid lines (subtle)
+  ctx.strokeStyle = `hsla(${hue}, 40%, 30%, 0.15)`;
+  ctx.lineWidth = 1;
+  const gridOff = - (cameraX * 0.3) % 60;
+  for (let x = gridOff; x < W; x += 60) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+
+  // Floor / ceiling glow
+  const gradTop = ctx.createLinearGradient(0, 0, 0, 40);
+  gradTop.addColorStop(0, `hsla(${hue}, 80%, 50%, 0.25)`);
+  gradTop.addColorStop(1, 'transparent');
+  ctx.fillStyle = gradTop;
+  ctx.fillRect(0, 0, W, 40);
+
+  const gradBot = ctx.createLinearGradient(0, H - 40, 0, H);
+  gradBot.addColorStop(0, 'transparent');
+  gradBot.addColorStop(1, `hsla(${hue}, 80%, 50%, 0.25)`);
+  ctx.fillStyle = gradBot;
+  ctx.fillRect(0, H - 40, W, 40);
+
+  // Obstacles
+  obstacles.forEach(o => {
+    const ox = o.x - cameraX;
+    if (ox + o.w < -50 || ox > W + 50) return;
+
+    if (o.type === 'block') {
+      // Main body
+      ctx.fillStyle = `hsl(${hue}, 70%, 45%)`;
+      ctx.fillRect(ox, o.y, o.w, o.h);
+      // Glow edge
+      ctx.fillStyle = `hsl(${hue}, 100%, 70%)`;
+      ctx.fillRect(ox, o.y, 4, o.h);
+      // Inner darker
+      ctx.fillStyle = `hsl(${hue}, 60%, 25%)`;
+      ctx.fillRect(ox + 6, o.y + 4, o.w - 10, Math.max(0, o.h - 8));
+      // Top highlight
+      if (o.h > 10) {
+        ctx.fillStyle = `hsla(${hue}, 100%, 80%, 0.4)`;
+        ctx.fillRect(ox, o.y, o.w, 3);
+      }
+    } else if (o.type === 'spike') {
+      const sy = o.y + Math.sin(o.phase) * 18;
+      ctx.fillStyle = `hsl(${(hue + 40) % 360}, 90%, 55%)`;
+      ctx.beginPath();
+      ctx.moveTo(ox + o.w / 2, sy);
+      ctx.lineTo(ox, sy + o.h);
+      ctx.lineTo(ox + o.w, sy + o.h);
+      ctx.closePath();
+      ctx.fill();
+      // Glow
+      ctx.shadowColor = `hsl(${(hue + 40) % 360}, 100%, 60%)`;
+      ctx.shadowBlur = 12;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    } else if (o.type === 'orb') {
+      const ox2 = o.x + Math.sin(o.phase) * 30 - cameraX;
+      const oy = o.y + Math.cos(o.phase * 0.7) * 20;
+      ctx.beginPath();
+      ctx.arc(ox2, oy, 11, 0, Math.PI * 2);
+      ctx.fillStyle = `hsl(${(hue + 120) % 360}, 100%, 60%)`;
+      ctx.shadowColor = `hsl(${(hue + 120) % 360}, 100%, 50%)`;
+      ctx.shadowBlur = 16;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  });
+
+  // Player trail
+  player.trail.forEach((t, i) => {
+    const tx = t.x - cameraX;
+    const alpha = t.life * 0.6;
+    const size = player.size * (0.4 + t.life * 0.4);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = `hsl(${hue}, 100%, 65%)`;
+    ctx.beginPath();
+    ctx.moveTo(tx, t.y - size);
+    ctx.lineTo(tx + size * 1.4, t.y);
+    ctx.lineTo(tx, t.y + size);
+    ctx.closePath();
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // Player (wave arrow)
+  const px = player.x - cameraX;
+  const py = player.y;
+  ctx.save();
+  ctx.translate(px, py);
+  // Glow
+  ctx.shadowColor = `hsl(${hue}, 100%, 60%)`;
+  ctx.shadowBlur = 20;
+  ctx.fillStyle = `hsl(${hue}, 100%, 70%)`;
+  ctx.beginPath();
+  // Diamond / arrow shape pointing in travel direction
+  const s = player.size;
+  if (player.dir > 0) {
+    ctx.moveTo(s * 1.3, 0);
+    ctx.lineTo(-s * 0.6, -s);
+    ctx.lineTo(-s * 0.2, 0);
+    ctx.lineTo(-s * 0.6, s);
+  } else {
+    ctx.moveTo(s * 1.3, 0);
+    ctx.lineTo(-s * 0.6, -s);
+    ctx.lineTo(-s * 0.2, 0);
+    ctx.lineTo(-s * 0.6, s);
+  }
+  ctx.closePath();
+  ctx.fill();
+  // Core
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(0, 0, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Particles
+  particles.forEach(p => {
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x - cameraX, p.y, 3 + p.life * 2, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // Flash
+  if (flash > 0) {
+    ctx.fillStyle = `rgba(255,100,150,${flash * 0.35})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  ctx.restore();
+}
+
+// Loop
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min((now - last) / 1000, 0.05);
+  last = now;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// Prevent scroll on mobile
+document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+</script>
+</body>
+</html>
