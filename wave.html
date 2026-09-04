@@ -95,6 +95,23 @@
   }
   .btn:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(0,150,255,0.7); }
   .btn:active { transform: scale(0.97); }
+  .instant-label {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+    font-size: 15px;
+    color: #a0d0ff;
+    cursor: pointer;
+    user-select: none;
+  }
+  .instant-label input {
+    width: 18px;
+    height: 18px;
+    accent-color: #00c6ff;
+    cursor: pointer;
+  }
   .stats {
     margin-top: 28px;
     text-align: center;
@@ -145,6 +162,9 @@
   <div class="subtitle">Infinite Geometry Wave • Gets Harder Forever</div>
   <div class="controls-hint">HOLD to go DOWN • RELEASE to go UP</div>
   <button class="btn" id="startBtn">PLAY</button>
+  <label class="instant-label">
+    <input type="checkbox" id="instantRespawn"> Instant Respawn
+  </label>
   <div class="stats" id="menuStats">
     Hold mouse / finger / Space to dive down<br>
     Survive as long as you can
@@ -161,6 +181,13 @@ const scoreEl = document.getElementById('score');
 const bestEl = document.getElementById('best');
 const menuStats = document.getElementById('menuStats');
 const diffFill = document.getElementById('difficulty-fill');
+const instantCheckbox = document.getElementById('instantRespawn');
+
+// Load saved preference
+instantCheckbox.checked = localStorage.getItem('waveDashInstant') === '1';
+instantCheckbox.addEventListener('change', () => {
+  localStorage.setItem('waveDashInstant', instantCheckbox.checked ? '1' : '0');
+});
 
 let W, H, dpr;
 function resize() {
@@ -319,26 +346,39 @@ function startGame() {
 }
 
 function die() {
-  state = 'dead';
-  shake = 12;
-  flash = 1;
-  // Explosion
-  for (let i = 0; i < 40; i++) {
-    const a = Math.random() * Math.PI * 2;
-    const sp = Math.random() * 10 + 3;
-    particles.push({
-      x: player.x, y: player.y,
-      vx: Math.cos(a) * sp,
-      vy: Math.sin(a) * sp,
-      life: 1.2,
-      color: `hsl(${Math.random() * 40 + 350}, 100%, 60%)`
-    });
-  }
+  // Always update high score
   if (score > best) {
     best = score;
     localStorage.setItem('waveDashBest', best);
     bestEl.textContent = best;
   }
+
+  // Quick death effects
+  shake = 10;
+  flash = 0.8;
+  for (let i = 0; i < 28; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const sp = Math.random() * 9 + 2;
+    particles.push({
+      x: player.x, y: player.y,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp,
+      life: 0.9,
+      color: `hsl(${Math.random() * 40 + 350}, 100%, 60%)`
+    });
+  }
+
+  // Instant respawn — skip death screen entirely
+  if (instantCheckbox.checked) {
+    resetGame();
+    state = 'playing';
+    // Keep current holding state so control feels continuous
+    player.dir = holding ? -1 : 1;
+    return;
+  }
+
+  // Normal death screen
+  state = 'dead';
   menuStats.innerHTML = `
     <div class="big-score">${score}</div>
     Distance traveled<br>
@@ -347,14 +387,17 @@ function die() {
   startBtn.textContent = 'RETRY';
   setTimeout(() => {
     overlay.classList.remove('hidden');
-  }, 600);
+  }, 550);
 }
 
-// Input — Hold to go UP, release to go DOWN
+// Input — Hold to go DOWN, release to go UP
 startBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   startGame();
 });
+// Prevent checkbox clicks from starting the game
+instantCheckbox.addEventListener('click', (e) => e.stopPropagation());
+instantCheckbox.addEventListener('pointerdown', (e) => e.stopPropagation());
 
 // Keyboard
 window.addEventListener('keydown', e => {
@@ -376,7 +419,8 @@ window.addEventListener('keyup', e => {
 
 // Mouse / Touch / Pointer
 window.addEventListener('pointerdown', e => {
-  if (e.target === startBtn) return;
+  // Ignore UI controls
+  if (e.target === startBtn || e.target === instantCheckbox || e.target.closest('.instant-label')) return;
   if (state === 'menu' || state === 'dead') {
     startGame();
   } else {
