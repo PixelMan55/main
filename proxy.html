@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browser Python Proxy</title>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #1e293b;
+      padding: 1rem 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+    }
+    input {
+      flex: 1;
+      padding: 0.7rem 1rem;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: white;
+      font-size: 1rem;
+    }
+    button {
+      padding: 0.7rem 1.4rem;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { background: #2563eb; }
+    #status {
+      padding: 0.5rem 1.5rem;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      background: #1e293b;
+    }
+    #frame-container {
+      flex: 1;
+      position: relative;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: white;
+    }
+    .note {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      right: 1rem;
+      background: #422006;
+      color: #fbbf24;
+      padding: 0.8rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <input type="url" id="url" placeholder="https://example.com" value="https://example.com">
+    <button onclick="go()">Go</button>
+  </header>
+  <div id="status">Loading Python in the browser…</div>
+  <div id="frame-container">
+    <iframe id="viewer"></iframe>
+    <div class="note" id="note">
+      ⚠️ Many sites block browser requests (CORS). This is a demo only.
+      For a real unrestricted proxy, keep using the Flask version.
+    </div>
+  </div>
+
+  <script>
+    let pyodide = null;
+
+    async function main() {
+      pyodide = await loadPyodide();
+      document.getElementById('status').textContent = 'Python ready. Enter a URL and click Go.';
+      // auto-load example
+      go();
+    }
+
+    async function go() {
+      const url = document.getElementById('url').value.trim();
+      if (!url) return;
+
+      document.getElementById('status').textContent = 'Fetching ' + url + ' …';
+      document.getElementById('note').style.display = 'none';
+
+      try {
+        // Simple fetch (will fail on most sites because of CORS)
+        const code = `
+import js
+from pyodide.http import pyfetch
+
+async def fetch_page(url):
+    try:
+        resp = await pyfetch(url)
+        text = await resp.text()
+        return text
+    except Exception as e:
+        return f"<h2>Error</h2><pre>{e}</pre><p>Most websites block requests from the browser (CORS).</p>"
+
+result = await fetch_page("${url.replace(/"/g, '\\"')}")
+result
+        `;
+        const html = await pyodide.runPythonAsync(code);
+        
+        const iframe = document.getElementById('viewer');
+        iframe.srcdoc = html;
+        document.getElementById('status').textContent = 'Showing: ' + url;
+        document.getElementById('note').style.display = 'block';
+      } catch (err) {
+        document.getElementById('status').textContent = 'Error: ' + err.message;
+        document.getElementById('note').style.display = 'block';
+      }
+    }
+
+    // Enter key support
+    document.getElementById('url').addEventListener('keydown', e => {
+      if (e.key === 'Enter') go();
+    });
+
+    main();
+  </script>
+</body>
+</html>
