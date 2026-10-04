@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Chain Reaction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800;900&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700;8..60,900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff; --panel:#ffffff; --panel-2:#f7f7f7;
+    --tile:#ffffff; --tile-edge:#878a8c; --ink:#1a1a1b;
+    --amber:#c9b458; --amber-dark:#a89440;
+    --moss:#6aaa64; --moss-dark:#538d4e;
+    --hard:#7a3fc4; --muted:#787c7e; --muted-2:#9a9a9a;
+    --cream:#1a1a1b; --line:#d3d6da; --danger:#d3455b;
+  }
+  body.dark{
+    --bg:#121213; --panel:#1b1b1c; --panel-2:#232324;
+    --tile:#1b1b1c; --tile-edge:#565656; --ink:#f2f2f2;
+    --muted:#9a9a9a; --muted-2:#767676; --cream:#f2f2f2; --line:#3a3a3c;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh; background:var(--bg);
+    font-family:'Libre Franklin',Arial,sans-serif; color:var(--cream);
+    display:flex; justify-content:center; padding:0 0 60px;
+    transition:background .2s ease, color .2s ease;
+  }
+  #app{width:100%; max-width:480px;}
+  header{
+    display:grid; grid-template-columns:1fr auto 1fr; align-items:center;
+    padding:14px 14px 12px; border-bottom:1px solid var(--line); margin-bottom:10px; gap:10px;
+  }
+  .header-actions{display:flex; gap:2px; align-items:center;}
+  .header-actions.left{justify-content:flex-start;}
+  .header-actions.right{justify-content:flex-end;}
+  .brand{text-align:center;}
+  .brand h1{font-family:'Source Serif 4',Georgia,serif; font-weight:900; font-size:26px; margin:0; line-height:1; color:var(--ink);}
+  .brand .byline{margin:4px 0 0; font-size:11px; color:var(--muted); font-weight:500;}
+  .brand .byline a{color:var(--muted); text-decoration:none; font-weight:700; border-bottom:1px solid var(--muted-2);}
+  .icon-btn{
+    background:none; border:none; color:var(--ink); width:34px; height:34px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .icon-btn svg{width:18px; height:18px;}
+  .icon-btn:hover{background:var(--panel-2);}
+
+  /* Home */
+  .home-screen{display:flex; flex-direction:column; min-height:100vh; padding:14px 20px 30px;}
+  .home-top{display:flex; justify-content:space-between; align-items:center;}
+  .home-hero{flex:1; display:flex; flex-direction:column; align-items:center; text-align:center; padding-top:6px;}
+  .home-kicker{font-size:11px; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:8px;}
+  .home-logo{font-family:'Source Serif 4',Georgia,serif; font-weight:900; font-size:42px; line-height:1; margin:0; color:var(--ink);}
+  .home-date{font-size:12.5px; color:var(--muted); font-weight:600; margin-top:9px; text-transform:uppercase; letter-spacing:.6px;}
+  .home-tagline{font-size:14.5px; color:var(--muted); max-width:320px; margin:14px auto 0; line-height:1.55;}
+  .home-example{margin:18px 0 8px; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:13px; color:var(--muted);}
+  .home-example .ex-row{display:flex; gap:4px; justify-content:center;}
+  .home-example .ex-letter{width:28px; height:28px; border:2px solid var(--tile-edge); border-radius:3px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; color:var(--ink); background:var(--tile);}
+  .home-example .ex-letter.ch{background:var(--amber); border-color:var(--amber); color:#fff;}
+  .home-example .ex-letter.ok{background:var(--moss); border-color:var(--moss); color:#fff;}
+  .home-example .ex-arrow{color:var(--muted-2); font-size:12px; font-weight:700;}
+  .home-streaks{display:flex; gap:10px; margin:18px 0 20px;}
+  .streak-pill{display:flex; align-items:center; gap:6px; font-weight:700; font-size:14px; padding:6px 12px; border-radius:20px; background:var(--panel-2);}
+  .streak-pill svg{width:16px; height:16px;}
+  .streak-pill.normal-streak{color:var(--amber-dark);}
+  .streak-pill.hard-streak{color:var(--hard);}
+  .home-play-btn{
+    width:100%; max-width:280px; background:var(--ink); border:2px solid var(--ink); color:var(--bg);
+    font-family:'Libre Franklin',sans-serif; font-weight:800; font-size:16.5px; letter-spacing:.4px;
+    text-transform:uppercase; padding:16px 22px; border-radius:6px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    box-shadow:0 3px 0 rgba(0,0,0,.15);
+  }
+  .home-play-btn:active{transform:translateY(2px); box-shadow:none;}
+  .home-play-btn:disabled{opacity:.5; cursor:default; box-shadow:none;}
+  .home-solved-note{margin-top:11px; font-size:12.5px; color:var(--moss-dark); font-weight:700; display:none; align-items:center; gap:6px;}
+  .home-mode-row{display:flex; gap:10px; width:100%; max-width:280px; margin-top:14px;}
+  .home-mode-btn{
+    flex:1; display:flex; align-items:center; gap:8px; background:var(--panel-2);
+    border:1.5px solid var(--line); border-radius:6px; padding:10px; cursor:pointer; text-align:left;
+    font-family:'Libre Franklin',sans-serif; color:var(--ink);
+  }
+  .home-mode-icon{width:26px; height:26px; border-radius:50%; background:var(--panel); display:flex; align-items:center; justify-content:center;}
+  .home-mode-icon svg{width:14px; height:14px;}
+  .home-mode-label{font-size:12.5px; font-weight:800;}
+  .home-mode-sub{font-size:10.5px; color:var(--muted); font-weight:600;}
+  .home-secondary-btn{
+    width:100%; max-width:280px; margin-top:12px; background:var(--panel); border:2px solid var(--tile-edge);
+    color:var(--ink); font-weight:700; font-size:13.5px; letter-spacing:.4px; text-transform:uppercase;
+    padding:13px 20px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+    font-family:'Libre Franklin',sans-serif;
+  }
+  .home-links{margin-top:24px; display:flex; align-items:center; gap:10px;}
+  .home-link{background:none; border:none; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.4px; font-size:11px; cursor:pointer; font-family:'Libre Franklin',sans-serif;}
+  .home-links-dot{color:var(--muted-2); font-size:11px;}
+  .home-footer{text-align:center; color:var(--muted-2); font-size:12px; margin-top:30px; padding-top:16px; border-top:1px solid var(--line);}
+  .home-footer .credit a{color:var(--ink); font-weight:700; text-decoration:none; border-bottom:1px solid var(--ink);}
+
+  /* Game screen – NEW vertical chain UI */
+  .streaks-row{display:flex; justify-content:center; gap:10px; margin:0 16px 12px;}
+  .puzzle-meta{display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:11.5px; margin:0 16px 8px; letter-spacing:.4px; text-transform:uppercase; font-weight:600;}
+  .puzzle-meta b{color:var(--ink);}
+  .mode-badge{display:inline-block; font-size:10px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--hard); border:1.5px solid var(--hard); padding:2px 7px; border-radius:4px; margin-left:8px;}
+  .prompt-line{text-align:center; font-size:14px; color:var(--muted); margin:0 16px 18px;}
+  .prompt-line b{color:var(--ink); font-weight:800; border-bottom:2px solid var(--amber);}
+
+  .chain-area{
+    display:flex; flex-direction:column; align-items:center;
+    padding:0 20px 10px; min-height:320px;
+  }
+  .chain-word{
+    display:flex; gap:5px; justify-content:center; margin:2px 0;
+  }
+  .chain-letter{
+    width:40px; height:40px; border:2px solid var(--tile-edge); border-radius:4px;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:17px; color:var(--ink); background:var(--tile);
+  }
+  .chain-letter.goal{background:transparent; border-style:dashed; color:var(--muted-2);}
+  .chain-letter.start{background:var(--ink); border-color:var(--ink); color:var(--bg);}
+  .chain-letter.filled{background:var(--amber); border-color:var(--amber); color:#fff;}
+  .chain-letter.solved{background:var(--moss); border-color:var(--moss); color:#fff;}
+
+  .chain-connector{
+    display:flex; flex-direction:column; align-items:center;
+    color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.4px;
+    text-transform:uppercase; margin:4px 0;
+  }
+  .chain-connector .line{
+    width:2px; height:14px; background:var(--line); margin:2px 0;
+  }
+  .chain-connector .len-label{
+    background:var(--panel-2); border:1px solid var(--line);
+    padding:3px 10px; border-radius:12px; font-size:11px;
+  }
+
+  .input-area{margin:16px 16px 0; text-align:center;}
+  .len-hint-bar{font-size:13px; color:var(--muted); font-weight:600; margin-bottom:10px;}
+  .len-hint-bar b{color:var(--ink);}
+  .boxes-row{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;}
+  .boxes{display:flex; justify-content:center; gap:6px; flex-wrap:wrap;}
+  .box-input{
+    width:42px; height:48px; text-align:center; font-family:'Libre Franklin',sans-serif;
+    font-weight:800; font-size:18px; text-transform:uppercase; background:var(--panel);
+    border:2px solid var(--tile-edge); border-radius:4px; color:var(--ink); outline:none; padding:0;
+  }
+  .box-input:focus{border-color:var(--ink);}
+  .boxes.shake{animation:shake .32s ease;}
+  @keyframes shake{10%,90%{transform:translateX(-2px);}20%,80%{transform:translateX(4px);}30%,50%,70%{transform:translateX(-7px);}40%,60%{transform:translateX(7px);}}
+  .box-input.invalid{border-color:var(--danger);}
+  .clear-link{
+    background:var(--panel); border:2px solid var(--line); border-radius:4px; color:var(--muted);
+    font-family:'Libre Franklin',sans-serif; font-size:12px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.4px; cursor:pointer; padding:8px 12px; height:48px;
+  }
+  .clear-link:hover{color:var(--ink); border-color:var(--tile-edge);}
+
+  .action-row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:4px;}
+  button.primary{
+    background:var(--ink); border:2px solid var(--ink); color:var(--bg); font-weight:700;
+    font-size:14px; letter-spacing:.3px; text-transform:uppercase; padding:12px 26px;
+    border-radius:4px; cursor:pointer; font-family:'Libre Franklin',sans-serif;
+  }
+  button.primary:disabled{opacity:.35; cursor:not-allowed;}
+  button.secondary{
+    background:var(--panel); border:2px solid var(--tile-edge); color:var(--ink); font-weight:700;
+    font-size:13px; letter-spacing:.3px; text-transform:uppercase; padding:12px 16px;
+    border-radius:4px; cursor:pointer; font-family:'Libre Franklin',sans-serif;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  button.secondary:disabled{opacity:.35; cursor:not-allowed;}
+  .hard-lock-note{text-align:center; font-size:11.5px; color:var(--hard); font-weight:600; margin:10px 16px 0;}
+  .status-bar{display:flex; justify-content:center; gap:22px; margin-top:16px; font-size:12.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; font-weight:600;}
+  .status-bar b{color:var(--ink); text-transform:none;}
+  .practice-badge{text-align:center; font-size:11.5px; color:var(--muted); background:var(--panel-2); border:1px dashed var(--line); border-radius:6px; padding:6px 10px; margin:0 16px 12px;}
+
+  .toast{position:fixed; top:18px; left:50%; transform:translate(-50%,-140%); background:var(--ink); color:var(--bg); padding:11px 20px; border-radius:5px; font-size:13.5px; font-weight:700; z-index:100; transition:transform .25s ease; box-shadow:0 4px 14px rgba(0,0,0,.2); max-width:88vw; text-align:center;}
+  .toast.show{transform:translate(-50%,0);}
+  .toast.ok{background:var(--moss-dark); color:#fff;}
+
+  .overlay{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:flex-start; justify-content:center; padding:max(20px,5vh) 20px 20px; z-index:50; overflow-y:auto;}
+  .overlay.show{display:flex;}
+  .modal{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:28px 24px; width:100%; max-width:380px; max-height:88vh; overflow-y:auto; position:relative; box-shadow:0 12px 40px rgba(0,0,0,.25); color:var(--ink);}
+  .modal h2{font-family:'Source Serif 4',Georgia,serif; font-weight:800; font-size:24px; margin:0 0 4px; color:var(--ink);}
+  .modal .sub{color:var(--muted); font-size:13px; margin-bottom:18px;}
+  .modal .close{position:absolute; top:16px; right:16px; background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer; line-height:1;}
+  .stats-grid{display:grid; grid-template-columns:1fr 1fr; gap:1px; margin-bottom:10px; background:var(--line); border:1px solid var(--line);}
+  .stat-box{background:var(--panel); padding:16px 10px; text-align:center;}
+  .stat-box .val{font-weight:800; font-size:28px; color:var(--ink); line-height:1;}
+  .stat-box .lbl{font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; margin-top:6px;}
+  .win-word-line{display:flex; align-items:center; justify-content:center; gap:6px; font-weight:800; font-size:15px; color:var(--ink); margin:14px 0 18px; padding-bottom:14px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+  .win-word-line .arrow{color:var(--muted); font-weight:400;}
+  .share-block{background:var(--panel-2); border:1px solid var(--line); border-radius:6px; padding:12px; font-size:13px; white-space:pre-wrap; line-height:1.5; margin-bottom:14px; color:var(--ink);}
+  .how-list{padding-left:18px; margin:0 0 4px; color:var(--muted); font-size:13.5px; line-height:1.6;}
+  .how-list li{margin-bottom:6px;}
+  .how-list b{color:var(--ink);}
+  .settings-section{margin-bottom:18px;}
+  .settings-section h3{font-size:12px; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); margin:0 0 8px; font-weight:700;}
+  .switch-row{display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); gap:12px;}
+  .switch-row:last-child{border-bottom:none;}
+  .switch-row .lbl-main{font-weight:700; font-size:14px; color:var(--ink);}
+  .switch-row .lbl-sub{font-size:11.5px; color:var(--muted); margin-top:2px;}
+  .switch{position:relative; width:42px; height:24px; flex:none;}
+  .switch input{opacity:0; width:0; height:0; position:absolute;}
+  .slider{position:absolute; inset:0; background:#d3d6da; border-radius:24px; transition:.2s; cursor:pointer;}
+  .slider:before{content:""; position:absolute; height:18px; width:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s;}
+  .switch input:checked + .slider{background:var(--ink);}
+  .switch input:checked + .slider:before{transform:translateX(18px);}
+
+  footer{text-align:center; color:var(--muted-2); font-size:12px; margin:30px 16px 0; padding-top:18px; border-top:1px solid var(--line);}
+  footer .credit a{color:var(--ink); font-weight:700; text-decoration:none; border-bottom:1px solid var(--ink);}
+
+  @media (max-width:380px){
+    .chain-letter{width:34px; height:34px; font-size:15px;}
+    .box-input{width:36px; height:42px; font-size:16px;}
+    .home-logo{font-size:36px;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="home-screen" id="homeScreen">
+    <div class="home-top">
+      <button class="icon-btn" id="homeHelpBtn" title="How to play">?</button>
+      <button class="icon-btn" id="homeSettingsBtn" title="Settings"></button>
+    </div>
+    <div class="home-hero">
+      <div class="home-kicker">PixelMan Games</div>
+      <h1 class="home-logo">Chain Reaction</h1>
+      <div class="home-date" id="homeDate">—</div>
+      <p class="home-tagline">Connect a start word to a target word in four steps using compound words or common two-word phrases.</p>
+
+      <div class="home-example">
+        <div class="ex-row">
+          <div class="ex-letter">F</div><div class="ex-letter">I</div><div class="ex-letter">R</div><div class="ex-letter">E</div>
+        </div>
+        <div class="ex-arrow">↓ firefly</div>
+        <div class="ex-row">
+          <div class="ex-letter ch">F</div><div class="ex-letter ch">L</div><div class="ex-letter ch">Y</div>
+        </div>
+        <div class="ex-arrow">↓ flypaper</div>
+        <div class="ex-row">
+          <div class="ex-letter">P</div><div class="ex-letter">A</div><div class="ex-letter">P</div><div class="ex-letter">E</div><div class="ex-letter">R</div>
+        </div>
+        <div class="ex-arrow">↓ paperclip</div>
+        <div class="ex-row">
+          <div class="ex-letter">C</div><div class="ex-letter">L</div><div class="ex-letter">I</div><div class="ex-letter">P</div>
+        </div>
+        <div class="ex-arrow">↓ clipboard</div>
+        <div class="ex-row">
+          <div class="ex-letter ok">B</div><div class="ex-letter ok">O</div><div class="ex-letter ok">A</div><div class="ex-letter ok">R</div><div class="ex-letter ok">D</div>
+        </div>
+      </div>
+
+      <div class="home-streaks">
+        <div class="streak-pill normal-streak" id="homeNormalStreakPill"></div>
+        <div class="streak-pill hard-streak" id="homeHardStreakPill"></div>
+      </div>
+
+      <button class="home-play-btn" id="playBtn" disabled>
+        <span id="playBtnLabel">Loading…</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <div class="home-solved-note" id="homeSolvedNote">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Today's chain is solved
+      </div>
+
+      <div class="home-mode-row">
+        <button class="home-mode-btn" id="homeWeeklyBtn">
+          <span class="home-mode-icon" id="homeWeeklyIcon"></span>
+          <span>
+            <div class="home-mode-label">Weekly Puzzle</div>
+            <div class="home-mode-sub">A tougher, longer chain</div>
+          </span>
+        </button>
+        <button class="home-mode-btn" id="homePracticeBtn">
+          <span class="home-mode-icon" id="homePracticeIcon"></span>
+          <span>
+            <div class="home-mode-label">Practice</div>
+            <div class="home-mode-sub" id="homePracticeSub">5 of 5 left this week</div>
+          </span>
+        </button>
+      </div>
+
+      <button class="home-secondary-btn" id="homeCustomBtn">
+        <span id="homeCustomIcon"></span>
+        Custom Chain
+      </button>
+
+      <div class="home-links">
+        <button class="home-link" id="homeStatsBtn">Stats</button>
+        <span class="home-links-dot">·</span>
+        <button class="home-link" id="homeHowBtn">How to play</button>
+      </div>
+    </div>
+    <footer class="home-footer">
+      A new chain appears every day at midnight, local time.<br>
+      <span class="credit">Made by <a href="https://pixelman.net" target="_blank" rel="noopener">PixelMan Games</a></span>
+    </footer>
+  </div>
+
+  <div id="gameScreen" style="display:none;">
+    <header>
+      <div class="header-actions left">
+        <button class="icon-btn" id="backHomeBtn" title="Home"></button>
+        <button class="icon-btn" id="helpBtn" title="How to play">?</button>
+      </div>
+      <div class="brand">
+        <h1>Chain Reaction</h1>
+        <p class="byline">By <a href="https://pixelman.net" target="_blank" rel="noopener">PixelMan Games</a></p>
+      </div>
+      <div class="header-actions right">
+        <button class="icon-btn" id="statsBtn" title="Statistics"></button>
+        <button class="icon-btn" id="settingsBtn" title="Settings"></button>
+      </div>
+    </header>
+
+    <div class="streaks-row">
+      <div class="streak-pill normal-streak" id="normalStreakPill"></div>
+      <div class="streak-pill hard-streak" id="hardStreakPill"></div>
+    </div>
+
+    <div class="puzzle-meta">
+      <span>Chain <b id="puzzleNum">#0</b><span class="mode-badge" id="modeBadge" style="display:none;">Hard</span></span>
+      <span id="puzzleDate">—</span>
+    </div>
+    <div class="prompt-line">Turn <b id="startWordLabel">····</b> into <b id="targetWordLabel">····</b> in four compound steps.</div>
+    <div class="practice-badge" id="recapNote" style="display:none;"></div>
+
+    <!-- NEW clean vertical chain UI -->
+    <div class="chain-area" id="chainArea"></div>
+
+    <div class="input-area" id="inputArea">
+      <div class="len-hint-bar">Next word length: <b id="nextLen">—</b></div>
+      <div class="boxes-row">
+        <div class="boxes" id="boxes"></div>
+        <button class="clear-link" id="clearBtn">Clear</button>
+      </div>
+      <div class="action-row">
+        <button class="secondary" id="undoBtn"></button>
+        <button class="primary" id="submitBtn">Submit</button>
+        <button class="secondary" id="hintBtn"></button>
+      </div>
+      <div class="hard-lock-note" id="hardLockNote" style="display:none;">Hard mode: hints and undo are turned off.</div>
+    </div>
+
+    <div class="status-bar">
+      <span>Steps <b id="moveCount">0</b>/4</span>
+      <span>Time <b id="timeCount">0:00</b></span>
+    </div>
+
+    <div class="action-row" id="resultRow" style="margin-top:16px; display:none; justify-content:center;">
+      <button class="primary" id="viewResultBtn">View result</button>
+    </div>
+
+    <footer>
+      A new chain appears every day at midnight, local time.<br>
+      <span class="credit">Made by <a href="https://pixelman.net" target="_blank" rel="noopener">PixelMan Games</a></span>
+    </footer>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="statsOverlay">
+  <div class="modal">
+    <button class="close" data-close="statsOverlay">&times;</button>
+    <h2>Statistics</h2>
+    <div class="sub">Your all-time chain record.</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="val" id="s-played">0</div><div class="lbl">Played</div></div>
+      <div class="stat-box"><div class="val" id="s-normal-streak">0</div><div class="lbl">Normal streak</div></div>
+      <div class="stat-box"><div class="val" id="s-hard-streak">0</div><div class="lbl">Hard streak</div></div>
+      <div class="stat-box"><div class="val" id="s-normal-best">0</div><div class="lbl">Best normal</div></div>
+      <div class="stat-box"><div class="val" id="s-hard-best">0</div><div class="lbl">Best hard</div></div>
+      <div class="stat-box"><div class="val" id="s-fastest">—</div><div class="lbl">Fastest</div></div>
+      <div class="stat-box"><div class="val" id="s-total">0</div><div class="lbl">Total climbs</div></div>
+      <div class="stat-box"><div class="val" id="s-perfect">0</div><div class="lbl">Perfect (4 steps)</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="settingsOverlay">
+  <div class="modal">
+    <button class="close" data-close="settingsOverlay">&times;</button>
+    <h2>Settings</h2>
+    <div class="sub">Preferences are saved on this device.</div>
+    <div class="settings-section">
+      <h3>Appearance</h3>
+      <div class="switch-row">
+        <div><div class="lbl-main">Dark mode</div></div>
+        <label class="switch"><input type="checkbox" id="darkModeToggle"><span class="slider"></span></label>
+      </div>
+      <div class="switch-row">
+        <div><div class="lbl-main">Reduce motion</div><div class="lbl-sub">Turns off shake animations</div></div>
+        <label class="switch"><input type="checkbox" id="reduceMotionToggle"><span class="slider"></span></label>
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>Gameplay</h3>
+      <div class="switch-row">
+        <div><div class="lbl-main">Hard mode</div><div class="lbl-sub">No hints, no undo. Separate streak.</div></div>
+        <label class="switch"><input type="checkbox" id="hardModeToggle"><span class="slider"></span></label>
+      </div>
+      <div class="switch-row">
+        <div><div class="lbl-main">Sound effects</div></div>
+        <label class="switch"><input type="checkbox" id="soundToggle"><span class="slider"></span></label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="helpOverlay">
+  <div class="modal">
+    <button class="close" data-close="helpOverlay">&times;</button>
+    <h2>How to play</h2>
+    <div class="sub">Link words through compounds in exactly four steps.</div>
+    <ol class="how-list">
+      <li>You are given a <b>start word</b> and a <b>target word</b>.</li>
+      <li>Each step, enter a new word that forms a <b>compound or common phrase</b> with the previous word (e.g. FIRE + FLY = firefly).</li>
+      <li>You are told the <b>length</b> of each intermediate word.</li>
+      <li>Reach the target in exactly <b>four steps</b>.</li>
+      <li>Normal and hard mode keep separate streaks. Hard mode disables hints and undo.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="overlay" id="customOverlay">
+  <div class="modal">
+    <button class="close" data-close="customOverlay">&times;</button>
+    <h2>Custom Chain</h2>
+    <div class="sub">Build your own four-step compound chain (local only).</div>
+    <div id="customChoice">
+      <button class="home-secondary-btn" id="customChoosePlay" style="margin:0 0 10px 0;">Play a custom chain</button>
+      <button class="home-secondary-btn" id="customChooseCreate" style="margin:0;">Create a custom chain</button>
+    </div>
+    <div id="customPlayPanel" style="display:none;">
+      <button class="home-link" id="customBackFromPlay" style="margin-bottom:12px;padding-left:0;">← Back</button>
+      <input class="box-input" id="customCodeInput" maxlength="8" style="width:100%;height:48px;letter-spacing:3px;font-size:18px;" placeholder="CODE">
+      <button class="secondary" id="customPlayGoBtn" style="width:100%;margin-top:12px;">Play</button>
+      <div id="customPlayError" style="color:#b3402a;margin-top:8px;font-size:13px;"></div>
+    </div>
+    <div id="customCreatePanel" style="display:none;">
+      <button class="home-link" id="customBackFromCreate" style="margin-bottom:12px;padding-left:0;">← Back</button>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input class="box-input" id="customStartInput" maxlength="12" style="flex:1;height:44px;width:auto;" placeholder="START">
+        <input class="box-input" id="customTargetInput" maxlength="12" style="flex:1;height:44px;width:auto;" placeholder="TARGET">
+      </div>
+      <button class="secondary" id="customCreateGoBtn" style="width:100%;margin-bottom:8px;">Create</button>
+      <div id="customCreateError" style="color:#b3402a;font-size:13px;"></div>
+      <div id="customCreateResult" style="display:none;margin-top:12px;text-align:center;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Share this code</div>
+        <div id="customResultCode" style="font-size:28px;font-weight:900;letter-spacing:4px;">------</div>
+        <div id="customResultWords" style="font-size:13px;color:var(--muted);margin:6px 0;"></div>
+        <button class="secondary" id="customCopyCodeBtn" style="width:100%;margin-top:8px;">Copy code</button>
+        <button class="home-play-btn" id="customPlayNowBtn" style="margin-top:12px;width:100%;max-width:none;">Play it now</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="winOverlay">
+  <div class="modal">
+    <button class="close" data-close="winOverlay">&times;</button>
+    <h2 id="winTitle">Solved it!</h2>
+    <div class="sub" id="winSub">You reached the top.</div>
+    <div class="win-word-line" id="winChain"></div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="val" id="w-moves">4</div><div class="lbl">Your steps</div></div>
+      <div class="stat-box"><div class="val" id="w-par">4</div><div class="lbl">Required</div></div>
+      <div class="stat-box"><div class="val" id="w-time">0:00</div><div class="lbl">Time</div></div>
+      <div class="stat-box"><div class="val" id="w-streak">0</div><div class="lbl" id="w-streak-lbl">Streak</div></div>
+    </div>
+    <div class="share-block" id="shareText"></div>
+    <div class="action-row" style="justify-content:center;">
+      <button class="primary" id="shareBtn">Copy result</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const ICONS = {
+    settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+    chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+    undo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+    sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
+    flame: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1.2 3.1-2.8 4.4-2.8 7.4a2.8 2.8 0 0 0 5.6 0c0-1-.4-1.9-.9-2.7 1 .6 2.9 2.6 2.9 5.6A5.8 5.8 0 0 1 5.9 12.3C5.9 7.3 9.1 5 12 2z"/></svg>',
+    gem: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12l4 6-10 12L2 9z"/></svg>',
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>',
+    calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l2-2a5 5 0 0 0-7.07-7.07l-1 1"/><path d="M14 11a5 5 0 0 0-7.07 0l-2 2a5 5 0 0 0 7.07 7.07l1-1"/></svg>'
+  };
+  function setIcon(el, name){ if(el) el.innerHTML = ICONS[name]; }
+
+  setIcon(document.getElementById("statsBtn"), "chart");
+  setIcon(document.getElementById("settingsBtn"), "settings");
+  setIcon(document.getElementById("backHomeBtn"), "home");
+  setIcon(document.getElementById("homeSettingsBtn"), "settings");
+  document.getElementById("homeCustomIcon").innerHTML = ICONS.link;
+  document.getElementById("homeWeeklyIcon").innerHTML = ICONS.calendar;
+  document.getElementById("homePracticeIcon").innerHTML = ICONS.target;
+  document.getElementById("undoBtn").innerHTML = ICONS.undo + " Undo";
+  document.getElementById("hintBtn").innerHTML = ICONS.sun + " Hint";
+  document.getElementById("normalStreakPill").innerHTML = ICONS.flame + '<span id="normalStreakVal">0</span>';
+  document.getElementById("hardStreakPill").innerHTML = ICONS.gem + '<span id="hardStreakVal">0</span>';
+  document.getElementById("homeNormalStreakPill").innerHTML = ICONS.flame + '<span id="homeNormalStreakVal">0</span>';
+  document.getElementById("homeHardStreakPill").innerHTML = ICONS.gem + '<span id="homeHardStreakVal">0</span>';
+
+  /* Compound pairs */
+  const PAIRS = [
+    ["FIRE","FLY"],["FLY","PAPER"],["PAPER","CLIP"],["CLIP","BOARD"],
+    ["SUN","FLOWER"],["FLOWER","POT"],["POT","HOLE"],["HOLE","PUNCH"],
+    ["HOT","DOG"],["DOG","HOUSE"],["HOUSE","HOLD"],["HOLD","UP"],
+    ["RAIN","BOW"],["BOW","TIE"],["TIE","PIN"],["PIN","POINT"],
+    ["FOOT","BALL"],["BALL","PARK"],["PARK","WAY"],["WAY","SIDE"],
+    ["BOOK","SHELF"],["SHELF","LIFE"],["LIFE","BOAT"],["BOAT","HOUSE"],
+    ["WATER","FALL"],["FALL","OUT"],["OUT","LOOK"],["LOOK","OUT"],
+    ["SNOW","MAN"],["MAN","HOLE"],["HOLE","CARD"],["CARD","BOARD"],
+    ["LIGHT","HOUSE"],["HOUSE","WIFE"],
+    ["AIR","PORT"],["PORT","HOLE"],
+    ["BACK","PACK"],["PACK","RAT"],["RAT","TRAP"],
+    ["BASE","BALL"],["BALL","ROOM"],["ROOM","MATE"],["MATE","SHIP"],
+    ["BLACK","BOARD"],["BOARD","WALK"],["WALK","WAY"],
+    ["BLUE","BERRY"],["BERRY","BUSH"],
+    ["BUTTER","FLY"],["FLY","WHEEL"],
+    ["CROSS","WALK"],["WALK","MAN"],
+    ["DAY","LIGHT"],["LIGHT","NING"],
+    ["DOOR","BELL"],["BELL","HOP"],
+    ["EAR","RING"],["RING","TONE"],
+    ["EYE","BALL"],["BALL","POINT"],
+    ["FINGER","NAIL"],["NAIL","FILE"],
+    ["GOLD","FISH"],["FISH","BOWL"],
+    ["HAIR","CUT"],["CUT","OFF"],
+    ["HAND","SHAKE"],["SHAKE","DOWN"],
+    ["HEAD","ACHE"],
+    ["HONEY","BEE"],["BEE","HIVE"],
+    ["HORSE","BACK"],["BACK","YARD"],
+    ["KEY","BOARD"],["BOARD","ROOM"],
+    ["LIFE","GUARD"],["GUARD","RAIL"],
+    ["LIP","STICK"],
+    ["MAIL","BOX"],["BOX","CAR"],
+    ["MOON","LIGHT"],
+    ["NOTE","BOOK"],["BOOK","MARK"],
+    ["PAN","CAKE"],["CAKE","WALK"],
+    ["PASS","WORD"],["WORD","PLAY"],
+    ["PEA","NUT"],["NUT","SHELL"],
+    ["PLAY","GROUND"],
+    ["RAIN","COAT"],["COAT","ROOM"],
+    ["SAND","BOX"],
+    ["SEA","SHELL"],["SHELL","FISH"],
+    ["SIDE","WALK"],
+    ["SKATE","BOARD"],["BOARD","GAME"],
+    ["SNOW","BALL"],
+    ["STAR","FISH"],
+    ["SUN","SET"],["SET","BACK"],
+    ["TOOTH","BRUSH"],["BRUSH","FIRE"],
+    ["TREE","HOUSE"],["HOUSE","BOAT"],
+    ["UNDER","GROUND"],
+    ["WEEK","END"],["END","GAME"],
+    ["WHEEL","CHAIR"],["CHAIR","MAN"],
+    ["WHITE","BOARD"],
+    ["WIND","MILL"],
+    ["WORK","SHOP"],
+    ["YARD","STICK"],
+    ["COFFEE","SHOP"],
+    ["ICE","CREAM"],["CREAM","CHEESE"],
+    ["HIGH","SCHOOL"],["SCHOOL","HOUSE"],
+    ["POST","OFFICE"],
+    ["FULL","MOON"],
+    ["LIVING","ROOM"],
+    ["CREDIT","CARD"],
+    ["VIDEO","GAME"],["GAME","PLAN"],
+    ["FIRE","MAN"],["MAN","POWER"],
+    ["FIRE","WORK"],["WORK","OUT"],
+    ["FIRE","PLACE"],
+    ["FIRE","FLY"],
+    ["DRAGON","FLY"],
+    ["CUP","CAKE"],
+    ["MILK","SHAKE"],
+    ["TOOTH","PASTE"],
+    ["FACE","BOOK"],["BOOK","STORE"],
+    ["NEWS","PAPER"],["PAPER","BACK"],
+    ["SPACE","SHIP"],["SHIP","YARD"],
+    ["AIR","PLANE"],
+    ["BACK","GROUND"],
+    ["BATH","ROOM"],
+    ["BED","ROOM"],
+    ["BIRTH","DAY"],
+    ["BREAK","FAST"],["FAST","FOOD"],
+    ["CLASS","ROOM"],
+    ["DOWN","TOWN"],
+    ["FOOT","PRINT"],
+    ["FRIEND","SHIP"],
+    ["GREEN","HOUSE"],
+    ["HOME","WORK"],
+    ["LAND","MARK"],
+    ["NIGHT","MARE"],
+    ["OVER","COAT"],
+    ["RAIL","ROAD"],["ROAD","MAP"],
+    ["SEA","FOOD"],
+    ["SOME","ONE"],["ONE","WAY"],
+    ["SOME","THING"],
+    ["SUN","SHINE"],
+    ["TABLE","CLOTH"],
+    ["TIME","TABLE"],
+    ["UP","STAIRS"],
+    ["WALL","PAPER"],
+    ["WASH","ROOM"],
+    ["ANY","ONE"],
+    ["EVERY","ONE"],
+    ["EVERY","THING"],
+    ["SOME","WHERE"],
+    ["ANY","WHERE"],
+    ["NO","WHERE"],
+    ["OVER","NIGHT"],
+    ["OUT","SIDE"],["SIDE","LINE"],
+    ["IN","SIDE"],
+    ["UP","SET"],
+    ["CHECK","OUT"],["OUT","COME"],
+    ["CHECK","IN"],
+    ["TAKE","OFF"],["OFF","SET"],
+    ["TAKE","OVER"],
+    ["LOOK","UP"],
+    ["BREAK","UP"],
+    ["BREAK","DOWN"],
+    ["TURN","OVER"],
+    ["TURN","OUT"],
+    ["GIVE","UP"],
+    ["PUT","DOWN"],
+    ["SET","UP"],
+    ["MAKE","UP"],
+    ["PICK","UP"],
+    ["GET","AWAY"],
+    ["RUN","AWAY"],
+    ["WALK","AWAY"],
+    ["DRIVE","WAY"],
+    ["HIGH","WAY"],
+    ["FREE","WAY"],
+    ["PARK","WAY"],
+    ["RAIL","WAY"],
+    ["AIR","WAY"],
+    ["DOOR","WAY"],
+    ["HALL","WAY"],
+    ["CAR","POOL"],
+    ["CAR","PORT"],
+    ["BUS","STOP"],
+    ["POLICE","OFFICER"],
+    ["FIRE","FIGHTER"],
+    ["SAFETY","PIN"],
+    ["FIRST","AID"],
+    ["HAND","BAG"],
+    ["HOME","MADE"],
+    ["HOME","SICK"],
+    ["HOME","TOWN"],
+    ["TEAM","WORK"],
+    ["NET","WORK"],
+    ["FRAME","WORK"],
+    ["GROUND","WORK"],
+    ["WONDER","LAND"],
+    ["BOARD","GAME"],
+    ["PAPER","WORK"],
+    ["FLY","BY"],
+    ["DOG","FIGHT"],
+    ["HOLD","OVER"],
+    ["FLOWER","BED"],
+    ["POT","LUCK"],
+    ["PUNCH","LINE"],
+    ["PIN","WHEEL"],
+    ["BACK","FIRE"]
+  ];
+
+  const GRAPH = new Map();
+  for(const [a,b] of PAIRS){
+    const A=a.toUpperCase(), B=b.toUpperCase();
+    if(!GRAPH.has(A)) GRAPH.set(A, new Set());
+    GRAPH.get(A).add(B);
+  }
+  function isValidLink(prev, next){
+    const set = GRAPH.get(prev);
+    return set && set.has(next);
+  }
+  function bfsDistances(start){
+    const dist = new Map([[start,0]]);
+    const q=[start]; let qi=0;
+    while(qi<q.length){
+      const u=q[qi++];
+      for(const v of (GRAPH.get(u)||[])){
+        if(!dist.has(v)){ dist.set(v, dist.get(u)+1); q.push(v); }
+      }
+    }
+    return dist;
+  }
+  function shortestPath(start, target){
+    if(start===target) return [start];
+    const prev=new Map(), visited=new Set([start]), q=[start]; let qi=0;
+    while(qi<q.length){
+      const u=q[qi++];
+      for(const v of (GRAPH.get(u)||[])){
+        if(!visited.has(v)){
+          visited.add(v); prev.set(v,u);
+          if(v===target){
+            const path=[target]; let cur=target;
+            while(cur!==start){ cur=prev.get(cur); path.push(cur); }
+            return path.reverse();
+          }
+          q.push(v);
+        }
+      }
+    }
+    return null;
+  }
+
+  function hashString(str){
+    let h=1779033703^str.length;
+    for(let i=0;i<str.length;i++){ h=Math.imul(h^str.charCodeAt(i),3432918353); h=(h<<13)|(h>>>19); }
+    return function(){ h=Math.imul(h^(h>>>16),2246822519); h=Math.imul(h^(h>>>13),3266489917); h^=h>>>16; return h>>>0; };
+  }
+  function mulberry32(seed){
+    let a=seed;
+    return function(){ a|=0; a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; };
+  }
+  function dateStringFromDate(d){
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  function todayDateString(){ return dateStringFromDate(new Date()); }
+  function yesterdayDateString(){ const d=new Date(); d.setDate(d.getDate()-1); return dateStringFromDate(d); }
+  const LAUNCH=new Date(2026,0,1);
+  function puzzleNumber(dateStr){
+    const [y,m,d]=dateStr.split("-").map(Number);
+    return Math.max(1, Math.round((new Date(y,m-1,d)-LAUNCH)/86400000)+1);
+  }
+
+  const STARTERS=["FIRE","SUN","HOT","RAIN","FOOT","BOOK","WATER","SNOW","LIGHT","AIR","BACK","BASE","BLACK","BLUE","BUTTER","CROSS","DAY","DOOR","EAR","EYE","FINGER","GOLD","HAIR","HAND","HEAD","HONEY","HORSE","KEY","LIFE","LIP","MAIL","MOON","NOTE","PAN","PASS","PEA","PLAY","SAND","SEA","SIDE","SKATE","STAR","TOOTH","TREE","UNDER","WEEK","WHEEL","WHITE","WIND","WORK","YARD","COFFEE","ICE","HIGH","POST","FULL","LIVING","CREDIT","VIDEO","FIRE","DRAGON","CUP","MILK","FACE","NEWS","SPACE","AIR","BATH","BED","BIRTH","BREAK","CLASS","DOWN","FOOT","FRIEND","GREEN","HOME","LAND","NIGHT","OVER","RAIL","SEA","SOME","SUN","TABLE","TIME","UP","WALL","WASH","ANY","EVERY","CHECK","TAKE","LOOK","BREAK","TURN","GIVE","PUT","SET","MAKE","PICK","GET","RUN","WALK","DRIVE","HIGH","FREE","PARK","CAR","BUS","POLICE","SAFETY","FIRST","HAND","HOME","TEAM","NET","FRAME","GROUND","WONDER"];
+
+  function generatePuzzle(dateStr, desiredDist){
+    const seedFn=hashString("chain-"+dateStr+(desiredDist||4));
+    const rng=mulberry32(seedFn());
+    const desired=desiredDist||4;
+    const starts=STARTERS.slice().sort(()=>rng()-0.5);
+    for(const start of starts){
+      if(!GRAPH.has(start)) continue;
+      const dist=bfsDistances(start);
+      let cands=[];
+      for(const [w,dd] of dist) if(w!==start && dd===desired) cands.push(w);
+      if(!cands.length){
+        for(let r=1;r<=2;r++){
+          for(const [w,dd] of dist) if(w!==start && Math.abs(dd-desired)<=r) cands.push(w);
+          if(cands.length) break;
+        }
+      }
+      if(cands.length){
+        const target=cands[Math.floor(rng()*cands.length)];
+        const path=shortestPath(start, target);
+        if(path && path.length>=3){
+          return {
+            start, target, path,
+            intermediateLens: path.slice(1,-1).map(w=>w.length),
+            optimal: path.length-1,
+            dateStr, number: puzzleNumber(dateStr)
+          };
+        }
+      }
+    }
+    return {
+      start:"FIRE", target:"BOARD",
+      path:["FIRE","FLY","PAPER","CLIP","BOARD"],
+      intermediateLens:[3,5,4],
+      optimal:4, dateStr, number: puzzleNumber(dateStr)
+    };
+  }
+
+  const DEFAULT_SETTINGS={darkMode:false, hardMode:false, reduceMotion:false, sound:false};
+  const DEFAULT_STATS={normalStreak:0, normalLongest:0, hardStreak:0, hardLongest:0, lastNormalDate:null, lastHardDate:null, lastAnyDate:null, totalSolved:0, fastestSolveSeconds:null, perfectCount:0};
+  const LOCAL_KEY="chainreaction_v2";
+  let userDoc=null;
+  function fresh(){ return {settings:Object.assign({},DEFAULT_SETTINGS), stats:Object.assign({},DEFAULT_STATS), progress:{}, practiceWeek:null, customs:{}}; }
+  function load(){
+    try{
+      const raw=localStorage.getItem(LOCAL_KEY);
+      if(!raw) return null;
+      const d=JSON.parse(raw);
+      return {settings:Object.assign({},DEFAULT_SETTINGS,d.settings||{}), stats:Object.assign({},DEFAULT_STATS,d.stats||{}), progress:d.progress||{}, practiceWeek:d.practiceWeek||null, customs:d.customs||{}};
+    }catch(e){ return null; }
+  }
+  function save(){ try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(userDoc)); }catch(e){} }
+  let saveT=null;
+  function persist(){ clearTimeout(saveT); saveT=setTimeout(save,200); }
+
+  const STEPS_REQUIRED=4, HINT_LIMIT=2, PRACTICE_WEEKLY_LIMIT=5;
+  let viewDay="today", puzzleToday=null, puzzleYesterday=null, weeklyPuzzle=null, weeklyKeyStr=null;
+  let practicePuzzle=null, practiceSeed=null, customPuzzle=null, customCode=null, timerHandle=null;
+
+  function currentMode(){ return userDoc.settings.hardMode ? "hard" : "normal"; }
+  function currentDateStr(){
+    if(viewDay==="practice") return "practice_"+practiceSeed;
+    if(viewDay==="weekly") return "weekly_"+weeklyKeyStr;
+    if(viewDay==="custom") return "custom_"+customCode;
+    return viewDay==="today" ? todayDateString() : yesterdayDateString();
+  }
+  function currentPuzzle(){
+    if(viewDay==="practice") return practicePuzzle;
+    if(viewDay==="weekly") return weeklyPuzzle;
+    if(viewDay==="custom") return customPuzzle;
+    return viewDay==="today" ? puzzleToday : puzzleYesterday;
+  }
+  function stateKey(){ return currentDateStr()+"_"+currentMode(); }
+  function mondayOfWeek(d){
+    const dt=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+    const day=dt.getDay(); const diff=day===0?-6:1-day;
+    dt.setDate(dt.getDate()+diff); return dateStringFromDate(dt);
+  }
+  function currentWeekStartDateStr(){ return mondayOfWeek(new Date()); }
+  function generateWeeklyPuzzle(weekStartStr){ return generatePuzzle("weekly-"+weekStartStr, 5); }
+  function generatePracticePuzzle(seed){ return generatePuzzle("practice-"+seed, 3+Math.floor(Math.random()*2)); }
+  function ensurePracticeWeek(){
+    const wk=currentWeekStartDateStr();
+    if(!userDoc.practiceWeek||userDoc.practiceWeek.weekStart!==wk) userDoc.practiceWeek={weekStart:wk, used:0};
+    return userDoc.practiceWeek;
+  }
+  function practiceRemaining(){ return Math.max(0, PRACTICE_WEEKLY_LIMIT-ensurePracticeWeek().used); }
+
+  function getState(){
+    const key=stateKey();
+    if(!userDoc.progress[key]){
+      const p=currentPuzzle();
+      userDoc.progress[key]={ chain:[p.start], solved:false, startTimestamp:Date.now(), solveSeconds:null, hintsUsed:0 };
+    }
+    return userDoc.progress[key];
+  }
+
+  function showToast(msg, ok){
+    const t=document.getElementById("toast");
+    t.textContent=msg; t.classList.toggle("ok",!!ok); t.classList.add("show");
+    clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove("show"),1700);
+  }
+  function fmtTime(s){ s=Math.max(0,Math.floor(s)); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
+  function openOverlay(id){ document.getElementById(id).classList.add("show"); }
+  function closeOverlay(id){ document.getElementById(id).classList.remove("show"); }
+  function playTone(freq, dur){
+    if(!userDoc.settings.sound) return;
+    try{
+      const ctx=playTone._ctx||(playTone._ctx=new (window.AudioContext||window.webkitAudioContext)());
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.frequency.value=freq; o.type="sine";
+      g.gain.setValueAtTime(0.08, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+dur);
+      o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime+dur);
+    }catch(e){}
+  }
+
+  function nextExpectedLength(state, puzzle){
+    const stepsDone=state.chain.length-1;
+    if(stepsDone>=STEPS_REQUIRED) return 0;
+    if(puzzle.intermediateLens && puzzle.intermediateLens[stepsDone]!=null) return puzzle.intermediateLens[stepsDone];
+    if(stepsDone===STEPS_REQUIRED-1) return puzzle.target.length;
+    return 4;
+  }
+
+  function renderWordRow(word, cls){
+    const row=document.createElement("div");
+    row.className="chain-word";
+    for(let i=0;i<word.length;i++){
+      const d=document.createElement("div");
+      d.className="chain-letter "+(cls||"");
+      d.textContent=word[i];
+      row.appendChild(d);
+    }
+    return row;
+  }
+
+  function renderChain(){
+    const puzzle=currentPuzzle();
+    const state=getState();
+    const area=document.getElementById("chainArea");
+    area.innerHTML="";
+
+    // GOAL at top
+    const goalCls = (state.solved && state.chain[state.chain.length-1]===puzzle.target) ? "solved" : "goal";
+    area.appendChild(renderWordRow(puzzle.target, goalCls));
+
+    // connectors + filled intermediates (newest near goal)
+    const intermediates = state.chain.slice(1); // submitted so far
+    // we show remaining length hints for future steps, and filled ones for past
+    const totalSteps = STEPS_REQUIRED;
+    for(let step=totalSteps-1; step>=0; step--){
+      const connector=document.createElement("div");
+      connector.className="chain-connector";
+      const line1=document.createElement("div"); line1.className="line"; connector.appendChild(line1);
+
+      if(step < intermediates.length){
+        // already submitted this step
+        const word = intermediates[intermediates.length-1-step];
+        const isFinal = state.solved && step===0;
+        area.appendChild(renderWordRow(word, isFinal ? "solved" : "filled"));
+      } else {
+        // future step – show length label
+        const len = (puzzle.intermediateLens && puzzle.intermediateLens[totalSteps-1-step]) || (step===0 ? puzzle.target.length : 4);
+        const label=document.createElement("div");
+        label.className="len-label";
+        label.textContent = len + " LETTERS";
+        connector.appendChild(label);
+      }
+      const line2=document.createElement("div"); line2.className="line"; connector.appendChild(line2);
+      area.appendChild(connector);
+    }
+
+    // START at bottom
+    area.appendChild(renderWordRow(puzzle.start, "start"));
+  }
+
+  function rebuildInputBoxes(len){
+    const boxes=document.getElementById("boxes");
+    boxes.innerHTML="";
+    for(let i=0;i<len;i++){
+      const inp=document.createElement("input");
+      inp.className="box-input"; inp.maxLength=1; inp.dataset.i=i;
+      inp.autocomplete="off"; inp.autocapitalize="characters"; inp.spellcheck=false;
+      boxes.appendChild(inp);
+    }
+    wireBoxes();
+    if(boxes.firstChild) boxes.firstChild.focus();
+  }
+  function wireBoxes(){
+    const inputs=Array.from(document.querySelectorAll("#boxes .box-input"));
+    inputs.forEach((box,i)=>{
+      box.addEventListener("input", ()=>{
+        box.value=box.value.replace(/[^a-zA-Z]/g,"").toUpperCase().slice(0,1);
+        if(box.value && i<inputs.length-1) inputs[i+1].focus();
+      });
+      box.addEventListener("keydown", e=>{
+        if(e.key==="Backspace" && !box.value && i>0){ e.preventDefault(); inputs[i-1].value=""; inputs[i-1].focus(); }
+        if(e.key==="Enter") handleSubmit();
+      });
+    });
+  }
+  function currentInputWord(){ return Array.from(document.querySelectorAll("#boxes .box-input")).map(b=>(b.value||"").toUpperCase()).join(""); }
+  function clearBoxes(){
+    Array.from(document.querySelectorAll("#boxes .box-input")).forEach(b=>{ b.value=""; b.classList.remove("invalid"); });
+    const first=document.querySelector("#boxes .box-input"); if(first) first.focus();
+  }
+  function flashInvalid(){
+    const boxes=document.getElementById("boxes");
+    if(!userDoc.settings.reduceMotion){ boxes.classList.remove("shake"); void boxes.offsetWidth; boxes.classList.add("shake"); }
+    Array.from(boxes.querySelectorAll(".box-input")).forEach(b=>b.classList.add("invalid"));
+    setTimeout(()=>Array.from(boxes.querySelectorAll(".box-input")).forEach(b=>b.classList.remove("invalid")),500);
+  }
+
+  function render(){
+    const puzzle=currentPuzzle();
+    const state=getState();
+    const mode=currentMode();
+
+    if(viewDay==="practice"){
+      document.getElementById("puzzleNum").textContent="Practice";
+      document.getElementById("puzzleDate").textContent="Untimed";
+      document.getElementById("recapNote").style.display="";
+      document.getElementById("recapNote").textContent="Practice — doesn't affect streak. "+practiceRemaining()+" of "+PRACTICE_WEEKLY_LIMIT+" left this week.";
+    } else if(viewDay==="weekly"){
+      document.getElementById("puzzleNum").textContent="Weekly No. "+(puzzle.number||"");
+      document.getElementById("puzzleDate").textContent="Resets Monday";
+      document.getElementById("recapNote").style.display="";
+      document.getElementById("recapNote").textContent="Weekly chain — extra tough, no streak.";
+    } else if(viewDay==="custom"){
+      document.getElementById("puzzleNum").textContent="Custom · "+customCode;
+      document.getElementById("puzzleDate").textContent="Untimed";
+      document.getElementById("recapNote").style.display="";
+      document.getElementById("recapNote").textContent="Custom chain — doesn't affect streak.";
+    } else {
+      document.getElementById("puzzleNum").textContent="#"+puzzle.number;
+      document.getElementById("puzzleDate").textContent=new Date(puzzle.dateStr+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
+      document.getElementById("recapNote").style.display="none";
+    }
+
+    document.getElementById("startWordLabel").textContent=puzzle.start;
+    document.getElementById("targetWordLabel").textContent=puzzle.target;
+    document.getElementById("modeBadge").style.display=mode==="hard"?"inline-block":"none";
+    document.getElementById("hardLockNote").style.display=mode==="hard"?"":"none";
+
+    renderChain();
+
+    const stepsDone=state.chain.length-1;
+    document.getElementById("moveCount").textContent=String(stepsDone);
+    updateTimerDisplay();
+    updateStreakPills();
+
+    if(state.solved){
+      document.getElementById("inputArea").style.display="none";
+      document.getElementById("resultRow").style.display="flex";
+    } else {
+      document.getElementById("inputArea").style.display="";
+      document.getElementById("resultRow").style.display="none";
+      const hardOn=mode==="hard";
+      document.getElementById("undoBtn").style.display=hardOn?"none":"inline-flex";
+      document.getElementById("hintBtn").style.display=hardOn?"none":"inline-flex";
+      document.getElementById("undoBtn").disabled=state.chain.length<=1;
+      document.getElementById("hintBtn").disabled=state.hintsUsed>=HINT_LIMIT;
+      document.getElementById("hintBtn").innerHTML=ICONS.sun+" Hint ("+(HINT_LIMIT-state.hintsUsed)+")";
+
+      const nextLen=nextExpectedLength(state, puzzle);
+      document.getElementById("nextLen").textContent=nextLen||"—";
+      const currentBoxes=document.querySelectorAll("#boxes .box-input").length;
+      if(currentBoxes!==nextLen) rebuildInputBoxes(nextLen);
+    }
+  }
+
+  function updateStreakPills(){
+    document.getElementById("normalStreakVal").textContent=String(userDoc.stats.normalStreak);
+    document.getElementById("hardStreakVal").textContent=String(userDoc.stats.hardStreak);
+    document.getElementById("homeNormalStreakVal").textContent=String(userDoc.stats.normalStreak);
+    document.getElementById("homeHardStreakVal").textContent=String(userDoc.stats.hardStreak);
+    updateHomeScreen();
+  }
+  function updateTimerDisplay(){
+    const state=getState();
+    if(state.solved && state.solveSeconds!=null) document.getElementById("timeCount").textContent=fmtTime(state.solveSeconds);
+    else if(state.startTimestamp) document.getElementById("timeCount").textContent=fmtTime((Date.now()-state.startTimestamp)/1000);
+  }
+  function startTimer(){ stopTimer(); timerHandle=setInterval(updateTimerDisplay,1000); }
+  function stopTimer(){ if(timerHandle){ clearInterval(timerHandle); timerHandle=null; } }
+
+  function handleSubmit(){
+    if(viewDay==="yesterday") return;
+    const state=getState();
+    if(state.solved) return;
+    const puzzle=currentPuzzle();
+    const word=currentInputWord();
+    const expectedLen=nextExpectedLength(state, puzzle);
+    if(word.length!==expectedLen){ flashInvalid(); showToast("Need a "+expectedLen+"-letter word"); return; }
+    const prev=state.chain[state.chain.length-1];
+    if(word===prev){ flashInvalid(); showToast("That's the word you're on"); return; }
+    if(!isValidLink(prev, word)){ flashInvalid(); showToast("Not a valid compound / phrase link"); return; }
+    if(state.chain.includes(word)){ flashInvalid(); showToast("Already used that word"); return; }
+
+    state.chain.push(word);
+    clearBoxes();
+    playTone(660,0.12);
+
+    const stepsDone=state.chain.length-1;
+    if(word===puzzle.target && stepsDone===STEPS_REQUIRED){
+      state.solved=true; stopTimer();
+      state.solveSeconds=(Date.now()-state.startTimestamp)/1000;
+      persist(); render(); finishGame(state); return;
+    }
+    if(stepsDone>=STEPS_REQUIRED){
+      flashInvalid(); state.chain.pop();
+      showToast("Must reach the target on the 4th step");
+      persist(); render(); return;
+    }
+    persist(); render();
+  }
+
+  function handleUndo(){
+    if(viewDay==="yesterday") return;
+    const state=getState();
+    if(currentMode()==="hard") return;
+    if(state.chain.length<=1) return;
+    state.chain.pop(); persist(); render(); clearBoxes();
+  }
+  function handleHint(){
+    if(viewDay==="yesterday") return;
+    const state=getState();
+    if(currentMode()==="hard") return;
+    if(state.hintsUsed>=HINT_LIMIT || state.solved) return;
+    const puzzle=currentPuzzle();
+    const cur=state.chain[state.chain.length-1];
+    let next=null;
+    if(puzzle.path){
+      const idx=puzzle.path.indexOf(cur);
+      if(idx>=0 && idx<puzzle.path.length-1) next=puzzle.path[idx+1];
+    }
+    if(!next){ const path=shortestPath(cur, puzzle.target); if(path&&path.length>1) next=path[1]; }
+    if(next){
+      state.hintsUsed++;
+      const inputs=Array.from(document.querySelectorAll("#boxes .box-input"));
+      for(let i=0;i<Math.min(inputs.length,next.length);i++) inputs[i].value=next[i];
+      showToast("Hint: try "+next, true);
+      persist(); render();
+    } else showToast("No hint available from here");
+  }
+
+  function maybeResetStreaks(){
+    const stats=userDoc.stats, today=todayDateString(), yest=yesterdayDateString();
+    if(stats.lastAnyDate && stats.lastAnyDate!==today && stats.lastAnyDate!==yest){
+      const had=stats.normalStreak>0||stats.hardStreak>0;
+      stats.normalStreak=0; stats.hardStreak=0;
+      if(had) showToast("Your streak reset — a day was missed");
+      persist();
+    }
+  }
+
+  function finishGame(state){
+    const mode=currentMode();
+    const puzzle=currentPuzzle();
+    const stats=userDoc.stats;
+    playTone(880,0.18);
+    if(viewDay==="today"){
+      const today=puzzle.dateStr, yest=yesterdayDateString();
+      if(mode==="normal"){
+        if(stats.lastNormalDate!==today){
+          stats.normalStreak=(stats.lastNormalDate===yest)?stats.normalStreak+1:1;
+          stats.normalLongest=Math.max(stats.normalLongest, stats.normalStreak);
+          stats.lastNormalDate=today;
+        }
+      } else {
+        if(stats.lastHardDate!==today){
+          stats.hardStreak=(stats.lastHardDate===yest)?stats.hardStreak+1:1;
+          stats.hardLongest=Math.max(stats.hardLongest, stats.hardStreak);
+          stats.lastHardDate=today;
+        }
+      }
+      stats.lastAnyDate=today;
+      if(stats.fastestSolveSeconds==null || state.solveSeconds<stats.fastestSolveSeconds) stats.fastestSolveSeconds=state.solveSeconds;
+      stats.totalSolved+=1;
+      if((state.chain.length-1)===STEPS_REQUIRED) stats.perfectCount=(stats.perfectCount||0)+1;
+      persist(); updateStreakPills();
+    } else { persist(); updateHomeScreen(); }
+    showWinModal(state, viewDay);
+  }
+
+  function showWinModal(state, kind){
+    const puzzle=currentPuzzle();
+    const mode=currentMode();
+    const isBonus=kind==="practice"||kind==="weekly"||kind==="custom";
+    const movesUsed=state.chain.length-1;
+    document.getElementById("winChain").innerHTML=state.chain.map((w,i)=>(i?" <span class='arrow'>→</span> ":"")+"<b>"+w+"</b>").join("");
+    document.getElementById("w-moves").textContent=String(movesUsed);
+    document.getElementById("w-par").textContent=String(STEPS_REQUIRED);
+    document.getElementById("w-time").textContent=fmtTime(state.solveSeconds||0);
+    const streakVal=mode==="hard"?userDoc.stats.hardStreak:userDoc.stats.normalStreak;
+    document.getElementById("w-streak").textContent=isBonus?"—":String(streakVal);
+    document.getElementById("w-streak-lbl").textContent=isBonus?(kind==="weekly"?"Weekly (no streak)":kind==="custom"?"Custom (no streak)":"Practice (no streak)"):(mode==="hard"?"Hard streak":"Normal streak");
+    document.getElementById("winTitle").textContent=movesUsed===STEPS_REQUIRED?"Perfect chain!":"Solved it!";
+    document.getElementById("winSub").textContent=(kind==="practice"?"Practice complete. ":kind==="weekly"?"Weekly complete. ":kind==="custom"?"Custom complete. ":"")+"You linked the words in "+movesUsed+" steps.";
+    const streakLine=isBonus?(kind==="weekly"?"Weekly (no streak)":kind==="custom"?("Custom "+customCode+" (no streak)"):"Practice (no streak)"):(mode==="hard"?("Hard streak: "+streakVal):("Normal streak: "+streakVal));
+    const header=kind==="weekly"?("Weekly Chain #"+puzzle.number):kind==="practice"?"Chain Practice":kind==="custom"?("Custom Chain "+customCode):("Chain Reaction #"+puzzle.number);
+    const share=header+"\n"+state.chain.join(" → ")+"\n"+movesUsed+" steps · "+fmtTime(state.solveSeconds||0)+"\n"+streakLine;
+    document.getElementById("shareText").textContent=share;
+    document.getElementById("shareBtn").onclick=async()=>{ try{ await navigator.clipboard.writeText(share); showToast("Copied!",true); }catch(e){ showToast("Couldn't copy"); } };
+    openOverlay("winOverlay");
+  }
+
+  function showHome(){ stopTimer(); document.getElementById("homeScreen").style.display="flex"; document.getElementById("gameScreen").style.display="none"; updateHomeScreen(); }
+  function showGame(){ document.getElementById("homeScreen").style.display="none"; document.getElementById("gameScreen").style.display=""; }
+  function updateHomeScreen(){
+    if(!userDoc) return;
+    document.getElementById("homeDate").textContent=new Date(todayDateString()+"T00:00:00").toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+    const key=todayDateString()+"_"+currentMode();
+    const state=userDoc.progress[key];
+    const solved=!!(state&&state.solved);
+    const playBtn=document.getElementById("playBtn");
+    const label=document.getElementById("playBtnLabel");
+    const note=document.getElementById("homeSolvedNote");
+    playBtn.disabled=false;
+    if(solved){ label.textContent="View Result"; note.style.display="flex"; }
+    else { label.textContent=state?"Continue":"Play"; note.style.display="none"; }
+    const remaining=practiceRemaining();
+    document.getElementById("homePracticeSub").textContent=remaining+" of "+PRACTICE_WEEKLY_LIMIT+" left this week";
+    document.getElementById("homePracticeBtn").disabled=remaining<=0;
+  }
+
+  function refreshStatsModal(){
+    const s=userDoc.stats;
+    document.getElementById("s-played").textContent=String(s.totalSolved);
+    document.getElementById("s-normal-streak").textContent=String(s.normalStreak);
+    document.getElementById("s-hard-streak").textContent=String(s.hardStreak);
+    document.getElementById("s-normal-best").textContent=String(s.normalLongest);
+    document.getElementById("s-hard-best").textContent=String(s.hardLongest);
+    document.getElementById("s-fastest").textContent=s.fastestSolveSeconds!=null?fmtTime(s.fastestSolveSeconds):"—";
+    document.getElementById("s-total").textContent=String(s.totalSolved);
+    document.getElementById("s-perfect").textContent=String(s.perfectCount||0);
+  }
+  function applySettingsToDOM(){
+    document.body.classList.toggle("dark", !!userDoc.settings.darkMode);
+    document.body.classList.toggle("reduce-motion", !!userDoc.settings.reduceMotion);
+    document.getElementById("darkModeToggle").checked=!!userDoc.settings.darkMode;
+    document.getElementById("hardModeToggle").checked=!!userDoc.settings.hardMode;
+    document.getElementById("reduceMotionToggle").checked=!!userDoc.settings.reduceMotion;
+    document.getElementById("soundToggle").checked=!!userDoc.settings.sound;
+  }
+
+  /* Events */
+  document.getElementById("submitBtn").addEventListener("click", handleSubmit);
+  document.getElementById("undoBtn").addEventListener("click", handleUndo);
+  document.getElementById("hintBtn").addEventListener("click", handleHint);
+  document.getElementById("clearBtn").addEventListener("click", clearBoxes);
+  document.getElementById("statsBtn").addEventListener("click", ()=>{ refreshStatsModal(); openOverlay("statsOverlay"); });
+  document.getElementById("viewResultBtn").addEventListener("click", ()=>{ showWinModal(getState(), viewDay); });
+  document.getElementById("helpBtn").addEventListener("click", ()=> openOverlay("helpOverlay"));
+  document.getElementById("playBtn").addEventListener("click", ()=>{
+    if(!userDoc) return;
+    showGame(); viewDay="today";
+    const state=getState();
+    render();
+    if(!state.solved){ startTimer(); const nl=nextExpectedLength(state, currentPuzzle()); rebuildInputBoxes(nl); }
+  });
+  document.getElementById("backHomeBtn").addEventListener("click", showHome);
+  document.getElementById("homeHelpBtn").addEventListener("click", ()=> openOverlay("helpOverlay"));
+  document.getElementById("homeSettingsBtn").addEventListener("click", ()=>{ applySettingsToDOM(); openOverlay("settingsOverlay"); });
+  document.getElementById("homeStatsBtn").addEventListener("click", ()=>{ refreshStatsModal(); openOverlay("statsOverlay"); });
+  document.getElementById("homeHowBtn").addEventListener("click", ()=> openOverlay("helpOverlay"));
+  document.getElementById("homeWeeklyBtn").addEventListener("click", ()=>{
+    if(!userDoc) return;
+    viewDay="weekly"; showGame(); render();
+    const state=getState(); stopTimer();
+    if(!state.solved){ startTimer(); rebuildInputBoxes(nextExpectedLength(state, currentPuzzle())); }
+  });
+  document.getElementById("homePracticeBtn").addEventListener("click", ()=>{
+    if(!userDoc) return;
+    if(practiceRemaining()<=0){ showToast("You've used all "+PRACTICE_WEEKLY_LIMIT+" practice puzzles this week"); return; }
+    ensurePracticeWeek().used+=1; persist();
+    practiceSeed="p"+Date.now()+"_"+Math.floor(Math.random()*1e6);
+    practicePuzzle=generatePracticePuzzle(practiceSeed);
+    viewDay="practice"; showGame(); render(); updateHomeScreen();
+    stopTimer(); startTimer(); rebuildInputBoxes(nextExpectedLength(getState(), practicePuzzle));
+  });
+
+  document.querySelectorAll("[data-close]").forEach(btn=> btn.addEventListener("click", ()=> closeOverlay(btn.getAttribute("data-close"))));
+  document.querySelectorAll(".overlay").forEach(ov=> ov.addEventListener("click", e=>{ if(e.target===ov) ov.classList.remove("show"); }));
+
+  document.getElementById("darkModeToggle").addEventListener("change", ()=>{ userDoc.settings.darkMode=document.getElementById("darkModeToggle").checked; document.body.classList.toggle("dark", userDoc.settings.darkMode); persist(); });
+  document.getElementById("reduceMotionToggle").addEventListener("change", ()=>{ userDoc.settings.reduceMotion=document.getElementById("reduceMotionToggle").checked; document.body.classList.toggle("reduce-motion", userDoc.settings.reduceMotion); persist(); });
+  document.getElementById("soundToggle").addEventListener("change", ()=>{ userDoc.settings.sound=document.getElementById("soundToggle").checked; persist(); });
+  document.getElementById("hardModeToggle").addEventListener("change", ()=>{ userDoc.settings.hardMode=document.getElementById("hardModeToggle").checked; persist(); render(); clearBoxes(); });
+  document.getElementById("settingsBtn").addEventListener("click", ()=>{ applySettingsToDOM(); openOverlay("settingsOverlay"); });
+
+  /* Custom */
+  function resetCustomOverlay(){
+    document.getElementById("customChoice").style.display="";
+    document.getElementById("customPlayPanel").style.display="none";
+    document.getElementById("customCreatePanel").style.display="none";
+    document.getElementById("customCreateResult").style.display="none";
+    document.getElementById("customPlayError").textContent="";
+    document.getElementById("customCreateError").textContent="";
+    document.getElementById("customCodeInput").value="";
+    document.getElementById("customStartInput").value="";
+    document.getElementById("customTargetInput").value="";
+  }
+  document.getElementById("homeCustomBtn").addEventListener("click", ()=>{ resetCustomOverlay(); openOverlay("customOverlay"); });
+  document.getElementById("customChoosePlay").addEventListener("click", ()=>{ document.getElementById("customChoice").style.display="none"; document.getElementById("customPlayPanel").style.display=""; });
+  document.getElementById("customChooseCreate").addEventListener("click", ()=>{ document.getElementById("customChoice").style.display="none"; document.getElementById("customCreatePanel").style.display=""; });
+  document.getElementById("customBackFromPlay").addEventListener("click", ()=>{ document.getElementById("customPlayPanel").style.display="none"; document.getElementById("customChoice").style.display=""; });
+  document.getElementById("customBackFromCreate").addEventListener("click", ()=>{ document.getElementById("customCreatePanel").style.display="none"; document.getElementById("customCreateResult").style.display="none"; document.getElementById("customChoice").style.display=""; });
+
+  function loadCustomPuzzle(code, start, target, path, intermediateLens){
+    customCode=code;
+    customPuzzle={start, target, path, intermediateLens, optimal:path?path.length-1:4, dateStr:"custom_"+code, number:null};
+    viewDay="custom"; showGame(); render();
+    const state=getState(); stopTimer();
+    if(!state.solved){ startTimer(); rebuildInputBoxes(nextExpectedLength(state, customPuzzle)); }
+  }
+  document.getElementById("customPlayGoBtn").addEventListener("click", ()=>{
+    const code=document.getElementById("customCodeInput").value.trim().toUpperCase();
+    const err=document.getElementById("customPlayError"); err.textContent="";
+    if(!code){ err.textContent="Enter a code."; return; }
+    const stored=userDoc.customs[code];
+    if(!stored){ err.textContent="No custom chain with that code on this device."; return; }
+    loadCustomPuzzle(code, stored.start, stored.target, stored.path, stored.intermediateLens);
+    closeOverlay("customOverlay");
+  });
+  document.getElementById("customCreateGoBtn").addEventListener("click", ()=>{
+    const start=document.getElementById("customStartInput").value.trim().toUpperCase();
+    const target=document.getElementById("customTargetInput").value.trim().toUpperCase();
+    const err=document.getElementById("customCreateError"); err.textContent="";
+    if(!start||!target){ err.textContent="Enter start and target words."; return; }
+    if(start===target){ err.textContent="Start and target must differ."; return; }
+    const path=shortestPath(start, target);
+    if(!path||path.length<3){ err.textContent="No compound chain of 2+ steps connects those words."; return; }
+    let finalPath=path;
+    if(path.length-1>4) finalPath=path.slice(0,5);
+    const intermediateLens=finalPath.slice(1,-1).map(w=>w.length);
+    const code=String(Math.floor(100000+Math.random()*900000));
+    userDoc.customs[code]={start:finalPath[0], target:finalPath[finalPath.length-1], path:finalPath, intermediateLens};
+    persist();
+    document.getElementById("customResultCode").textContent=code;
+    document.getElementById("customResultWords").textContent=finalPath.join(" → ");
+    const resultBox=document.getElementById("customCreateResult");
+    resultBox.style.display=""; resultBox.dataset.code=code;
+  });
+  document.getElementById("customCopyCodeBtn").addEventListener("click", async ()=>{
+    const code=document.getElementById("customCreateResult").dataset.code;
+    try{ await navigator.clipboard.writeText(code); showToast("Code copied", true); }catch(e){ showToast("Couldn't copy"); }
+  });
+  document.getElementById("customPlayNowBtn").addEventListener("click", ()=>{
+    const code=document.getElementById("customCreateResult").dataset.code;
+    const stored=userDoc.customs[code];
+    loadCustomPuzzle(code, stored.start, stored.target, stored.path, stored.intermediateLens);
+    closeOverlay("customOverlay");
+  });
+
+  /* Boot */
+  userDoc=load()||fresh();
+  maybeResetStreaks();
+  applySettingsToDOM();
+  puzzleToday=generatePuzzle(todayDateString(),4);
+  puzzleYesterday=generatePuzzle(yesterdayDateString(),4);
+  weeklyKeyStr=currentWeekStartDateStr();
+  weeklyPuzzle=generateWeeklyPuzzle(weeklyKeyStr);
+  render();
+  updateHomeScreen();
+  document.getElementById("playBtn").disabled=false;
+  document.getElementById("playBtnLabel").textContent="Play";
+})();
+</script>
+</body>
+</html>
