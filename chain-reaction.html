@@ -68,14 +68,17 @@
   .streak-pill.normal-streak{color:var(--amber-dark);}
   .streak-pill.hard-streak{color:var(--hard);}
   .home-play-btn{
-    width:100%; max-width:280px; background:var(--ink); border:2px solid var(--ink); color:var(--bg);
-    font-family:'Libre Franklin',sans-serif; font-weight:800; font-size:16.5px; letter-spacing:.4px;
-    text-transform:uppercase; padding:16px 22px; border-radius:6px; cursor:pointer;
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    box-shadow:0 3px 0 rgba(0,0,0,.15);
+    width:auto; max-width:260px; min-width:180px;
+    background:var(--ink); border:2px solid var(--ink); color:var(--bg);
+    font-family:'Libre Franklin',sans-serif; font-weight:800; font-size:15px; letter-spacing:.4px;
+    text-transform:uppercase; padding:14px 28px; border-radius:8px; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    box-shadow:0 3px 0 rgba(0,0,0,.15); margin:0 auto;
   }
   .home-play-btn:active{transform:translateY(2px); box-shadow:none;}
   .home-play-btn:disabled{opacity:.5; cursor:default; box-shadow:none;}
+  .home-play-btn svg{width:16px; height:16px; flex-shrink:0;}
+  .home-hero .home-play-btn{align-self:center;}
   .home-solved-note{margin-top:11px; font-size:12.5px; color:var(--moss-dark); font-weight:700; display:none; align-items:center; gap:6px;}
   .home-mode-row{display:flex; gap:10px; width:100%; max-width:280px; margin-top:14px;}
   .home-mode-btn{
